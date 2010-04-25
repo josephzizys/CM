@@ -14,6 +14,7 @@
 #include "Console.h"
 #include "Scheme.h"
 #include "Main.h"
+#include "Help.h"
 #include <iostream>
 #include <limits>
 
@@ -173,6 +174,7 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
 
       CommandIDs::EditorUndo,        // Edit menu
       CommandIDs::EditorRedo,
+      CommandIDs::EditorDelete,
       CommandIDs::EditorCut,
       CommandIDs::EditorCopy,
       CommandIDs::EditorPaste,
@@ -198,10 +200,8 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
       CommandIDs::EditorFontSize + 28,
       CommandIDs::EditorFontSize + 30,
       CommandIDs::EditorFontSize + 32,
-      //      CommandIDs::EditorTabWidth + 2,
-      //      CommandIDs::EditorTabWidth + 4,
-      //      CommandIDs::EditorTabWidth + 6,
-      //      CommandIDs::EditorTabWidth + 8,
+      CommandIDs::EditorFontLarger,
+      CommandIDs::EditorFontSmaller,
       CommandIDs::EditorTheme + 0,
       CommandIDs::EditorTheme + 1,
       CommandIDs::EditorTheme + 2,
@@ -221,7 +221,9 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
       CommandIDs::EditorExecute,      // Eval menu
       CommandIDs::EditorExpand,
       CommandIDs::SchedulerStop,
-      CommandIDs::SchedulerPause
+      CommandIDs::SchedulerPause,
+
+      CommandIDs::EditorSymbolHelp
     } ;
   commands.addArray(ids, sizeof(ids) / sizeof(CommandID));       
 }
@@ -316,6 +318,10 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
 	info.addDefaultKeypress(T('Z'), ModifierKeys::commandModifier | ModifierKeys::shiftModifier);
       info.setActive(document.getUndoManager().canRedo());
       break;
+    case CommandIDs::EditorDelete:
+      info.shortName=T("Delete");
+      info.setActive(getCodeBuffer()->getHighlightedRegion().getLength()>1);
+      break;
     case CommandIDs::EditorCut:
       info.shortName=T("Cut");
       if (commandkeyactive)
@@ -367,6 +373,17 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
     case CommandIDs::EditorFontSize:
       info.shortName=String(data);
       info.setTicked(getCodeBuffer()->getFontSize()==data);
+      break;
+    case CommandIDs::EditorFontLarger:
+      info.shortName=T("Font Larger");
+      if (commandkeyactive)
+	info.addDefaultKeypress(T('='), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::EditorFontSmaller:
+      info.shortName=T("Font Smaller");
+      info.setActive(getCodeBuffer()->getFontSize()>=8);
+      if (commandkeyactive)
+	info.addDefaultKeypress(T('-'), ModifierKeys::commandModifier);
       break;
     case CommandIDs::EditorTheme:
       {
@@ -436,6 +453,18 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
 		      T("Pause Processes"));
       info.setActive(!SchemeThread::getInstance()->isQueueEmpty());
       break;
+    case CommandIDs::EditorSymbolHelp:
+      info.shortName=T("Documention For Symbol under Cursor");
+       if (commandkeyactive)
+         {
+           info.addDefaultKeypress(T('D'), ModifierKeys::commandModifier );
+           CodeBuffer* buf=getCodeBuffer();
+           tchar chr=buf->getCaretPos().getCharacter();
+           info.setActive((buf->getHighlightedRegion().getLength()>0) ||
+                          buf->syntax->isWordChar(chr) ||
+                          buf->syntax->isSymbolChar(chr));
+         }
+      break;
     default:
       //      std::cout << "CodeEditorWindow::getCommandInfo: unhandled command: " << comm << "\n";
       break;
@@ -494,8 +523,11 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       getCodeBuffer()->redo();
       getCodeBuffer()->isChanged(true);
       break;
-    case CommandIDs::EditorCut:
+    case CommandIDs::EditorDelete:
       getCodeBuffer()->cut();
+      break;
+    case CommandIDs::EditorCut:
+      getCodeBuffer()->copyThenCut();
       getCodeBuffer()->isChanged(true);
       break;
     case CommandIDs::EditorCopy:
@@ -521,6 +553,14 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
     case CommandIDs::EditorFontSize:
       getCodeBuffer()->setFontSize(data);
       resizeForColumnsAndLines();
+      break;
+    case CommandIDs::EditorFontLarger:
+      getCodeBuffer()->setFontSize(getCodeBuffer()->getFontSize()+1);
+      getCodeBuffer()->repaint();
+      break;
+    case CommandIDs::EditorFontSmaller:
+      getCodeBuffer()->setFontSize(jmax(8, getCodeBuffer()->getFontSize()-1));
+      getCodeBuffer()->repaint();
       break;
     case CommandIDs::EditorTheme:
       if (XmlElement* theme=Preferences::getInstance()->getColorTheme(data))
@@ -564,7 +604,9 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       break;
     case CommandIDs::SchedulerPause:
       break;
-
+    case CommandIDs::EditorSymbolHelp:
+      getCodeBuffer()->lookupHelpAtPoint();
+      break;
     default:
       std::cout << "CodeEditorWindow::perform: unhandled command: " << comm << "\n";
     }
@@ -619,6 +661,7 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
       menu.addCommandItem(&commands, CommandIDs::EditorUndo);
       menu.addCommandItem(&commands, CommandIDs::EditorRedo);
       menu.addSeparator();
+      menu.addCommandItem(&commands, CommandIDs::EditorDelete);
       menu.addCommandItem(&commands, CommandIDs::EditorCut);
       menu.addCommandItem(&commands, CommandIDs::EditorCopy);
       menu.addCommandItem(&commands, CommandIDs::EditorPaste);
@@ -646,6 +689,9 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
       sub2.addSeparator();
       sub2.addCommandItem(&commands, CommandIDs::EditorDefaultTheme);
       menu.addSubMenu(T("Theme"), sub2);
+      sub3.addCommandItem(&commands, CommandIDs::EditorFontLarger);
+      sub3.addCommandItem(&commands, CommandIDs::EditorFontSmaller);
+      sub3.addSeparator();
       for (int i=8; i<=32; i+=2)
         sub3.addCommandItem(&commands, CommandIDs::EditorFontSize+i);
       sub3.addSeparator();
@@ -677,6 +723,8 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
   else if (name==T("Help")) 
     {
       menu=CommandMenus::getHelpMenu(WindowTypes::CodeEditor, gmanager);
+      menu.addSeparator();
+      menu.addCommandItem(&commands, CommandIDs::EditorSymbolHelp);
     }
   return menu;
 }
@@ -711,6 +759,9 @@ void CodeEditorWindow::updateKeyPressesForEditMode()
     }
   else
     {
+      keymap->addKeyPress(CommandIDs::EditorFontLarger, KeyPress(T('='), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorFontSmaller, KeyPress(T('-'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorSymbolHelp, KeyPress(T('D'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::EditorNew, KeyPress(T('N'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::EditorOpen, KeyPress(T('O'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::EditorSave, KeyPress(T('S'), ModifierKeys::commandModifier, 0));
@@ -1253,7 +1304,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
 
   //std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
   if (isParensMatchingActive()) 
-    stopParensMatching();
+      stopParensMatching();
 
   if (key == KeyPress(T('\t')))
     indent();
@@ -1278,6 +1329,8 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
       else
         moveCharForward();
     }
+  else if (emacs && key == KeyPress(T('h'), ctrl, 0))
+    lookupHelpAtPoint();
   else if (emacs && key == KeyPress(T('k'), ctrl, 0))
     killLine();
   else if (emacs && key == KeyPress(T('n'), ctrl, 0))
@@ -1321,13 +1374,6 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
     moveExprForward();
   else if (emacs && key == KeyPress(T('k'), both, 0))
     killExprForward();
-  // TESTING commands  
-  else if (emacs && key == KeyPress(T('='), ModifierKeys::ctrlModifier, 0))
-    posInfo(getCaretPos());
-  else if (emacs && key == KeyPress(T('-'), ModifierKeys::ctrlModifier, 0))
-    test(false);
-  else if (emacs && key == KeyPress(T('+'), ModifierKeys::ctrlModifier | ModifierKeys::shiftModifier, 0))
-    test(true); 
   // NON emacs additions
   else if (SysInfo::isMac() && key.isKeyCode(KeyPress::rightKey))
     {
@@ -1354,7 +1400,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
       if (CodeEditorComponent::keyPressed(key)) // search component's keypress
         {
           juce_wchar chr=key.getTextCharacter();
-          if (isParensMatching() && (chr==')' || chr=='}'))
+          if (isParensMatching() && (chr==T(')') || chr==T('}')))
             matchParens();
           //std::cout << "returning true from CodeEditorComponent";
           isChanged(true); // if handled give up and 
@@ -1388,6 +1434,26 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
   return true;
 } 
 
+void CodeBuffer::mouseDown (const MouseEvent& e)
+{
+  if (e.mods.isPopupMenu())
+    {
+      PopupMenu m;
+      // m.setLookAndFeel (&getLookAndFeel());
+      addPopupMenuItems (m, &e);
+      const int result = m.show();
+      if (result != 0)
+        performPopupMenuAction(result);
+    }
+  else
+    CodeEditorComponent::mouseDown(e);
+}
+
+void CodeBuffer::performPopupMenuAction (int menuItemID)
+{
+  std::cout << "performPopupMenuAction, id=" << menuItemID << "\n";
+}
+
 void CodeBuffer::mouseDoubleClick (const MouseEvent &e)
 {
   tchar c=getCaretPos().getCharacter();
@@ -1417,9 +1483,22 @@ void CodeBuffer::mouseDoubleClick (const MouseEvent &e)
     }
 }  	
 
+void CodeBuffer::addPopupMenuItems (PopupMenu& m, const MouseEvent*)
+{
+  m.addCommandItem(manager, CommandIDs::EditorDelete);
+  m.addCommandItem(manager, CommandIDs::EditorCut);
+  m.addCommandItem(manager, CommandIDs::EditorCopy);
+  m.addCommandItem(manager, CommandIDs::EditorPaste);
+  m.addSeparator();
+  m.addCommandItem(manager, CommandIDs::EditorSelectAll);
+  m.addSeparator();
+  m.addCommandItem(manager, CommandIDs::EditorUndo);
+  m.addCommandItem(manager, CommandIDs::EditorRedo);
+}
+
 void CodeBuffer::matchParens()
 {
-  //std::cout << "matchParens()\n";
+  std::cout << "matchParens()\n";
   CodeDocument::Position pos (getCaretPos());
   pos.moveBy(-1);
   int b=pos.getPosition();
@@ -1912,6 +1991,67 @@ bool CodeBuffer::replaceAndFind(String str, String rep)
 }
 
 /*=======================================================================*
+                                 Symbol Help
+ *=======================================================================*/
+
+void CodeBuffer::lookupHelpAtPoint()
+{
+  bool region=(getHighlightedRegion().getLength() > 0);
+  String text;
+  String helppath;
+
+  switch (getTextType())
+    {
+    case TextIDs::Sal:
+      helppath=T("Sal:CM");
+      break;
+    case TextIDs::Sal2:
+      helppath=T("Sal:CM");
+      break;
+    case TextIDs::Lisp:
+      helppath=T("CM");
+      break;
+    default:
+      return;
+    }
+  helppath<<T(":SndLib:Scheme");
+  CodeDocument::Position a;
+  CodeDocument::Position e;
+  if (region)
+    {
+      a=CodeDocument::Position(&document, getHighlightedRegion().getStart());
+      e=CodeDocument::Position(&document, getHighlightedRegion().getEnd()+1);
+    }
+  else
+    {
+      a=getCaretPos();
+      e=a.movedBy(INT_MAX); // EOB
+      int p=a.getPosition();
+      // cursor always one past start of backwards positions
+      a.moveBy(-1);
+      p--;
+      while (p>=0 && (syntax->isWordChar(a.getCharacter()) || syntax->isSymbolChar(a.getCharacter())))
+        {
+          a.moveBy(-1);
+          p--;
+        }
+      // IF there is a token it starts at p+1
+      a.setPosition(p+1);
+    }
+  
+  CodeDocument::Position b (a);
+  while (b!=e && (syntax->isWordChar(b.getCharacter()) || syntax->isSymbolChar(b.getCharacter())))
+    b.moveBy(1);
+  // if B>A then we have a token and B is one past it.
+  if (!(b==a))
+    {
+      text=document.getTextBetween(a, b);
+      std::cout << "HelpAtPoint='" << text.toUTF8() << T("'\n");
+      Help::getInstance()->symbolHelp(text, helppath);
+    }
+}
+
+/*=======================================================================*
                              Emacs Editing Commands
  *=======================================================================*/
 
@@ -1958,7 +2098,7 @@ void CodeBuffer::killExprForward()
       // scanning could fail so test if we moved
       if (here!=getCaretPos())
         {
-          cut();
+          copyThenCut();
           isChanged(true);
         }
     }

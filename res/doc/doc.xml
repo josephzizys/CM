@@ -8,6 +8,12 @@
     <item name="Changelog" url="$DOCDIR:/changelog.html"/>
   </menu>
 
+  <menu name="GUI">
+    <item name="Console Window" file="console.html" url="$DOCDIR:/console.html"/>
+    <item name="Code Editor" file="editor.html" url="$DOCDIR:/editor.html"/>
+    <item name="Plot Window" file="plot.html" url="$DOCDIR:/plot.html"/>
+  </menu>
+
   <menu name="Sal Tutorials">
     <item name="Sal 2.0 Quick Tour" file="quicktour.sal"/>
     <item name="Hello World" file="hello.sal" />
@@ -51,7 +57,7 @@
     <item name="FM Composition" file="fm.sal"/>
     <item name="Csound" file="csound.sal"/>
     <item name="Input Hooks" file="input.sal"/>
-    <item name="Plotting" file="plot.scm"/>
+    <item name="Plotting" file="plot.sal"/>
     <item name="Fomus" file="fomus.sal"/>
     <item name="Cellular Automata" file="automata.sal"/>
     <item name="OSC" file="osc.sal"/>

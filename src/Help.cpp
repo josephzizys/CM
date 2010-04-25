@@ -87,6 +87,15 @@ void Help::restoreHelpFiles()
     Console::getInstance()->printWarning(T("Warning: couldn't restore ") + css.getFullPathName() + T("\n"));
   if (!log.replaceWithText(getHelpFileText(T("changelog.html"))))
     Console::getInstance()->printWarning(T("Warning: couldn't restore ") + log.getFullPathName() + T("\n"));
+  XmlElement* gui=getXmlMenu(T("GUI"));
+  if (!gui) {std::cout << "No GUI menu!\n";  return;}
+  forEachXmlChildElement (*gui, e)
+    {
+      String n=e->getStringAttribute(T("file"));
+      File f=cmdocdir.getChildFile(n);
+      if (!f.replaceWithText(getHelpFileText(n)))
+        Console::getInstance()->printWarning(T("Warning: couldn't restore ") + f.getFullPathName() + T("\n"));
+    }
 }
   
 XmlElement* Help::getXmlMenu(String title)
@@ -129,6 +138,14 @@ void Help::openHelp(CommandID id)
   if (comm==CommandIDs::HelpManual)
     {
       if (help=getXmlMenuItem(T("Reference"), data))
+        {
+          String url=help->getStringAttribute(T("url"));
+          openHelpInBrowser(url);
+        }
+    }
+  else if (comm==CommandIDs::HelpGUI)
+    {
+      if (help=getXmlMenuItem(T("GUI"), data))
         {
           String url=help->getStringAttribute(T("url"));
           openHelpInBrowser(url);
@@ -329,18 +346,16 @@ void Help::addSalSymbolHelp()
 {
   roots.set(T("Sal"), T("file://")+cmdocdir.getFullPathName()+T("/"));
   sal.set(T("begin"), T("cm.html#begin"));
-  sal.set(T("chdir"), T("cm.html#chdir"));
-  sal.set(T("define"), T("cm.html#define"));
-  sal.set(T("end"), T("cm.html#begin"));
-  sal.set(T("exec"), T("cm.html#exec"));
+  sal.set(T("file"), T("cm.html#file"));
+  sal.set(T("function"), T("cm.html#function"));
   sal.set(T("if"), T("cm.html#if"));
-  sal.set(T("load"), T("cm.html#load"));
   sal.set(T("loop"), T("cm.html#loop"));
-  sal.set(T("print"), T("cm.html#print"));
-  sal.set(T("return"), T("cm.html#return"));
-  sal.set(T("run"), T("cm.html#run"));
-  sal.set(T("send"), T("cm.html#send"));
+  sal.set(T("process"), T("cm.html#process"));
   sal.set(T("set"), T("cm.html#set"));
+  sal.set(T("variable"), T("cm.html#variable"));
+  sal.set(T("wait"), T("cm.html#process_wait"));
+  sal.set(T("with"), T("cm.html#with"));
+
   sal.set(T("="), T("cm.html#set"));
   sal.set(T("&="), T("cm.html#set"));
   sal.set(T("^="), T("cm.html#set"));
@@ -348,13 +363,6 @@ void Help::addSalSymbolHelp()
   sal.set(T("+="), T("cm.html#set"));
   sal.set(T(">="), T("cm.html#set"));
   sal.set(T("<="), T("cm.html#set"));
-  sal.set(T("sprout"), T("cm.html#sprout"));
-  sal.set(T("unless"), T("cm.html#unless"));
-  sal.set(T("wait"), T("cm.html#run"));
-  sal.set(T("while"), T("cm.html#loop"));
-  sal.set(T("until"), T("cm.html#loop"));
-  sal.set(T("when"), T("cm.html#loop"));
-  sal.set(T("with"), T("cm.html#loop"));
 }
 
 void Help::addCommonMusicSymbolHelp() 
@@ -402,8 +410,9 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("fms:save-score"), T("cm.html#fms:save-score"));
   cm.set(T("fms:clear-score"), T("cm.html#fms:clear-score"));
   cm.set(T("fms:delete-score"), T("cm.html#fms:delete-score"));
-
   cm.set(T("fourth"), T("cm.html#fourth"));
+  cm.set(T("greater?"), T("cm.html#greater_qm"));
+  cm.set(T("greater=?"), T("cm.html#greater_eqm"));
   cm.set(T("hz"), T("cm.html#hz"));
   //  cm.set(T("hush"), T("cm.html#hush"));
   cm.set(T("int"), T("cm.html#int"));
@@ -412,7 +421,10 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("interp"), T("cm.html#interp"));
   cm.set(T("invert"), T("cm.html#ivert"));
   cm.set(T("last"), T("cm.html#last"));
+  cm.set(T("less?"), T("cm.html#less_qm"));
+  cm.set(T("less=?"), T("cm.html#less_eqm"));
   cm.set(T("list-set!"), T("cm.html#list-set_"));
+  cm.set(T("load"), T("cm.html#load"));
   cm.set(T("log2"), T("cm.html#log2"));
   cm.set(T("log10"), T("cm.html#log10"));
   cm.set(T("loop"), T("cm.html#loop"));
@@ -430,32 +442,13 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("make-weighting"), T("cm.html#make-weighting"));
   cm.set(T("markov-analyze"), T("cm.html#markov-analyze"));
   cm.set(T("minus"), T("cm.html#minus"));
-  cm.set(T("mm:bend?"), T("cm.html#mm:bend_"));
-  cm.set(T("mm:ctrl?"), T("cm.html#mm:ctrl_"));
-  cm.set(T("mm:prog?"), T("cm.html#mm:prog_"));
-  cm.set(T("mm:press?"), T("cm.html#mm:press_"));
-  cm.set(T("mm:off?"), T("cm.html#mm:off_"));
-  cm.set(T("mm:on?"), T("cm.html#mm:on_"));
-  cm.set(T("mm:touch?"), T("cm.html#mm:touch_"));
-  cm.set(T("mm:chan"), T("cm.html#mm:chan"));
-  cm.set(T("mm:chan-set!"), T("cm.html#mm:chan-set_"));
-  cm.set(T("mm:key"), T("cm.html#mm:key"));
-  cm.set(T("mm:key-set!"), T("cm.html#mm:key-set_"));
-  cm.set(T("mm:num"), T("cm.html#mm:num"));
-  cm.set(T("mm:num-set!"), T("cm.html#mm:num-set_"));
-  cm.set(T("mm:time"), T("cm.html#mm:time"));
-  cm.set(T("mm:time-set!"), T("cm.html#mm:time-set_"));
-  cm.set(T("mm:val"), T("cm.html#mm:val"));
-  cm.set(T("mm:val-set!"), T("cm.html#mm:val-set_"));
-  cm.set(T("mm:vel"), T("cm.html#mm:vel"));
-  cm.set(T("mm:vel-set!"), T("cm.html#mm:vel-set_"));
-  cm.set(T("mm:make-bend"), T("cm.html#mm:make-bend"));
-  cm.set(T("mm:make-ctrl"), T("cm.html#mm:make-ctrl"));
-  cm.set(T("mm:make-prog"), T("cm.html#mm:make-prog"));
-  cm.set(T("mm:make-press"), T("cm.html#mm:make-press"));
-  cm.set(T("mm:make-off"), T("cm.html#mm:make-off"));
-  cm.set(T("mm:make-on"), T("cm.html#mm:make-on"));
-  cm.set(T("mm:make-touch"), T("cm.html#mm:make-touch"));
+  cm.set(T("mm:bend"), T("cm.html#midi_opcodes"));
+  cm.set(T("mm:ctrl"), T("cm.html#midi_opcodes"));
+  cm.set(T("mm:prog"), T("cm.html#midi_opcodes"));
+  cm.set(T("mm:press"), T("cm.html#midi_opcodes"));
+  cm.set(T("mm:off"), T("cm.html#midi_opcodes"));
+  cm.set(T("mm:on"), T("cm.html#midi_opcodes"));
+  cm.set(T("mm:touch"), T("cm.html#midi_opcodes"));
   cm.set(T("most-positive-fixnum"), T("cm.html#most-positive-fixnum"));
   cm.set(T("most-negative-fixnum"), T("cm.html#most-negative-fixnum"));
   cm.set(T("mp:midi"), T("cm.html#mp:midi"));
@@ -471,12 +464,13 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("nth"), T("cm.html#nth"));
   cm.set(T("now"), T("cm.html#now"));
   cm.set(T("note"), T("cm.html#note"));
-  cm.set(T("note?"), T("cm.html#note_"));
   cm.set(T("odds"), T("cm.html#odds"));
+  cm.set(T("osc:bundle"), T("cm.html#osc:bundle"));
   cm.set(T("osc:close"), T("cm.html#osc:close"));
-  cm.set(T("osc:hook"), T("cm.html#osc:hook"));
   cm.set(T("osc:message"), T("cm.html#osc:message"));
   cm.set(T("osc:open"), T("cm.html#osc:open"));
+  cm.set(T("osc:receiver"), T("cm.html#osc:receiver"));
+  cm.set(T("osc:receiver?"), T("cm.html#osc:receiver_qm"));
 
   cm.set(T("pause"), T("cm.html#pause"));
   cm.set(T("pc"), T("cm.html#pc"));
@@ -486,6 +480,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("plot-data"), T("cm.html#plot-data"));
   cm.set(T("plot-hook"), T("cm.html#plot-hook"));
   cm.set(T("plus"), T("cm.html#plus"));
+  cm.set(T("print"), T("cm.html#print"));
   cm.set(T("promise"), T("cm.html#promise"));
   cm.set(T("quantize"), T("cm.html#quantize"));
   cm.set(T("ran"), T("cm.html#ran"));

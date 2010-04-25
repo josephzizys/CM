@@ -214,18 +214,16 @@ const PopupMenu CommandMenus::getHelpMenu(int wtype,
 					  ApplicationCommandManager* com2)
 {
   ApplicationCommandManager* comm=CommandManager::getInstance();
-  PopupMenu menu, mans, saltuts, scmtuts, salexamps, scmexamps, sites;
+  PopupMenu menu, mans, gui, saltuts, scmtuts, salexamps, scmexamps, sites;
   Help* help=Help::getInstance();
 
   // Manuals
   help->addHelpMenuItems(mans, T("Reference"), CommandIDs::HelpManual, 8, comm);
-  //  if (wtype==WindowTypes::CodeEditor)
-  //    {
-  //      mans.addSeparator();
-  //      mans.addCommandItem(com2, CommandIDs::EditorSymbolHelp);
-  //    }
-
   menu.addSubMenu(T("Reference"), mans);
+  // GUI
+  help->addHelpMenuItems(gui, T("GUI"), CommandIDs::HelpGUI, 8, comm);
+  menu.addSubMenu(T("GUI"), gui);
+
   if (!SysInfo::isGraceCL())
     {
       PopupMenu tutorials, examples;

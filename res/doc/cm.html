@@ -24,24 +24,24 @@
     <li><a href="#patterns">Patterns</a></li>
     <li><a href="#spectral">Spectral Composition</a></li>
     <li><a href="#automata">Cellular Automata</a></li>
-    <li><a href="#files">File System</a></li>
+    <li><a href="#environment">Environment</a></li>
   </ul>
   </li>
 
    <li><a href="#iteration">Iteration</a></li>
  
   <li><a href="#audio">Audio</a>
-  <ul><li><a href="#send">Sending Audio Data</a></li>
+  <ul><li><a href="#sending">Sending Audio Data</a></li>
   
   <li><a href="#midi-out">Midi Out</a></li>
   <li><a href="#midi-in">Midi In</a></li>
+  <li><a href="#clm">CLM/SndLib</a></li>
+  <li><a href="#fomus">Fomus</a></li>
   <li><a href="#osc">OSC (Open Sound Control)</a></li>
   <li><a href="#csound">Csound</a></li>
-  <li><a href="#sndlib">SndLib</a></li>
-  <li><a href="#fomus">Fomus</a></li>
+
 </ul>
 </li>
-
 
 <li><a href="#scheduler">The Scheduler</a>
 <ul>
@@ -53,72 +53,70 @@
 
 <li><a href="#plotting">Plotting</a></li>
 
-
 <li><a href="#sal">SAL</a>
 <ul>
- <li><a href="#expressions">Expressions</a></li>
+  <li><a href="#expressions">Expressions</a></li>
   <li><a href="#assignment">Assignment</a></li>
   <li><a href="#conditionals">Conditionals</a></li>
-  <li><a href="#definitions">Definitions</a>
-  <ul>
-    <li><a href="#variables">Variables</a></li>
-    <li><a href="#functions">Functions</a></li>
+  <li><a href="#definitions">Definitions</a></li>
+  <li><a href="#files">Files</a></li>
 
-  </ul>
-  </li>
-  <li><a href="#environment">Environment</a></li>
+</ul>
+</li>
 
- <li><a href="#sal_reserved">SAL Reserved Symbols</a></li>
- <li><a href="#sal_scheme_cltl">Table of SAL, Scheme and Common Lisp</a></li>
+
+<li><a href="#appendix">Appendix</a>
+<ul>
+  <li><a href="#metasyntax">A. Documentation Meta-syntax</a></li>
+  <li><a href="#funargs">B. Function Arguments</a></li>
+  <li><a href="#sal_scheme_cltl">C. Table of SAL, Scheme and Common Lisp</a></li>
 </ul>
 </li>
 </ul>
 
 <h2 id="introduction">Introduction</h2>
 
-<p>The Common Music 3 branch is implemented in Scheme (SndLib/S7 or <a
-href="http://www.call-with-current-continuation.org">Chicken
-Scheme</a>) and optimized for interactive work and real-time scheduling. Since this triggered major design changes to the underlying code (and thereby ruled out source compatibility with earlier CM versions) I have  taken this opportunity to make the API a leaner, more consistent and (hopefully) a more expressive one than the CM2 branch.
+<p>Common Music 3 is a software environment for real time and score file (non-real time) algorithmic composition. It is implemented in <a href="http://www.rawmaterialsoftware.com/">JUCE</a>, by Julian Storer, and <a href="https://ccrma.stanford.edu/software/snd/snd/s7.html">S7 Scheme</a> / <a href="https://ccrma.stanford.edu/software/snd/snd/sndlib.html">SndLib</a>, by William Schottstaedt. 
 </p>
 
-<p>
-The distinguishing features of the Common Music 3 line compared to
-the previous version are:
-</p>
+<p> The distinguishing features of Common Music 3 (CM3)
+compared with the previous (CM2) branch are: </p>
 
 <ul>
-  <li>Does not require source tree at runtime.</li>
-  <li>Does not depend on an object system or generic functions.</li>
+  <li>Seamless integration of Scheme (dynamic scripting) and C++ .</li>
+  <li>Audio Ports for real-time work. </li>
+  <li>A dedicated scheduling thread for running <a href="#processes">processes</a> (musical algorithms) in real time.</li>
+  <li>True drag-and-drop executables: all runtime sources, examples, instruments and documentation are embedded in the app itself.</li>
+  <li><a href="#sal">SAL</a>, a simple, infix, minimalist language for algorithmic composition. In documentation Scheme formals are only shown when they differ in some significant way from the SAL versions. </li>
+  <li>Simpler API, no object system or generic functions.</li>
 
-  <li>Terser calling syntax facilitates interactive coding:
+  <li>Terser calling syntax to facilitate interactive coding:
   <ul>
     <li>No dependence on quoted symbols or keywords in argument data.</li>
-    <li>Numerous functions expanded to handle lists as well as atomic data. This reduces the number of functions in the API and helps minimize the need for ad hoc looping to process list data. In the documentation separate formals are provided in cases where list handling causes a significant difference in argument syntax.</li>
-    <li>Functions that take variable arguments also permit a single list argument.</li>
+    <li>Many functions automatically handle list mapping to reduce the need for ad hoc looping in order to process list data. (In the documentation separate formals are provided in cases where the automatic list handling results a significant difference in argument syntax.)</li>
 
-   <li><a href="#sal:optkey-parameters">Opt/key</a> parameters with DSSSL style keywords (symbols ending with a colon) replace &amp;optional and &amp;keyword parameters.  </li>
-    <li>Shorter names in general.</li>
-  <li>Note names support quarter-tone inflection. </li>
+   <li><a href="#sal:optkey-parameters">Opt/key</a> function parameters.  </li>
+   <li>Shorter function names (in general).</li>
+  <li>Note names in the standard chromatic scale also support quarter-tone inflection. </li>
   </ul>
 </li>
 
-<li>SAL and Scheme equivalence. Scheme formals are only shown when they differ in some significant way from the SAL versions. </li>
 
-<li>Ports replace files. </li>
+
 </ul>
+
 <h2 id="toolbox">Composition Toolbox</h2>
 
 <p>The following functions have been added to Scheme to facilitate algorithmic music composition. </p>
 
 <h3 id="numbers">Numbers</h3>
 
-
 <!-- DEFINITION -->
 <table class="entry" id="fit">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">fit</span>
-      (<var class="arg">num</var>, <var class="arg">min</var>, <var class="arg">max</var>, [<var class="opt">mode</var> <var class="optval">1</var>])
+      (<var class="arg">num</var>, <var class="arg">min</var>, <var class="arg">max</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">1</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -357,7 +355,7 @@ Returns a list of the deltas (differences) between adjacent numbers in <var>nums
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="less?">
+<table class="entry" id="less_qm">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">less?</span>
@@ -382,7 +380,7 @@ Returns a list of the deltas (differences) between adjacent numbers in <var>nums
 <!-- END DEFINITION -->
   
 <!-- DEFINITION -->
-<table class="entry" id="greater?">
+<table class="entry" id="greater_qm">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">greater?</span>
@@ -407,7 +405,7 @@ Returns a list of the deltas (differences) between adjacent numbers in <var>nums
   <!-- END DEFINITION -->
   
 <!-- DEFINITION -->
-<table class="entry" id="less?">
+<table class="entry" id="less_eqm">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">less=?</span>
@@ -433,7 +431,7 @@ Returns a list of the deltas (differences) between adjacent numbers in <var>nums
   
 
 <!-- DEFINITION -->
-<table class="entry" id="greater?">
+<table class="entry" id="greater_eqm">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">greater=?</span>
@@ -452,7 +450,7 @@ Returns a list of the deltas (differences) between adjacent numbers in <var>nums
 </table>
   <blockquote>
   <p>
-  Returns true if the numbers in <var>nums...</var> or in a single <var>list</var> of numbers are in monotonically nonincreasing order, otherwise returns false.
+  Returns true if the numbers in <var>nums...</var> or in a single <var>list</var> of numbers are in monotonically non-increasing order, otherwise returns false.
   </p>
   </blockquote>
 <!-- END DEFINITION -->
@@ -698,13 +696,13 @@ Concatenates its inputs, which can be lists and non-lists, into a single list.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">make-list</span>
-      (<var class="arg">length</var> [<var class="opt">fill</var> <var class="optval"> #f</var>])
+      (<var class="arg">length</var> <span class="meta">[</span><var class="opt">fill</var> <var class="optval"> #f</var><span class="meta">]</span>)
     </td>
   </tr>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">make-list</span>
-      (<var class="arg">length</var> [<var class="opt">function</var>] <var class="rest">args...</var>)
+      (<var class="arg">length</var> <span class="meta">[</span><var class="opt">function</var><span class="meta">]</span> <var class="rest">args...</var>)
     </td>
   </tr>
 
@@ -743,7 +741,7 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">sort</span>
-      (<var class="arg">list</var>  [<var class="opt">comparator</var> <code>&lt;</code>])
+      (<var class="arg">list</var>  <span class="meta">[</span><var class="opt">comparator</var> <code>less?</code><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -761,7 +759,7 @@ Returns a sorted copy of <var>list</var> given a pairwise <var>comparator</var> 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">sort!</span>
-      (<var class="arg">list</var>  [<var class="opt">comparator</var> <code>&lt;</code>])
+      (<var class="arg">list</var>  <span class="meta">[</span><var class="opt">comparator</var> <code>less?</code><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -946,7 +944,7 @@ Returns a version of <var>list</var> with its elements reversed.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">scale</span>
-      (<var class="arg">num</var>, <var class="arg">start</var>, <var class="arg">list</var>, [<var class="opt">limit #f</var>], [<var class="opt">mode</var> 1])
+      (<var class="arg">num</var>, <var class="arg">start</var>, <var class="arg">list</var>, <span class="meta">[</span><var class="opt">limit #f</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">mode</var> 1<span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -966,7 +964,7 @@ Returns a list of <var>num</var> keys starting on <var>start</var> and increment
   <tr class="entry">
     <td class="formals">
       <span class="funcname">scale-order</span>
-      (<var class="arg">list</var>, [<var class="opt">mode</var> <var class="optval">1</var>])</td>
+      (<var class="arg">list</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">1</var><span class="meta">]</span>)</td>
     <!-- td class="label">Function</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; list</td></tr>
@@ -983,7 +981,7 @@ Returns a <var>list</var> of notes, keys or hertz values ordered according to <v
   <tr class="entry">
     <td class="formals">
       <span class="funcname">scale-order!</span>
-      (<var class="arg">list</var>, [<var class="opt">mode</var> <var class="optval">1</var>])</td>
+      (<var class="arg">list</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">1</var><span class="meta">]</span>)</td>
     <!-- td class="label">Function</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; list</td></tr>
@@ -1000,7 +998,7 @@ Like <a href="#scale-order"><code>scale-order</code></a> except that <var>list</
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rhythm</span>
-      (<var class="arg">rhy</var>, [<var class="opt">tempo 60</var>], [<var class="opt">beat</var> 1/4])
+      (<var class="arg">rhy</var>, <span class="meta">[</span><var class="opt">tempo 60</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">beat</var> 1/4<span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1046,7 +1044,7 @@ note, a <var>rhythmic symbol</var> or a list of the same. A fraction of a whole 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rescale</span>
-      (<var class="arg">x</var>, <var class="arg">x1</var>,  <var class="arg">x2</var>, <var class="arg">y1</var>, <var class="arg">y2</var>, [<var class="opt">base</var> <var class="optval">1</var>])
+      (<var class="arg">x</var>, <var class="arg">x1</var>,  <var class="arg">x2</var>, <var class="arg">y1</var>, <var class="arg">y2</var>, <span class="meta">[</span><var class="opt">base</var> <var class="optval">1</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1064,7 +1062,7 @@ note, a <var>rhythmic symbol</var> or a list of the same. A fraction of a whole 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">discrete</span>
-      (<var class="arg">x</var>, <var class="arg">x1</var>, <var class="arg">x2</var>, <var class="arg">i1</var>, <var class="arg">i2</var>, [<var class="opt">base</var> = <var class="optval">1</var>])
+      (<var class="arg">x</var>, <var class="arg">x1</var>, <var class="arg">x2</var>, <var class="arg">i1</var>, <var class="arg">i2</var>, <span class="meta">[</span><var class="opt">base</var> = <var class="optval">1</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1088,7 +1086,7 @@ Similar to <code>rescale</code> except floating point <var>x</var> is mapped ont
   <tr class="entry">
     <td class="formals">
       <span class="funcname">segs</span>
-      (<var class="arg">num</var>, <var class="arg">sum</var>, [<var class="opt">mode</var> <var class="optval">1</var>],  [<var class="opt">base</var> <var class="optval">2</var>])
+      (<var class="arg">num</var>, <var class="arg">sum</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">1</var><span class="meta">]</span>,  <span class="meta">[</span><var class="opt">base</var> <var class="optval">2</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1096,7 +1094,7 @@ Similar to <code>rescale</code> except floating point <var>x</var> is mapped ont
   <tr class="entry">
     <td class="formals">
       <span class="funcname">segs</span>
-      (<var class="arg">num</var>, <var class="arg">sum</var>, [<var class="opt">mode</var> <var class="optval">3</var>],  [<var class="opt">gen</var> <a href="#ran"><var class="optval">ran</var></a>], <var class="rest">args...</var>])
+      (<var class="arg">num</var>, <var class="arg">sum</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">3</var><span class="meta">]</span>,  <span class="meta">[</span><var class="opt">gen</var> <a href="#ran"><var class="optval">ran</var></a><span class="meta">]</span>, <var class="rest">args...</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1134,7 +1132,7 @@ where <var>gen</var> is the random function to use and
   <tr class="entry">
     <td class="formals">
       <span class="funcname">interp</span>
-      (<var class="arg">x</var>, <var class="arg">list</var>,  [<var class="opt">base 1</var>])
+      (<var class="arg">x</var>, <var class="arg">list</var>,  <span class="meta">[</span><var class="opt">base 1</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
@@ -1211,10 +1209,10 @@ Converts a <var>cent</var> value or list of the same to the equivalent frequency
   <tr class="entry">
     <td class="formals">
       <span class="funcname">harmonics</span>
-      (<var class="arg">h1</var>, <var class="arg">h2</var>, [<var class="optkey">fund</var> = 1],
-      [<var class="optkey">invert</var> = #f],
-      [<var class="optkey">order</var> = #f],
-      [<var class="optkey">keys</var> = #f]
+      (<var class="arg">h1</var>, <var class="arg">h2</var>, <span class="meta">[</span><var class="optkey">fund</var> = 1<span class="meta">]</span>,
+      <span class="meta">[</span><var class="optkey">invert</var> = #f<span class="meta">]</span>,
+      <span class="meta">[</span><var class="optkey">order</var> = #f<span class="meta">]</span>,
+      <span class="meta">[</span><var class="optkey">keys</var> = #f<span class="meta">]</span>
       )
     </td>
     <!-- td class="label">Function</td -->
@@ -1232,7 +1230,7 @@ and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then rat
 <!-- END DEFINITION -->
 
 <!-- dl id="decimals">
-<dt class="entry"><span class="term">decimals</span> (<var>x</var> [<var>precision</var> 3])<br/>&rarr; <var>float</var></dt>
+<dt class="entry"><span class="term">decimals</span> (<var>x</var> <span class="meta">[</span><var>precision</var> 3<span class="meta">]</span>)<br/>&rarr; <var>float</var></dt>
 <dd><p>Same as CM. </p></dd></dl -->
 
 <h3 id="randomness">Randomness</h3>
@@ -1248,7 +1246,7 @@ state object that can be seeded using <a href="#ran-set_"><code>ran-set!</code><
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ran</span>
-      ([<var class="opt">num</var> <var class="optval"> 1.0</var>])
+      (<span class="meta">[</span><var class="opt">num</var> <var class="optval"> 1.0</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1287,7 +1285,7 @@ Returns a randomly chosen number between <var>a</var> and <var>b</var> (exclusiv
     <td class="formals">
       <span class="funcname">vary</span>
       (<var class="arg">value</var>, <var class="arg">pct</var>,
-      [<var class="opt">mode</var> <var class="optval">0</var>]
+      <span class="meta">[</span><var class="opt">mode</var> <var class="optval">0</var><span class="meta">]</span>
       )
     </td>
     <!-- td class="label">Function</td -->
@@ -1345,7 +1343,7 @@ previous value of <var>num</var> implements a random walk (see also <a href="#ra
   <tr class="entry">
     <td class="formals">
       <span class="funcname">odds</span>
-      (<var class="arg">num</var>, [<var class="opt">true</var> <var class="optval">#t</var>], [<var class="opt">false</var> <var class="optval">#f</var>])
+      (<var class="arg">num</var>, <span class="meta">[</span><var class="opt">true</var> <var class="optval">#t</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">false</var> <var class="optval">#f</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1443,7 +1441,7 @@ Like <a href="#shuffle"><code>shuffle</code></a> except that <var>list</var> is 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">tendency</span>
-      (<var class="arg">x</var>, <var class="arg">low</var>, <var class="arg">high</var>, [<var class="opt">gen</var> <a href="#ran"><var class="optval">ran</var></a>], <var class="rest">args...</var>)
+      (<var class="arg">x</var>, <var class="arg">low</var>, <var class="arg">high</var>, <span class="meta">[</span><var class="opt">gen</var> <a href="#ran"><var class="optval">ran</var></a><span class="meta">]</span>, <var class="rest">args...</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1557,7 +1555,7 @@ Returns a value between 0 and 1 with middle values more likely.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rangauss</span>
-      ([<var class="opt">a</var> <var class="optval">1</var>], [<var class="opt">b</var> <var class="optval">0</var>])
+      (<span class="meta">[</span><var class="opt">a</var> <var class="optval">1</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">b</var> <var class="optval">0</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1575,7 +1573,7 @@ Returns unbounded value from the  <a href="http://en.wikipedia.org/wiki/Normal_d
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ranexp</span>
-      ([<var class="opt">lambda</var> <var class="optval">1</var>])
+      (<span class="meta">[</span><var class="opt">lambda</var> <var class="optval">1</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1593,7 +1591,7 @@ Returns a value greater than 0 from the  <a href="http://en.wikipedia.org/wiki/E
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ranbeta</span>
-      ([<var class="opt">a</var> <var class="optval">.5</var>], [<var class="opt">b</var> <var class="optval">.5</var>])
+      (<span class="meta">[</span><var class="opt">a</var> <var class="optval">.5</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">b</var> <var class="optval">.5</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1611,7 +1609,7 @@ Returns value between 0 and 1 from the  <a href="http://en.wikipedia.org/wiki/Be
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rangamma</span>
-      ([<var class="opt">k</var> <var class="optval">1</var>])
+      (<span class="meta">[</span><var class="opt">k</var> <var class="optval">1</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1647,7 +1645,7 @@ Returns an unbounded value from the <a href="http://en.wikipedia.org/wiki/Cauchy
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ranpoisson</span>
-      ([<var class="opt">lambda</var> <var class="optval">1</var>])
+      (<span class="meta">[</span><var class="opt">lambda</var> <var class="optval">1</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1776,7 +1774,7 @@ Returns a weighting pattern that generates <var>items</var> from a weighted dist
 Each item can be an item, sub-pattern, or list:
 </p>
 <blockquote>
-  <p><code>{<var>item</var> [<var>weight 1</var>] [<var>min 1</var>] [<var>max #f</var>]}</code></p>
+  <p><code>{<var>item</var> <span class="meta">[</span><var>weight 1</var><span class="meta">]</span> <span class="meta">[</span><var>min 1</var><span class="meta">]</span> <span class="meta">[</span><var>max #f</var><span class="meta">]</span>}</code></p>
 </blockquote>
 <p>
 where <var>item</var> is the thing to generate, <var>weight</var> is its weight in the distribution relative to the other items in the pattern, <var>min</var> is the minimum number of times that <var>item</var> must be directly selected before another item can be considered, and <var>max</var> is the maximum number of times that <var>item</var> can be directly selected before another item must be selected.
@@ -1799,7 +1797,7 @@ where <var>item</var> is the thing to generate, <var>weight</var> is its weight 
 Returns a pattern that rotates its items according to <var>rotate</var>, which can be a list or a pattern of lists of the format:
 </p>
 <blockquote>
-  <p><code>{<var>start</var> [<var>step 1</var>] [<var>width 1</var>] [<var>end</var>]}</code></p>
+  <p><code>{<var>start</var> <span class="meta">[</span><var>step 1</var><span class="meta">]</span> <span class="meta">[</span><var>width 1</var><span class="meta">]</span> <span class="meta">[</span><var>end</var><span class="meta">]</span>}</code></p>
 </blockquote>
 </blockquote>
   
@@ -1807,7 +1805,7 @@ Returns a pattern that rotates its items according to <var>rotate</var>, which c
   <tr class="entry">
   <td class="formals">
     <span class="funcname">make-markov</span>
-    (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>, <var class="optkey">past </var> <var class="optval"> = {...}</var>)
+    (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>, <var class="optkey">past </var> <var class="optval"> = {}</var>)
   </td>
   <!-- td class="label">Function</td -->
   </tr>
@@ -1860,7 +1858,7 @@ Analyzes a <var>list</var> of data for a specified Markov <var>order</var> (0-n)
 Returns a pattern that generates its items from a directed graph of nodes with transition patterns. Each node is a list:
 </p>
 <blockquote>
-  <p><code>{<var>item</var> <var>to</var> [<var>id</var>]}</code></p>
+  <p><code>{<var>item</var> <var>to</var> <span class="meta">[</span><var>id</var><span class="meta">]</span>}</code></p>
 </blockquote>
 <p>
 where <var>item</var> is the item or pattern to generate, <var>to</var> is an id or pattern of ids identifying which node should follow the current node in the graph, and <var>id</var> is a unique identifier for the node which defaults to the node's position in <var>items</var> starting from 1.
@@ -1899,7 +1897,7 @@ generated. The <var>repeat</var> initialization causes the
   <tr class="entry">
     <td class="formals">
       <span class="funcname">next</span>
-      (<var class="arg">pattern</var>, [<var class="opt">chunk</var> <var class="optval">#f</var>])
+      (<var class="arg">pattern</var>, <span class="meta">[</span><var class="opt">chunk</var> <var class="optval">#f</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1986,7 +1984,7 @@ The following functions create, access or modify <var>spectrum</var> objects. A 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">make-spectrum</span>
-      (<var class="arg">freqs</var>, [<var class="optvar">amps</var> <var class="optval">#f</var>], [<var class="optvar">time</var> <var class="optval">#f</var>])
+      (<var class="arg">freqs</var>, <span class="meta">[</span><var class="optvar">amps</var> <var class="optval">#f</var><span class="meta">]</span>, <span class="meta">[</span><var class="optvar">time</var> <var class="optval">#f</var><span class="meta">]</span>)
     </td>
 
   </tr>
@@ -2364,7 +2362,7 @@ Inverts the frequencies in <var>spectrum</var> while preserving the minimum and 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-invert!</span>
-      (<var class="arg">spectrum</var>, [<var class="optkey">point</var> = #f])
+      (<var class="arg">spectrum</var>, <var class="optkey">point</var> = #f)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2384,7 +2382,7 @@ Inverts frequencies in <var>spectrum</var> around <var>point</var>, or around th
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-rescale!</span>
-      (<var class="arg">spectrum</var>, [<var class="optkey">min</var> = #t], [<var class="optkey">max</var> = #t])
+      (<var class="arg">spectrum</var>, <var class="optkey">min</var> = #t, <var class="optkey">max</var> = #t)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2401,34 +2399,31 @@ rescaling.
 </blockquote>
 
 <!-- DEFINITION -->
+<!--
 <table class="entry" id="spectrum-modify_">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-modify!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="arg">envelope</var>)
     </td>
-    <!-- td class="label">Function</td -->
   </tr>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-modify!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="rest">xy...</var>)
     </td>
-    <!-- td class="label">Function</td -->
   </tr>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-modify!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="arg">y</var>)
     </td>
-    <!-- td class="label">Function</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
 </table>
 <blockquote>
 
 <p>
-
 Returns <var>spectrum</var> with its frequency or amplitude components
 modified according to <var>mode</var> and an <var>envelope</var> of x
 y values or a sequence of <var>xy...</var> values or a single
@@ -2490,10 +2485,9 @@ following rescaling or filtering operations:</p>
   <dd><code>spectrum-modify!(spectrum, 5, {100 1 400 .2 1000 .1})</code></dd>
   <dt>To invert the frequencies in a spectrum:</dt>
   <dd><code>spectrum-modify!(spectrum, 1, #f, #t, #t, #f)</code></dd>
-
 </dl>
-
 </blockquote>
+-->
 <!-- END DEFINITION -->
 
 <h3 id="automata">Cellular Automata</h3>
@@ -2503,14 +2497,12 @@ following rescaling or filtering operations:</p>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">make-automata</span> (<var class="arg">cells</var>, <var class="arg">transfunc</var>,
-      [<var class="optkey">title</var> = #f],
-      [<var class="optkey">colormap</var> = {}],
-      [<var class="optkey">backgroundcolor</var> = <span class="string">"white"</span>],
-      [<var class="optkey">cellsize</var> = 50],
-      [<var class="optkey">cellbordersize</var> = 1],
-      [<var class="optkey">rows</var> = 1]
-
-      )
+      <var class="optkey">title</var> <var class="optval">= #f</var>,
+      <var class="optkey">colormap</var> <var class="optval">= {}</var>,
+      <var class="optkey">backgroundcolor</var> = <span class="string">"white"</span>,
+      <var class="optkey">cellsize</var> <var class="optval">= 50</var>,
+      <var class="optkey">cellbordersize</var> <var class="optval">= 1</var>,
+      <var class="optkey">rows</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2541,7 +2533,7 @@ The transition function <var>transfunc</var> is called automatically and passed 
 <table class="entry" id="state">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">state</span> (<var class="arg">automata</var>,  [<var class="optkey">all</var> = #f])
+      <span class="funcname">state</span> (<var class="arg">automata</var>, <var class="optkey">all</var> = #f)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; integer or list</td></tr>
@@ -2558,7 +2550,7 @@ Return the next integer state from <var>automata</var> or a list of all the stat
 <table class="entry" id="cell-state">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">cell-state</span> (<var class="arg">automata</var>, <var class="arg">index</var>, [<var class="optkey">neighbor</var> = 0] )
+      <span class="funcname">cell-state</span> (<var class="arg">automata</var>, <var class="arg">index</var>, <var class="optkey">neighbor</var> = 0)
     </td>
   </tr>
 
@@ -2588,14 +2580,67 @@ Encodes <var>x</var> and <var>y</var> values -+2768 as a single point (integer) 
 </blockquote>
 <!-- END DEFINITION -->
 
+<h3 id="environment">Environment</h3>
 
-<h3 id="files">File System</h3>
+<!-- DEFINITION -->
+<table class="entry" id="print">
+ <tr class="entry">
+    <td class="formals">
+      <span class="funcname">print</span> (<var class="arg">expr</var> <span class="meta">{</span>, <var class="arg">expr</var><span class="meta">}*</span>)
+    </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p> Prints one or more <a href="#expressions">expressions </a> to the Console window.</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+
+<!-- DEFINITION -->
+<table class="entry" id="now">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">now</span>
+      ()
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a current time stamp. Note that now values are not used by the scheduler or in processes, which have their own notion of <a href="#elapsed"><code>elapsed</code></a> time.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+
+<!-- DEFINITION -->
+<table class="entry" id="load">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">load</span> (<var class="arg">file</var>)
+    </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+
+<p> Loads a Lisp or <a href="#sal">SAL</a> <var>file</var>. If <var>file</var> has no directory component and the <a href="#chdir">current working directory</a> does not contain <var>file</var> then the embedded distribution will be searched for the <var>file</var> to load.
+</p>
+
+</blockquote>
+<!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table class="entry" id="chdir">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">chdir</span> (<var class="arg">pathname</var>)
+      <span class="funcname">chdir</span> (<var class="arg">directory</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2604,7 +2649,7 @@ Encodes <var>x</var> and <var>y</var> values -+2768 as a single point (integer) 
 </table>
 <blockquote>
 <p>
-Changes the current working directory to the <var>pathname</var> string.
+Changes the current working directory to <var>directory</var> (string).
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -2630,7 +2675,7 @@ Returns the full pathname string of the current working directory.
 <table class="entry" id="directory">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">directory</span> (<var class="arg">spec</var>, [<var class="opt">recurse</var> <var class="optval">#f</var>])
+      <span class="funcname">directory</span> (<var class="arg">spec</var>, <span class="meta">[</span><var class="opt">recurse</var> <var class="optval">#f</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2648,8 +2693,7 @@ Returns a list of absolute filenames matching wildcard <var>spec</var>. If <var>
 <table class="entry" id="shell">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">shell</span>
-      <var class="arg">command</var>
+      <span class="funcname">shell</span> (<var class="arg">command</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2664,20 +2708,20 @@ Calls operating system's shell interpreter to execute user's <var>command</var>.
 
 <h2 id="iteration">Iteration</h2>
 
-<p>An (essentially) complete implementation of the <a href="http://www.lisp.org/HyperSpec/Body/sec_6-1.html">Common Lisp loop macro</a> is provided. </p>
+<p>An (essentially) complete implementation of the Common Lisp loop macro is provided in Scheme and <a href="#sal">SAL</a>.</p>
 
 <!-- DEFINITION -->
 <table class="entry" id="loop">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">loop</span> [<a href="#with"><var class="arg">with-decl</var></a>] {<var class="arg">stepping</var>}* {<var class="arg">stopping</var>}* {<var class="arg">action</var>}+ [<var class="arg">finally</var>]
+      <span class="commandname">loop</span> <span class="meta">[</span><a href="#with"><var class="arg">with-decl</var></a><span class="meta">]</span> <span class="meta">{</span><var class="arg">stepping</var><span class="meta">}*</span> <span class="meta">{</span><var class="arg">stopping</var><span class="meta">}*</span> <span class="meta">{</span><var class="arg">action</var><span class="meta">}+</span> <span class="meta">[</span><var class="arg">finally</var><span class="meta">]</span>
  <span class="commandname">end</span></td>
     <!-- td class="label">SAL</td -->
   </tr>
 
   <tr class="entry">
     <td class="formals">
-      (<span class="funcname">loop</span> {<var>clause</var>}*)
+      (<span class="funcname">loop</span> <span class="meta">{</span><var>clause</var><span class="meta">}*</span>)
     </td>
     <!-- td class="label">Scheme Macro</td -->
   </tr>
@@ -2695,9 +2739,9 @@ Defines an iteration. Optional local variables can be declared using the <a href
 <table class= "float">
 <tr><th colspan="2" class="lcol" style="padding-right: 1em">stepping statements</th></tr>
 <tr><td><code><span class="reserved">repeat</span></code> <var>expr</var></td> <td> sets the iteration limit to <var>expr</var> </td> </tr>
-<tr><td><code><span class="reserved">for</span></code> <var>var</var> <code><span class="reserved">=</span></code> <var>expr</var> [<code><span class="reserved">then</span></code> <var>expr2</var>]</td> <td> sets <var>var</var> to the value of <var>expr</var> on each iteration. If <code><span class="reserved">then</span></code> is specified <var>expr</var> is the initial value and <var>expr2</var> are the subsequent values</td></tr>
+<tr><td><code><span class="reserved">for</span></code> <var>var</var> <code><span class="reserved">=</span></code> <var>expr</var> <span class="meta">[</span><code><span class="reserved">then</span></code> <var>expr2</var><span class="meta">]</span></td> <td> sets <var>var</var> to the value of <var>expr</var> on each iteration. If <code><span class="reserved">then</span></code> is specified <var>expr</var> is the initial value and <var>expr2</var> are the subsequent values</td></tr>
 <tr><td><code><span class="reserved">for</span></code> <var>var</var> <code><span class="reserved">in</span></code> <var>expr</var></td> <td> increments <var>var</var> over elements the list <var>expr</var></td></tr>
-<tr><td><code><span class="reserved">for</span></code> <var>var</var> [<code><span class="reserved">from</span></code> <var>expr</var>] [<code><span class="reserved">to</span> | <span class="reserved">below</span></code> <var>expr</var>] [<code><span class="reserved">by</span></code> <var>expr</var>]</td> <td> increments <var>var</var> from an on optional starting value to an ending value by an optional amount</td></tr>
+<tr><td><code><span class="reserved">for</span></code> <var>var</var> <span class="meta">[</span><code><span class="reserved">from</span></code> <var>expr</var><span class="meta">]</span> <span class="meta">[</span><code><span class="reserved">to</span> | <span class="reserved">below</span></code> <var>expr</var><span class="meta">]</span> <span class="meta">[</span><code><span class="reserved">by</span></code> <var>expr</var><span class="meta">]</span></td> <td> increments <var>var</var> from an on optional starting value to an ending value by an optional amount</td></tr>
 
 <tr><th colspan="2" class="lcol" style="border-top: 1px solid gray; padding-right: 1em">stopping statements</th></tr>
 <tr><td><code><span class="reserved">while</span></code> <var>expr</var></td> <td> iteration continues while <var>expr</var> is true</td> </tr>
@@ -2720,37 +2764,92 @@ Defines an iteration. Optional local variables can be declared using the <a href
 </blockquote>
 
 
-
-
-
-
-
 <h2 id="audio">Audio</h2>
 
-<h3 id="sendingaudio">Sending Audio Data</h3>
+<p>Depending on the which particular Audio Target you are working with, audio data can be generated in four different ways:</p>
+<ol>
+<li> sending data to an open audio port in real time.</li>
+<li> sending data to an <a href="#file">open audio file</a> (non-real time).</li>
+<li> <a href="#scheduler">sprouting processes</a> to send audio to an open audio port in real time.</li>
+<li> <a href="#scheduler">sprouting processes</a> to send audio to an open audio file (non-real time).</li>
+</ol>
+
+<p>Here are small examples of each method:</p>
+
+<div class="float">
+  
+<pre class="code">
+<span class="comment">; example 1: sending data to the open Midi Port in real time</span>
+
+<span class="reserved">loop</span> <span class="reserved">for</span> i <span class="reserved">below</span> 10
+  send(<span class="string">"mp:midi"</span>, i * .1, <span class="keyword">key:</span> between(60,90))
+<span class="reserved">end</span>
+
+<span class="comment">; example 2: sending data to a Midi File (non-real time)</span>
+
+<span class="reserved">file</span> <span class="string">"test.mid"</span> ()
+  <span class="reserved">loop</span> <span class="reserved">for</span> i <span class="reserved">below</span> 10
+    send(<span class="string">"mp:midi"</span>, i * .1, <span class="keyword">key:</span> between(60,90))
+  <span class="reserved">end</span>
+<span class="reserved">end</span>
+
+<span class="comment">; example 3: sprouting process to send data to the open Midi Port in real time</span>
+
+<span class="reserved">process</span> simp(num, low, high)
+  <span class="reserved">repeat</span> num
+  send(<span class="string">"mp:midi"</span>, <span class="keyword">key:</span> between(60,90))
+  <span class="reserved">wait</span> .1
+<span class="reserved">end</span>
+
+sprout(simp(10, 60, 90)
+
+<span class="comment">; example 4: sprouting process to send data to a Midi File (non-real time)</span>
+
+sprout(simp(10,60, 90), <span class="string">"test.mid"</span>)
+</pre>
+</div>
+
+<p>Which method you use depends on what you want to accomplish and which methods the Audio Port in question supports. Here is a table that shows the capabilities of each Audio Target:</p>
+
+<table width="80%">
+<tr >
+<th class="lcol">audio target</th> <th class="lcol">real time port?</th> <th class="lcol">score file? (non-real time)</th> </tr>
+<tr ><td>Midi</td>                <td>yes</td>                <td>yes</td>  </tr>
+<tr ><td>Fomus</td>                <td>no</td>                <td>yes</td> </tr>
+<tr ><td>CLM</td>                <td>no</td>                <td>yes</td>    </tr>
+<tr ><td>Csound</td>                <td>no</td>                <td>yes</td> </tr>
+<tr ><td>OSC</td>                <td>yes</td>                <td>no</td>    </tr>
+</table>
+
+<h3 id="sending">Sending Audio Data</h3>
 
 <p>Every audio target implements a set of <var>methods</var> that you
-can send data to.  This routing is accomplished  using <a
- href="send">send</a> or by calling the underlying message
-functions directly.</p>
+can route data to.  This routing is accomplished  using the <a
+ href="send">send</a> macro or by calling the underlying method
+functions directly. 
+
+For example, the following calls are equivalent:</p>
+
+<div class="float">
+  <pre class="code">
+send(<span class="string">"mp:midi"</span>, <span class="keyword">key:</span> between(60, 90))
+mp:midi(<span class="keyword">key:</span> between(60, 90))
+</pre>
+</div>
+
+<p>
+Using <code>send</code> has two advantages: (1) it clearly identifies code that sends data to audio ports (2) it can check arguments at read time so keyword argument errors are caught before any code actually executes.
+</p>
 
 <!-- DEFINITION -->
 <table class="entry" id="send">
-
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">send</span>
-      <span class="string">"<var class="arg">target</var>:<var class="arg">method</var>"</span>, <var class="rest">data...</var>
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr class="entry">
-    <td class="formals">
-      (<span class="funcname">send</span>
-      <span class="string">"<var class="arg">target</var>:<var class="arg">method</var>"</span> <var class="rest">data...</var>)
+      <span class="funcname">send</span> (<span class="string">"<var class="arg">target</var>:<var class="arg">method</var>"</span> <var class="rest">...</var>)
     </td>
     <!-- td class="label">Scheme Macro</td -->
   </tr>
+
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
@@ -2759,10 +2858,7 @@ The first argument to <code>send</code> is its <var>message</var>, a
 literal string or symbol in the format <var>target</var><span
 style="font-weight: bold;">:</span><var>method</var> that identifies a
 specific audio resource and a method to receive the <var>data</var> you pass to it.
-</p>
-
-<p> Note that each send message is implemented by a Scheme function
-with the same name that can be called directly to achieve the same
+Each message is also implemented by a function with the same name that can be called directly to achieve the same
 effect. The difference between using a send message and calling the
 underlying message function is (1) for some messages the send macro can
 perform argument testing at eval time rather
@@ -2773,30 +2869,6 @@ sending audio information. </p>
 </blockquote>
 <!-- END DEFINITION -->
 
-<!--
-<h4>Example</h4>
-
-<div class="float">
-<p><strong>SAL</strong></p>
-<pre class="code">
-<span class="command">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> 70
-<span class="command">send</span> <span class="string">"mp:midi"</span>, 0, 1, 60, .1, 0
-<span class="command">send</span> <span class="string">"mp:midi"</span>, 0, 1, <span class="keyword">key:</span> 60, <span class="keyword">chan:</span> 10
-<span class="command">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">chan:</span> 10, <span class="keyword">time:</span> 2, <span class="keyword">key:</span> 60
-</pre>
-</div>
-
-<div class="float">
-<p><strong>Scheme</strong></p>
-<pre class="code">
-(send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> 70)
-(send <span class="string">"mp:midi"</span> 0 1 60 .1 0)
-(send <span class="string">"mp:midi"</span> 0 1 <span class="keyword">key:</span> 60 <span class="keyword">chan:</span> 10)
-(send <span class="string">"mp:midi"</span> <span class="keyword">chan:</span> 10 <span class="keyword">time:</span> 2 <span class="keyword">key:</span> 60)
-</pre>
-</div>
--->
-
 <h3 id="midi-out">Midi Out</h3>
 
 <p>Before sending anything to the Midi Out port select use the <span
@@ -2804,13 +2876,11 @@ class="menuitem">Audio&gt;Midi Out&gt;</span> menu to select an output device. Y
 <span class="menuitem">Ports&gt;Midi Out&gt;Test</span> to send a
 random burst of messages to the output device.</p>
 
-<h4>Midi Out Messages</h4>
-
 <!-- DEFINITION -->
 <table id="mp:midi" class="entry">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">send</span> <span class="string">"mp:midi"</span>, <var class="optkey">time</var> <var class="optval">= 0</var>, <var class="optkey">dur</var> <var class="optval"> = .5</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">amp</var> <var class="optval"> = .5</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>
+      <span class="funcname">send</span> (<span class="string">"mp:midi"</span>, <var class="optkey">time</var> <var class="optval">= 0</var>, <var class="optkey">dur</var> <var class="optval"> = .5</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">amp</var> <var class="optval"> = .5</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2829,8 +2899,7 @@ Send note data to midi port.
 <table id="mp:on"  class="entry">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">send</span>
-      <span class="string">"mp:on"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">amp</var> <var class="optval"> = .5</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>
+      <span class="funcname">send</span> (<span class="string">"mp:on"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">amp</var> <var class="optval"> = .5</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2847,42 +2916,45 @@ Send note on data to midi port.
 <!-- DEFINITION -->
 <table class="entry" id="mp:off">
   <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:off"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">vel</var> <var class="optval"> = 127</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>
+    <td class="formals">
+      <span class="funcname">send</span> (<span class="string">"mp:off"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">vel</var> <var class="optval"> = 127</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
-<blockquote><p>Sends note off data to midi port.</p></blockquote>
+<blockquote><p>Sends note off data to midi port.
+</p>
+</blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table id="mp:prog" class="entry">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">send</span>
-      <span class="string">"mp:prog"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>
+      <span class="funcname">send</span> (<span class="string">"mp:prog"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
-<blockquote><p>Sends program change value to midi port. </p></blockquote>
+<blockquote><p>Sends program change value to midi port.
+</p>
+</blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table id="mp:instruments" class="entry">
   <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:instruments"</span>, <var class="arg">pc</var><var class="rest">...</var></td>
-    <!-- td class="label">SAL</td -->
+    <td class="formals">
+      <span class="funcname">send</span> (<span class="string">"mp:instruments"</span>, <var class="arg">pc</var> <var class="rest">...</var>)
+    </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
 <p>
-Sends up to sixteen program changes out the Midi port and updates the port's instrument table. The position of each value specifies the channel it is sent to, ie the first program change is sent to channel 0 and so on. To skip a particular channel provide #f as its program change value, otherwise specify its program change (integer 0-127) or GM instrument name (string), in which case the first instrument that matches or contains name as a substring will be selected.
+Sends up to sixteen program changes out the Midi port and updates the port's instrument table. The position of each value specifies the channel it is sent to, i.e. the first program change is sent to channel 0 and so on. To skip a particular channel provide #f as its program change value, otherwise specify its program change (integer 0-127) or GM instrument name (string), in which case the first instrument that matches or contains name as a substring will be selected.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -2890,7 +2962,9 @@ Sends up to sixteen program changes out the Midi port and updates the port's ins
 <!-- DEFINITION -->
 <table id="mp:ctrl" class="entry">
   <tr class="entry">
-    <td class="formals"><span class="commandname">send</span> <span class="string">"mp:ctrl"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">num</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var></td>
+    <td class="formals">
+      <span class="funcname">send</span> (<span class="string">"mp:ctrl"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">num</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+    </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -2902,8 +2976,7 @@ Sends up to sixteen program changes out the Midi port and updates the port's ins
 <table id="mp:touch" class="entry">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">send</span>
-      <span class="string">"mp:touch"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>
+      <span class="funcname">send</span> (<span class="string">"mp:touch"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2920,8 +2993,9 @@ Sends after touch value to midi port.
 <!-- DEFINITION -->
 <table class="entry">
   <tr class="entry">
-    <td id="mp:press" class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:press"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var></td>
+    <td id="mp:press" class="formals">
+      <span class="funcname">send</span> (<span class="string">"mp:press"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+    </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -2937,8 +3011,8 @@ Sends channel pressure value to midi port.
 <!-- DEFINITION -->
 <table class="entry">
   <tr class="entry">
-    <td id="mp:bend" class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:bend"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 8192</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>
+    <td id="mp:bend" class="formals">
+      <span class="funcname">send</span> (<span class="string">"mp:bend"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 8192</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2951,17 +3025,13 @@ Sends pitch bend value 0-16383 to midi port.
 </blockquote>
 <!-- END DEFINITION -->
 
-<h4 id="midi_options">Midi Out File Options</h4>
-
-<p>Midi files can be written, no midifile options are implemented.</p>
-
-
 <h3 id="midi-in">Midi In</h3>
-
 
 <!-- DEFINITION -->
 <table id="mp:receiver" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:receiver"</span>, [<var class="optarg">opcode</var> ,] <var class="arg">function</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"mp:receiver"</span>, <span class="meta">[</span><var class="opt">opcode</var> ,<span class="meta">]</span> <var class="arg">function</var>)
+  </td>
 
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -2970,7 +3040,10 @@ Sends pitch bend value 0-16383 to midi port.
 <blockquote>
 <p>
 Causes <var>function</var> to receive incoming MIDI messages. To clear an existing receiver specify <code>#f</code> as the  <var>function</var>. Otherwise <var>function</var> should be a procedure of one argument; this procedure will be called asynchronously and passed a list of message values <code>(</code><var>channel data1 data2 ...</var><code>)</code> for each message that arrives at the MIDI input port.
-To associate the receiver with a specific type of message precede <var>function</var> by the MIDI status byte <var>opcode</var> 8-15 that it should handle.  MIDI opcodes 8-15 are also available as constants: <code>mm:off</code>, <code>mm:on</code>, <code>mm:touch</code>, <code>mm:ctrl</code>, <code>mm:prog</code>, <code>mm:press</code>, <code>mm:bend</code>. 
+</p>
+
+<p id="midi_opcodes">
+To associate the receiver with a specific type of message precede <var>function</var> by the MIDI status byte <var>opcode</var> 8-15 that it should handle. MIDI opcodes 8-15 are also available as constants: <code>mm:off</code>, <code>mm:on</code>, <code>mm:touch</code>, <code>mm:ctrl</code>, <code>mm:prog</code>, <code>mm:press</code>, <code>mm:bend</code>. 
 If no opcode is given then <var>function</var> becomes the "default" receiver and is called on any message that is not otherwise handled by an opcode receiver.  Message data for a default receiver will include the opcode of the message received: <code>(</code><var>opcode channel data1 data2 ...</var><code>)</code>.  Note that it possible to have several receivers, including a default receiver, in effect at the same time, each handling a different type of message.
 </p>
 
@@ -2984,29 +3057,30 @@ To clear all current receivers call <code>mp:receiver</code> with no arguments.
 
 <!-- DEFINITION -->
 <table id="mp:receiverq" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:receiver?"</span> [, <var class="optarg">opcode</var>]</td>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">send</span> (<span class="string">"mp:receiver?"</span> <span class="meta">[</span>, <var class="opt">opcode</var><span class="meta">]</span>)
+    </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; boolean or list</td></tr>
 </table>
-
 <blockquote>
 <p>
 Returns true if a receiver for <var>opcode</var> is currently in effect otherwise false.  If called without any <var>opcode</var> then a list containing the opcodes of all current receivers is returned. The default receiver, if any, is indicated by an opcode of 0.
 </p>
 </blockquote>
-
-
+<!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table id="mp:inchans" class="entry">
   <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:inchans"</span>, <var class="arg">chan ...</var></td>
+    <td class="formals">
+      <span class="funcname">send</span> (<span class="string">"mp:inchans"</span>, <var class="arg">chan ...</var>)
+    </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
-
 <blockquote>
 <p>
 Enables MIDI input only on the specified channels. Channel values are integers between 0 and 15. Specify a single <code>#t</code> value to enable all channels and <code>#f</code> to disable all channels.
@@ -3017,8 +3091,9 @@ Enables MIDI input only on the specified channels. Channel values are integers b
 <!-- DEFINITION -->
 <table id="mp:inops" class="entry">
   <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:inops"</span>, <var class="arg">opcode ...</var></td>
+    <td class="formals">
+      <span class="funcname">send</span> (<span class="string">"mp:inops"</span>, <var class="arg">opcode ...</var>)
+    </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3032,18 +3107,390 @@ Enables MIDI input only for the specified MIDI opcodes. Opcodes are integers bet
 <!-- END DEFINITION -->
 
 
-<h3 id="osc">OSC (Open Sound Control)</h3>
 
-<p>
-The OSC port provides input and output communication with other processes via the <a href="http://opensoundcontrol.org/">Open Sound Control</a> protocol. To send and receive OSC messages first open an OSC connection via <span class="menuitem">Audio&gt;OSC&gt;Open Connection...</span> or by sending the <span class="string">"osc:open"</span> message to the port from code. For example, the following calls are all equivalent:</p>
+<h3 id="clm">CLM/SndLib</h3>
+
+<p> Use <span class="menuitem">Audio&gt;SndLib&gt;Instruments...</span> to load
+instruments before working with them. To send data to a SndLib instrument specify the instrument name as
+a <a href="#send">send</a> message or call the instrument (function)
+directly. For example, the following calls are equivalent:</p>
 
 <div class="float">
   <pre class="code">
-<span class="command">send</span> <span class="string">"osc:open"</span>, 7779, 7770
-  
-(send <span class="string">"osc:open"</span>  7779 7770)
+send(<span class="string">"wave"</span>, 0, 1, 440, .1)
+wave(0, 1, 440, .1)
+</pre>
+</div>
 
-(osc:open 7779 7770)
+<h4 id="sndlib_options">SndLib Audio File Options</h4>
+<p>
+Any CLM <a href="http://ccrma.stanford.edu/software/snd/snd/sndscm.html#withsound">with-sound</a> option can be passed as an argument to <a href="#sprout">sprout</a> when you generate an audio file. The most common options are listed here and are also available in the <span class="menuitem">Audio&gt;SndLib&gt;</span> menu.
+</p>
+
+<dl>
+  <dt><code><span class="keyword">srate:</span></code></dt>
+  <dd>The sampling rate to use.</dd>
+  <dt><code><span class="keyword">channels:</span></code></dt>
+  <dd>The number of audio channels to write.</dd>
+  <dt><code><span class="keyword">play:</span></code></dt>
+  <dd>Play the audio file after writing it.</dd>
+</dl>  
+
+<!--  BEGIN FOMUS -->
+
+<h3 id="fomus">Fomus</h3>
+
+<p><a href="http://fomus.sourceforge.net">Fomus</a> generates musical scores for Lilipond, Sibelius and Finale
+from symbolic score information input by the user interactively or by running musical processes. Use the <span class="menuitem">Audio&gt;Fomus&gt;</span> menu to configure your
+Fomus environment and manage its score output. For more information see the examples in <span class="menuitem">Help&gt;Examples&gt;Fomus Examples</span> and the tutorial in <span class="menuitem">Help&gt;Tutorials&gt;Fomus</span>. To send data to Fomus use the send messages listed below or call the underlying message functions directly. For example, the following
+ calls are equivalent:</p>
+
+<div class="float">
+  <pre class="code">
+send(<span class="string">"fms:note"</span>, 0, 1, 60)
+fms:note(0, 1, 60)
+</pre>
+</div>
+
+<h4 id="fomus_events">Fomus Events</h4>
+
+<!-- DEFINITION -->
+<table id="fms:note" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:note"</span>,
+    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <var class="arg">dur</var>,
+    <var class="arg">pitch</var>,
+    <var class="optkey">part</var>,
+    <var class="optkey">voice</var> <var class="optval">= 1</var>,
+    <var class="optkey">dyn</var> <var class="optval">= 0</var>,
+    <var class="optkey">grtime</var>,
+    <var class="optkey">marks</var> <var class="optval">= {}</var>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Send a note event to the currently selected score at <var>time</var>.
+Parameters <var>dur</var> and <var>pitch</var> are required. The optional parameters <var>marks</var>
+and <var>sets</var> are lists of <a href="#marks">marks</a> and <a href="#settings">settings</a>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:rest" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:rest"</span>,
+    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <var class="arg">dur</var>,
+    <var class="optkey">part</var>,
+    <var class="optkey">voice</var> <var class="optval">= 1</var>,
+    <var class="optkey">grtime</var>,
+    <var class="optkey">marks</var> <var class="optval">= {}</var>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Send a rest event to the currently selected score at <var>time</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:mark" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:mark"</span>,
+    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <var class="arg">dur</var>,
+    <var class="optkey">part</var> ,
+    <var class="optkey">voice</var> <var class="optval">= 1</var>,
+    <var class="optkey">grtime</var> ,
+    <var class="optkey">marks</var> <var class="optval">= {}</var>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Send a mark event to the currently selected score at <var>time</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:meas" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:meas"</span>,
+    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <var class="arg">dur</var>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Send a measure to the currently selected to score at <var>time</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<h4 id="fomus_objects">Fomus Objects</h4>
+
+<!-- DEFINITION -->
+<table id="fms:part" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:part"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new part to use in the currently selected score.  A part with
+id <code>default</code> exists (with instrument <code>default</code>) if no other parts are
+defined.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:inst" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:inst"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new instrument to use in the currently selected score.  An
+instrument with id <code>default</code> and a grand staff exists if no other
+instruments are defined.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:percinst" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:percinst"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new percussion instrument to use in the currently selected
+score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:metapart" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:metapart"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new metapart to use in the currently selected score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:setting" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:setting"</span>,
+    <span class="meta">{</span><var class="arg">setting value</var><span class="meta">}+</span>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote><p>
+Change the value of one or more global settings in the currently
+selected score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:measdef" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:measdef"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new measure definition to use in the currently selected
+score.  Measdefs are more useful in .fms files than in processes.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<h4 id="fomus_commands">Fomus Commands</h4>
+
+<!-- DEFINITION -->
+<table id="fms:new-score" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:new-score"</span>,
+    <var class="arg">file</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a brand new empty score with output <var>file</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:load-score" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:load-score"</span>,
+    <var class="arg">file</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Load a .fms file into a new score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:select-score" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:select-score"</span>,
+    <var class="arg">file</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Select the first score with output <var>file</var>.  A new empty
+score is created if one with that name does not already exist.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:save-score" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:save-score"</span>,
+    <var class="arg">file</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Save the score to a .fms file, Fomus's native file format.  The file
+can be edited and/or reloaded with the <a href="#fms:load-score">load-score</a> command.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:run-score" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:run-score"</span>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Run Fomus on the currently selected score.  If an output file has
+not been specified, this produces an error.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:clear-score" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:clear-score"</span>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Clears note events and measures (but not part or instrument
+definitions) from the currently selected score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:delete-score" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:delete-score"</span>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Delete the currently selected Fomus score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!--  END FOMUS -->
+
+
+
+<h3 id="osc">OSC (Open Sound Control)</h3>
+
+<p>
+The OSC port provides input and output communication with other processes via the <a href="http://opensoundcontrol.org/">Open Sound Control</a> protocol. To send and receive OSC messages first open an OSC connection via <span class="menuitem">Audio&gt;OSC&gt;Open Connection...</span> or by sending the <span class="string">"osc:open"</span> message to the port from code. For example, the following calls are equivalent:</p>
+
+<div class="float">
+  <pre class="code">
+send(<span class="string">"osc:open"</span>, 7779, 7770)
+osc:open(7779, 7770)
 </pre>
 </div>
 
@@ -3051,10 +3498,10 @@ The OSC port provides input and output communication with other processes via th
 
 <!-- DEFINITION -->
 <table id="osc:open" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:open"</span> <var class="arg">serverport</var>, <var class="arg">targetport</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"osc:open"</span> <var class="arg">serverport</var>, <var class="arg">targetport</var>)
+  </td>
   </tr>
-  <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:open</span> <var class="arg">serverport</var> <var class="arg">targetport</var>)</td>
-  </tr -->
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
@@ -3066,9 +3513,10 @@ Opens an OSC connection with <var>serverport</var> as the CM application's input
 
 <!-- DEFINITION -->
 <table id="osc:close" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:close"</span></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"osc:close"</span>)
+  </td>
   </tr>
-  <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:close</span>)</td>  </tr -->
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
@@ -3080,9 +3528,10 @@ Closes an open OSC connection.
 
 <!-- DEFINITION -->
 <table id="osc:message" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:message"</span>, <var class="arg">path</var>, <var class="rest">data...</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"osc:message"</span>, <var class="arg">path</var>, <var class="rest">data ...</var>)</td>
   </tr>
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:message"</span>, <var class="arg">list</var></td>
+  <tr class="entry"> <td class="formals"><span class="funcname">send</span> (<span class="string">"osc:message"</span>, <var class="arg">list</var>)</td>
   </tr>
 
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3115,9 +3564,13 @@ Sends an OSC message consisting of an OSC <var>path</var> (string) followed by z
 
 <!-- DEFINITION -->
 <table id="osc:bundle" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:bundle"</span>, <var class="arg">time</var>, <var class="rest">message ...</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"osc:bundle"</span>, <var class="arg">time</var>, <var class="rest">message ...</var>)
+  </td>
   </tr>
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:bundle"</span>,  <var class="arg">time</var>, <var class="arg">list</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"osc:bundle"</span>,  <var class="arg">time</var>, <var class="arg">list</var>)
+  </td>
   </tr>
 
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3130,7 +3583,9 @@ Sends an OSC bundle consisting of a <var>time</var> tag (number) followed by one
 
 <!-- DEFINITION -->
 <table id="osc:receiver" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:receiver"</span>, [<var class="optarg">path</var> ,] <var class="arg">function</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"osc:receiver"</span>, <span class="meta">[</span><var class="arg">path</var> ,<span class="meta">]</span> <var class="arg">function</var>)
+  </td>
 
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3152,8 +3607,10 @@ To clear all current receivers call <code>osc:receiver</code> with no arguments.
 
 
 <!-- DEFINITION -->
-<table id="osc:receiverq" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:receiver?"</span> [, <var class="optarg">path</var>]</td>
+<table id="osc:receiver_qm" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"osc:receiver?"</span> <span class="meta">[</span>, <var class="opt">path</var><span class="meta">]</span>)
+  </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; boolean or list</td></tr>
 </table>
@@ -3166,415 +3623,7 @@ Returns true if a receiver for <var>path</var> is currently in effect otherwise 
 
 <!--  END OSC -->
 
-
-
-<h3 id="sndlib">SndLib</h3>
-
-<p>If CM has been built with SndLib/S7 then SndLib audio instruments
-are available.  Use <span
-class="menuitem">Audio&gt;SndLib&gt;Instruments...</span> to load
-instruments before working with them. </p>
-
-<h4>SndLib Messages</h4>
-
-<p>To send data to a SndLib instrument specify the instrument name as
-a <a href="#send">send</a> message or call the instrument functions
-directly. For example, the following calls are all equivalent:</p>
-
-<div class="float">
-  <pre class="code">
-<span class="command">send</span> <span class="string">"wave"</span>, 0, 1, 440, .1
-(send <span class="string">"wave"</span> 0 1 440 .1)
-(wave 0 1 440 .1)
-</pre>
-</div>
-
-<h4 id="sndlib_options">SndLib Audio File Options</h4>
-<p>
-Any CLM <a href="http://ccrma.stanford.edu/software/snd/snd/sndscm.html#withsound">with-sound</a> option can be passed as an argument to <a href="#sprout">sprout</a> when you generate an audio file. The most common options are listed here and are also available in the <span class="menuitem">Audio&gt;SndLib&gt;</span> menu.
-</p>
-
-<dl>
-  <dt><code><span class="keyword">srate:</span></code></dt>
-  <dd>The sampling rate to use.</dd>
-  <dt><code><span class="keyword">channels:</span></code></dt>
-  <dd>The number of audio channels to write.</dd>
-  <dt><code><span class="keyword">play:</span></code></dt>
-  <dd>Play the audio file after writing it.</dd>
-</dl>  
-
-<!--  BEGIN FOMUS -->
-
-<h3 id="fomus">Fomus</h3>
-
-<p><a href="http://fomus.sourceforge.net">Fomus</a> generates musical scores for Lilipond, Sibelius and Finale
-from symbolic score information input by the user interactively or by running musical processes. Use the <span class="menuitem">Audio&gt;Fomus&gt;</span> menu to configure your
-Fomus environment and manage its score output. For more information see the examples in <span class="menuitem">Help&gt;Examples&gt;Fomus Examples</span> and the tutorial in <span class="menuitem">Help&gt;Tutorials&gt;Fomus</span>.
-To send data to Fomus in Scheme or SAL code use the messages listed below or call the
- underlying message functions directly. For example, the following
- calls are all equivalent:</p>
-
-<div class="float">
-  <pre class="code">
-<span class="command">send</span> <span class="string">"fms:note"</span>, 0, 1, 60
-
-(send <span class="string">"fms:note"</span> 0 1 60)
-
-(fms:note 0 1 60)
-</pre>
-</div>
-
-<!-- DEFINITION -->
-<table id="fomusfile" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">fomusfile</span> <var class="arg">scorefile</var>
-    (<var class="optkey">settings...</var>)
-    <var class="arg">commands...</var>
-    <span class="commandname">end</span>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Creates a new score out of one or more enclosed <var>commands</var>. 
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<h4 id="fomus_events">Fomus Events</h4>
-
-<!-- DEFINITION -->
-<table id="fms:note" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:note"</span>,
-    <var class="optkey">time</var> <var class="optval">= 0</var>,
-    <var class="arg">dur</var>,
-    <var class="arg">pitch</var>,
-    <var class="optkey">part</var> <var class="optval">= #f</var>,
-    <var class="optkey">voice</var> <var class="optval">= 1</var>,
-    <var class="optkey">dyn</var> <var class="optval">= 0</var>,
-    <var class="optkey">grtime</var> <var class="optval">= #f</var>,
-    <var class="optkey">marks</var> <var class="optval">= {...}</var>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Send a note event to the currently selected score at <var>time</var>.
-Parameters <var>dur</var> and <var>pitch</var> are required. The optional parameters <var>marks</var>
-and <var>sets</var> are lists of <a href="#marks">marks</a> and <a href="#settings">settings</a>.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:rest" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:rest"</span>,
-    <var class="optkey">time</var> <var class="optval">= 0</var>,
-    <var class="arg">dur</var>,
-    <var class="optkey">part</var> <var class="optval">= #f</var>,
-    <var class="optkey">voice</var> <var class="optval">= 1</var>,
-    <var class="optkey">grtime</var> <var class="optval">= #f</var>,
-    <var class="optkey">marks</var> <var class="optval">= {...}</var>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Send a rest event to the currently selected score at <var>time</var>.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:mark" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:mark"</span>,
-    <var class="optkey">time</var> <var class="optval">= 0</var>,
-    <var class="arg">dur</var>,
-    <var class="optkey">part</var> <var class="optval">= #f</var>,
-    <var class="optkey">voice</var> <var class="optval">= 1</var>,
-    <var class="optkey">grtime</var> <var class="optval">= #f</var>,
-    <var class="optkey">marks</var> <var class="optval">= {...}</var>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Send a mark event to the currently selected score at <var>time</var>.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:meas" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:meas"</span>,
-    <var class="optkey">time</var> <var class="optval">= 0</var>,
-    <var class="arg">dur</var>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Send a measure to the currently selected to score at <var>time</var>.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<h4 id="fomus_objects">Fomus Objects</h4>
-
-<!-- DEFINITION -->
-<table id="fms:part" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:part"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Create a new part to use in the currently selected score.  A part with
-id <code>default</code> exists (with instrument <code>default</code>) if no other parts are
-defined.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:inst" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:inst"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Create a new instrument to use in the currently selected score.  An
-instrument with id <code>default</code> and a grand staff exists if no other
-instruments are defined.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:percinst" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:percinst"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Create a new percussion instrument to use in the currently selected
-score.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:metapart" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:metapart"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Create a new metapart to use in the currently selected score.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:setting" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:setting"</span>,
-    <var class="arg">setting value</var> <var class="rest">...</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote><p>
-Change the value of one or more global settings in the currently
-selected score.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:measdef" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:measdef"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {...}</var>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Create a new measure definition to use in the currently selected
-score.  Measdefs are more useful in .fms files than in processes.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<h4 id="fomus_commands">Fomus Commands</h4>
-
-<!-- DEFINITION -->
-<table id="fms:new-score" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:new-score"</span>,
-    <var class="arg">filename</var> 
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Create a brand new empty score with output <var>filename</var>.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:load-score" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:load-score"</span>,
-    <var class="arg">filename</var> 
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Load a .fms file into a new score.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:select-score" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:select-score"</span>,
-    <var class="arg">filename</var> 
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Select the first score with output <var>filename</var>.  A new empty
-score is created if one with that name does not already exist.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:run-score" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:run-score"</span>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Run Fomus on the currently selected score.  If an output filename has
-not been specified, this produces an error.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:save-score" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:save-score"</span>,
-    <var class="arg">filename</var> 
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Save the score to a .fms file, Fomus's native file format.  The file
-can be edited and/or reloaded with the <a href="#fms:load-score">load-score</a> command.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:clear-score" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:clear-score"</span>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Clears note events and measures (but not part or instrument
-definitions) from the currently selected score.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="fms:delete-score" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
-    <span class="string">"fms:delete-score"</span>
-  </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Delete the currently selected Fomus score.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!--  END FOMUS -->
-
-
-<!--  BEGIN OSC -->
-
-
-
+<!--  BEGIN CSOUND -->
 
 <h3 id="csound">Csound</h3>
 
@@ -3584,23 +3633,22 @@ configure the Csound environment, or pass the options directly to the
 scorefile when you generate it with <a href="#sprout">sprout</a>.
 </p>
 
-<h4 id="csound_messages">Csound Messages</h4>
-
 <p> To send data to Csound use the messages listed below or call the
  underlying message functions directly. For example, the following
- calls are all equivalent:</p>
+ calls are equivalent:</p>
 
 <div class="float">
   <pre class="code">
-<span class="command">send</span> <span class="string">"cs:i"</span>, 1, 0, 1, 440, 1000
-(send <span class="string">"cs:i"</span> 1 0 1 440 1000)
-(cs:i 1 0 1 440 1000)
+send(<span class="string">"cs:i"</span>, 1, 0, 1, 440, 1000)
+cs:i(1, 0, 1, 440, 1000)
 </pre>
 </div>
 
 <!-- DEFINITION -->
 <table id="cs:i" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:i"</span>, <var class="arg">ins</var>, <var class="arg">start</var>, <var class="arg">dur</var> <var class="rest">...</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"cs:i"</span>, <var class="arg">ins</var>, <var class="arg">start</var>, <var class="arg">dur</var> <var class="rest">...</var>)
+  </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3615,7 +3663,9 @@ Sends instrument data to Csound.  The first value should be the instrument's num
 
 <!-- DEFINITION -->
 <table id="cs:f" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:f"</span>, <var class="arg">num</var> <var class="rest">...</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"cs:f"</span>, <var class="arg">num</var> <var class="rest">...</var>)
+  </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3631,7 +3681,9 @@ Sends function table data to Csound. Similar to <span class="string">"cs:i"</spa
 
 <!-- DEFINITION -->
 <table id="cs:data" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:data"</span>, <var class="arg">list</var></td>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"cs:data"</span>, <var class="arg">list</var>)
+  </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3647,11 +3699,38 @@ Sends a <var>list</var> of data to Csound. The first element in the list must be
 
 
 <h4 id="csound_options">Csound Scorefile Options</h4>
+<!--
+<p>There are two ways to create Csound score files: (1) use file or with-csound to establish a lexical context for sending music to the open score file (2) use process and sprout to generate score output dynamically in the scheduler.</p>
+
+<div class="float">
+<pre class="code">
+<span class="comment">;; sprout a process to generate a Csound score</span>
+
+<span class="reserved">process</span> mysco (num, rhy)
+  <span class="reserved">repeat</span> num
+  send("mp:i", 1, elapsed(), .5, between(220,440), .2)
+  <span class="reserved">wait</span> rhy
+<span class="reserved">end</span>
+
+sprout(mysco(20, .2), <span class="string">"mytest.sco</span>")
+
+<span class="comment">;; use a loop in a file to create a Csound score</span>
+
+<span class="reserved">file</span> <span class="string">"mytest.sco"</span> ()
+  <span class="reserved">loop</span> <span class="reserved">for</span> time <span class="reserved">from</span> 0 <span class="reserved">by</span> .2
+    send(<span class="string">"mp:i"</span>, 1, time, .5, between(220,440), .2)
+  <span class="reserved">end</span>
+<span class="reserved">end</span>
+</pre>
+</div>
+
+-->
+
 
 <p> The following scorefile options are available in the <span
 class="menuitem">Audio&gt;Csound&gt;</span> menu and can be passed to
 Csound scores when you generate them using <a
- href="#sprout">sprout</a> .  </p>
+ href="#sprout">sprout</a> or <a href="#file">file</a>.</p>
 
 <dl>
 
@@ -3676,80 +3755,62 @@ Csound scores when you generate them using <a
 
 </dl>  
 
-
-<!--
-<h3 id="plotter-port">Plotter Port Methods</h3>
-<p>Routes data to the focus layer of the current plotter window. (Not yet implemented.)</p>
--->
-
 <h2 id="scheduler">The Scheduler</h2>
 
 <!-- p>The scheduler is a JUCE thread that executes on a 1 millisecond
 tick for real time scheduling and as fast as possible for file-based sheduling.</p -->
 
 <p>The main entry point into the scheduler is called <a
- href="sprout">sprout</a>.  Sprout schedules algorithms to run in real
-time, or faster than real time if a file (string) is specified as an
-argument to the function.
+ href="#sprout">sprout</a>.  Sprout schedules <a href="#processes">processes</a> to run in real
+time, or in faster-than real time if a file (string) is specified as the third argument to the function. When the scheduler runs faster-than real time then the time values inside processes are still treated as if they were seconds but the scheduling clock is running as fast as it can, i.e. is does not actually wait that amount of (real) time before calling the next process in the queue.
 </p>
 
 <table id="sprout" class="entry">
   <tr class="entry">
-    <td class="formals"> <span class="commandname">sprout</span> <var class="arg">process</var>, [<var class="opt">ahead</var> <var class="optval">0</var>], [<var class="opt">id</var> <var class="optval">#f</var>]</td>
+    <td class="formals">
+      <span class="funcname">sprout</span> (<var class="arg">process</var>, <span class="meta">[</span><var class="opt">ahead</var> <var class="optval">0</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">id</var> <var class="optval">#f</var><span class="meta">]</span>)
+    </td>
     <!-- td class="label">SAL</td -->
   </tr>
 
   <tr class="entry">
-    <td class="formals"> <span class="commandname">sprout</span> <var class="optkey">process</var>, [<var class="opt">ahead</var> <var class="optval">0</var>], <var class="arg">file</var>, <var class="rest">options... </var></td>
+    <td class="formals">
+      <span class="funcname">sprout</span> (<var class="optkey">process</var>, <span class="meta">[</span><var class="opt">ahead</var> <var class="optval">0</var><span class="meta">]</span>, <var class="arg">file</var> <span class="meta">{</span>, <var class="rest">keyword option</var>}*)
+    </td>
     <!-- td class="label">SAL</td -->
   </tr>
-
 
   <tr><td class="retval" colspan="2">&rarr; void</td> </tr>
 </table>
 
 <blockquote>
 
+<p>
 
-<h5> Real Time</h5>
+Adds <var>process</var> to the scheduler to start executing <var>ahead</var> seconds from now. Both <var>process</var> and <var>ahead</var> can be lists, in this case each process will be paired with each start time in a left-to-right order.</p>
 
-<p>Adds <a href="#processes"><var>process</var></a> to the scheduler
-starting at <var>ahead</var> time from now. If <var>id</var> is
-provided it tags the process in the scheduling queue; tagged processes
-can then be selectively removed from the scheduler using <a
- href="#stop"><code>stop</code></a>. The <var>process</var> parameter
-can be a single process or list of processes. If it is a list then
-<var>ahead</var> and <var>id</var> can also be lists and their values
-are paired with each process in left-to-right order. See <a
- href="#processes">Musical Processes</a> for more information.  </p>
+<p>If a <var>file</var> is <span style="text-decoration:underline;">not</span> specified then the process(es) will run in real time. In this case <var>id</var> can be used to identify the process(es) in the scheduling queue; tagged processes can then be selectively removed from the scheduler using <a href="#stop">stop</a>.  </p>
 
 
-<h5> File Output</h5>
-
-<p>Adds <a href="#processes"><var>process</var></a> to the scheduler
-starting at <var>ahead</var> time from now. <var>File</var> is the file to write the data to, and must include a supported file extension. CM currently supports the following file types:
+<p>If the third argument is a <var>file</var> then the scheduler will run in faster-than real time and all output will be sent to the open file.
+CM currently supports the following file types:
 </p>
 
-<ul>
+<ul id="score_file_types">
   <li><code><span class="string">".mid"</span></code> midi file.</li>
-  <li><code><span class="string">".wav"</span></code> audio file using SndLib.</li>
-  <li><code><span class="string">".aiff"</span></code> audio file using SndLib.</li>
-  <li><code><span class="string">".snd"</span></code> audio file using SndLib.</li>
+  <li><code><span class="string">".wav .aiff .snd"</span></code> audio file using SndLib.</li>
+  <li><code><span class="string">".ly .xml .fms"</span></code> notated score using Fomus.</li>
   <li><code><span class="string">".sco"</span></code> Csound score file.</li>
 </ul>
 
-<p><var>Options...</var> is zero or more keyword options suitable for the audio target selected by <var>file</var>:</p>
+<p>Following <var>file</var> comes zero or more keyword options pairs suitable for the audio target selected by <var>file</var>:</p>
 
 <ul>
-  <li><a href="#midi_options">Midi options</a></li>
-  <li><a href="#sndlib_options">SndLib options</a></li>
-  <li><a href="#csound_options">Csound options</a></li>
+  <li><a href="#midi_options">Midi file options</a></li>
+  <li><a href="#sndlib_options">SndLib audio file options</a></li>
+  <li><a href="#fomus_options">Fomus score options</a></li>
+  <li><a href="#csound_options">Csound score options</a></li>
 </ul>
-
-<p>Note that when an algorithm sends data to a file it should probably
-use the true score time as the time stamp fror the data, see <a
- href="#elapsed">elapsed</a> for more information about this.</p>
-
 
 </blockquote>
 
@@ -3804,35 +3865,100 @@ Suspends the process scheduler.
 <table class="entry" id="cont">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">cont</span>
-      ()
+      <span class="funcname">cont</span> ()
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
 <p>
-Resumes (continues) the paused scheduler.
+Resumes the scheduler if it is currently paused.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
+
+<h3 id="processes">Processes</h3>
+<p>
+Processes are iterative functions you <a href="#sprout"> <code>sprout</code></a> into the scheduler to execute. Processes can run in real time or in faster-than real time, depending on how they are sprouted. In SAL you create a process using the <a href="process">process</a> statement. In Scheme you create a process using the <a href="#run">process</a> macro. The following two examples are equivalent process definitions:
+</p>
+
+<div class="float">
+  <p>SAL process definition</p>
+<pre class="code">
+<span class="reserved">process</span> simp (reps, rate, low, hi)
+  <span class="reserved">repeat</span> reps
+      send(<span class="string">"mp:midi"</span>, <span class="keyword">key:</span> between(low, hi))
+      <span class="reserved">wait</span> rate
+  <span class="reserved">end</span>
+
+sprout( simp(20, .5, 60, 80))
+</pre>
+
+<p>Scheme process definition</p>
+<pre class="code">
+(<span class="reserved">define</span> (simp reps rate low hi)
+  (<span class="reserved">process</span> <span class="reserved">repeat</span> reps
+           <span class="reserved">do</span>
+           (send <span class="string">"mp:midi"</span> <span class="keyword">:key</span> (between low hi))
+           (wait rate)))
+
+(sprout (simp 20 .5 60 80))
+</pre>
+</div>
+
 <!-- DEFINITION -->
-<table class="entry" id="now">
-  <tr class="entry">
+<table class="entry" id="defprocess">
+    <tr class="entry">
     <td class="formals">
-      <span class="funcname">now</span>
-      ()
-    </td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+      <span class="commandname">process</span> <var class="arg">name</var> (<span class="meta">{</span><var class="arg">parameters</var><span class="meta">}*</span>) <span class="meta">{</span><var class="arg">iteration</var><span class="meta">}+</span> <span class="commandname">end</span> </td></tr> 
+  <tr><td class="retval" colspan="2">&rarr; function</td></tr>
+
 </table>
 <blockquote>
 <p>
-Returns the current time of the scheduler. See also <a href="#elapsed"><code>elapsed</code></a>
+Returns an iterative function to execute in the scheduler in real time or faster-than real time. <var>Parameters</var> consists of zero or more required parameters, optionally followed by <code><span class="reserved">&amp;optkey</span></code> and any <a href="#optkey_arguments">optkey arguments</a>.
+Following the parameter list comes a series of iteration clauses as documented under <a href="#loop">loop</a> and with the following two additional features:
+</p>
+
+<!-- DEFINITION -->
+<table class="entry" id="wait">
+  <tr class="entry">
+    <td class="formals">
+      <span class="commandname">wait</span> <var class="arg">time</var>
+    </td>
+    <!-- td class="label">SAL</td -->
+  </tr>  
+
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Causes the process to wait <var>time</var> seconds before the next iteration. To stop the process provide negative <var>time</var> value. This function only exists within the lexical scope of a process definition.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+<p style="padding-top: 1em;">Expressions defined within the body of a process have access to <a href="#elapsed"><code>elapsed</code></a>, a (load) function that returns the time of the current process iteration:</p>
+<!-- DEFINITION -->
+<table class="entry" id="elapsed">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">elapsed</span> (<span class="meta">[</span><var class="opt">scoretime?</var> <var class="optval">#f</var><span class="meta">]</span>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; seconds</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the amount of time since the process was first sprouted, or the absolute score time (the time since the initial sprout) if the optional <var>scoretime</var> argument is <code>#t</code> This function only exists within the lexical scope of a process definition.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+</blockquote>
+
 
 <h2 id="plotting">Plotting</h2>
 
@@ -3863,7 +3989,7 @@ The functions defined below provided an API for working with plots in Scheme or 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">plot</span>
-      (<var class="rest">settings...</var> {<var class="arg">pointlist</var> <var class="rest">settings...</var>}<var class="rest">...</var>)
+      (<var class="rest"><span class="meta">{</span><var class="arg">setting</var><span class="meta">}*</span></var> <span class="meta">{</span><var class="arg">pointlist</var> <span class="meta">{</span><var class="arg">setting</var><span class="meta">}*}*</span>)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3906,7 +4032,7 @@ that layer of points.</p>
   <dt id="title"><span class="keyword"><code>title:</code></span> <var>string</var></dt>
   <dd>Specifies the window title or the title of the point layer if it appears after a point list.</dd>
   
-  <dt id="xaxis"><span class="keyword"><code>xaxis:</code></span> {<var>type</var> | (<var>type from to by ticks</var>)}</dt>
+  <dt id="xaxis"><span class="keyword"><code>xaxis:</code></span> <var>type</var> | (<var>type from to by ticks</var>)</dt>
   <dd> Specifies the horizontal axis type and (optionally) its characteristics. 
     
     <blockquote>
@@ -3927,17 +4053,18 @@ that layer of points.</p>
     
   </dd>
   
-  <dt id="yaxis"><span class="keyword"><code>yaxis:</code></span> {<var>type</var> | (<var>type from to by ticks</var>)}</dt>
+  <dt id="yaxis"><span class="keyword"><code>yaxis:</code></span> <var>type</var> | (<var>type from to by ticks</var>)</dt>
   <dd> Specifies the vertical axis type and (optionally) its characteristics.
-  
     See the <a href="#fields">fields:</a> setting for complete control over record fields and axes.
-
   </dd>
   
-  <dt id="color"><span class="keyword"><code>color:</code></span> {<var>name</var> | <var>"rgb"</var>}</dt>
+  <dt id="color"><span class="keyword"><code>layer:</code></span> <var>points</var> </dt>
+  <dd>A list of points defining a layer in the plot</dd>
+
+  <dt id="color"><span class="keyword"><code>color:</code></span> <var>name</var> | <var>"rgb"</var></dt>
   <dd>The color for drawing the specified plot list.</dd>
 
-  <dt id="style"><span class="keyword"><code>style:</code></span> {<var>name</var>}</dt>
+  <dt id="style"><span class="keyword"><code>style:</code></span> <var>name</var></dt>
   <dd>The style for drawing point records.
     <ul>
       <li> <code> envelope</code> (points connected by lines) </li>
@@ -3960,7 +4087,7 @@ Provides full control over the interpretation of the data fields in
   force field to share the axis of a (leftward) field specify the name of that field as the axisinfo.</dd>
 
 <!--
-  <dt id="values"><span class="keyword"><code>values:</code></span> {<var>int</var> | <code>y</code>}</dt>
+  <dt id="values"><span class="keyword"><code>values:</code></span> <span class="meta">{</span><var>int</var> | <code>y</code>}</dt>
   <dd>Specifies how to parse non-standard point
   lists, i.e. flat lists containing only y data or flat lists in which
   each series of <var>int</var> values should become a single
@@ -3974,8 +4101,8 @@ Provides full control over the interpretation of the data fields in
 
 <!-- DEFINITION --> <table class="entry" id="plot-data"> <tr
 class="entry"> <td class="formals"> <span
-class="funcname">plot-data</span> (<var class="arg">title</var> [<var
-class="arg">all</var> #t]) </td> </tr> <tr><td class="retval"
+class="funcname">plot-data</span> (<var class="arg">title</var> <span class="meta">[</span><var
+class="arg">all</var> #t<span class="meta">]</span>) </td> </tr> <tr><td class="retval"
 colspan="2">&rarr; list</td></tr> </table> <blockquote> <p> Returns
 the point data from the plot window whose <var>title</var> is
 specified. If <var>all</var> is false then only the points in the
@@ -3985,8 +4112,8 @@ returned.  </p> </blockquote>
 
 <!-- DEFINITION --> <table class="entry" id="plot-hook"> <tr
 class="entry"> <td class="formals"> <span
-class="funcname">plot-hook</span> (<var class="arg">title</var> <var
-class="arg">function</var> <var class="rest">userdata...</var>)</td> </tr> <tr><td class="retval"
+class="funcname">plot-hook</span> (<var class="arg">title</var>, <var
+class="arg">function</var>, <var class="rest">userdata...</var>)</td> </tr> <tr><td class="retval"
 colspan="2">&rarr; list</td></tr> </table> <blockquote> <p>Associates <var>function</var> with Control-Option-Mouseclick inside the plot window named <var>title</var>. When a Control-Option-Mouseclick occurs, <var>function</var> will be be called automatically and passed the X and Y values of the mouse click along with any additional values specified in  <var>userdata</var>. The  <var>function</var> (hook) should return a list of fully specified <a href="#point_record">point records</a> to add to the window, or an empty list if no points should be added.
 </p>
 </blockquote>
@@ -3994,7 +4121,62 @@ colspan="2">&rarr; list</td></tr> </table> <blockquote> <p>Associates <var>funct
 
 
 
-<h2 id="sal">SAL</h2>
+<h2 id="sal">SAL (version 2)</h2> 
+
+<p>Sal is a minimalist language for algorithmic music composition. It provides <a href="#expressions">infix expressions</a> and a handful of control statements and reserved symbols:</p>
+
+<!-- DEFINITION -->
+
+<table width="66%">
+<tr>
+<td>
+<table>
+<tr><td> <a href="#begin"><code>begin</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>below</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>by</code></a> </td></tr>
+<tr><td> <a href="#if"><code>else</code></a> </td></tr>
+<tr><td> <a href="#begin"><code>end</code></a> </td></tr>
+<tr><td> <a href="#file"><code>file</code></a> </td></tr>
+</table>
+</td>
+
+<td>
+<table>
+<tr><td> <a href="#loop"><code>finally</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>for</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>from</code></a> </td></tr>
+<tr><td> <a href="#function"><code>function</code></a> </td></tr>
+<tr><td> <a href="#if"><code>if</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>in</code></a> </td></tr>
+</table>
+</td>
+<td>
+
+<table>
+<tr><td> <a href="#loop"><code>loop</code></a> </td></tr>
+<tr><td> <a href="#define_process"><code>process</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>repeat</code></a> </td></tr>
+<tr><td> <a href="#then"><code>then</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>to</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>unless</code></a> </td></tr>
+</table>
+</td>
+
+<td>
+<table>
+<tr><td> <a href="#loop"><code>until</code></a> </td></tr>
+<tr><td> <a href="#variable"><code>variable</code></a> </td></tr>
+<tr><td> <a href="#wait"><code>wait</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>when</code></a> </td></tr>
+<tr><td> <a href="#loop"><code>while</code></a> </td></tr>
+<tr><td> <a href="#with"><code>with</code></a> </td></tr>
+</table>
+</td>
+
+</tr>
+</table>
+
+
 
 <h3 id="expressions">Expressions</h3>
 
@@ -4002,13 +4184,13 @@ colspan="2">&rarr; list</td></tr> </table> <blockquote> <p>Associates <var>funct
 
 <dt id="sal:numbers">Numbers</dt>
 <dd>
-  <p>SAL number representation includes integers (1,2,3 etc), floating point values (1.0, .22, etc) and ratios (1/2, 4/17, etc).</p>
+  <p>SAL number representation includes integers, floats and ratios (e.g 1/2, 1/3, 11/17).</p>
 </dd>
 
 <dt id="sal:arithmetic">Arithmetic and Logical Expressions</dt>
 
-<dd><p>Arithmetic and logical expressions are infix.  Operators must be delimited from their operands using spaces and/or parentheses. In other words, 2 + 4 is addition and 2+4 is nothing. Standard operator
-precedence rules apply if no parentheses are provided. The following operators are defined:
+<dd><p>Arithmetic and logical expressions are infix.  Operators must be delimited from their operands using spaces and/or parentheses (in other words, 2 + 4 is addition and 2+4 is nothing.) Standard operator
+precedence rules apply if no parentheses are provided. The following math and logic operators are defined:
 </p>
 <table id="sal:operators" class= "float">
 <tr><th class="lcol" style="padding-right: 1em;">operator</th><th class="lcol">meaning</th></tr>
@@ -4024,7 +4206,7 @@ precedence rules apply if no parentheses are provided. The following operators a
 <tr><td><code>  &lt; </code></td><td>  less than  </td></tr>
 <tr><td><code>  &gt;= </code></td><td> greater than or equal  </td></tr>
 <tr><td><code>  &lt;= </code></td><td> less than or equal  </td></tr>
-<tr><td><code>  ~= </code></td><td> general equality  </td></tr>
+<tr><td><code>  ~= </code></td><td> general (looks like) equality </td></tr>
 <tr><td><code>  &amp;  </code></td><td> logical and   </td></tr>
 <tr><td><code>  |  </code></td><td> logical or  </td></tr>
 <tr><td><code>  !  </code></td><td> logical not  </td></tr>
@@ -4037,56 +4219,38 @@ precedence rules apply if no parentheses are provided. The following operators a
 </dd>
 
 <dt id="sal:conditional-values">Conditional Values</dt>
-<dd><p><code><span class="salcon">#?</span> (<var class="arg">test</var>,  <var class="arg">true</var> [<code>,</code> <var class="arg">false</var>])</code></p>
+<dd><p><code><span class="salcon">#?</span> (<var class="arg">test</var>,  <var class="arg">true</var> <span class="meta">[</span><code>,</code> <var class="arg">false</var><span class="meta">]</span>)</code></p>
 </dd>
 
 <dt id="sal:strings">Strings</dt>
-<dd><p>A string of uninterpreted characters enclosed within <code><span class="string">""</span></code>.</p>
+<dd><p>A string of uninterpreted characters enclosed within <code><span class="string">""</span></code>, e.g.  <code><span class="string">"Hi ho!"</span></code>.</p>
 </dd>  
 
 <dt id="sal:symbols">Symbols</dt>
-<dd><p>Alphanumeric names for variables, functions, etc.</p>
+<dd><p>Alphanumeric names for variables and functions, e.g. <code>foo</code> and <code>23-skidoo</code></p>
 </dd>
 
-<dt id="sal:keywords">Keywords</dt>
+<dt id="sal:keywords">Scheme Keywords (constants)</dt>
 <dd>
 
- <p> <code><span class="constant">#:<var class="arg">symbol</var></span></code>     </p>
+ <p> <code><span class="constant">:<var class="arg">symbol</var></span></code>     </p>
 
 </dd>
 
-<dt id="sal:lists">Lists</dt>
-<dd><p>Sequences of constant data enclosed within <code>{}</code>. Lists may contain numbers, booleans, symbols, strings, and other lists. Quasi-quotation in constant lists is supported. Use <code><span class="constant">#$</span></code> to unquote and <code><span class="constant">#^</span></code> to unquote-splice.</p>
+<dt id="sal:lists">Constant Lists</dt>
+<dd><p>Sequences of data enclosed within <code>{}</code>, e.g. {1 2 3}. May contain numbers, booleans, symbols, strings, and other lists. Quasi-quotation in constant lists is supported. Use <code><span class="constant">#$</span></code> to unquote and <code><span class="constant">#^</span></code> to unquote-splice.</p>
 </dd>
 
 <!-- dt id="slot_ref">Slot value references</dt>
 <dd><p>A variable reference <var>vvv</var>.<var>sss</var> where <var>vvv</var> is the name of the variable and <var>sss</var> is the name of a slot. Slot value references can appear in expressions and values can be assigned to slots by the <a href="#set">set</a> statement.</p></dd -->
 
-<dt id="sal:array">Vector notation</dt>
+<dt id="sal:array">List element notation</dt>
 <dd>
-  <p>A variable identifier followed by an index enclosed within <code>[]</code>.</p>
+  <p>A variable followed by an index inside <code>[]</code>, e.g. <code>foo[1]</code></p>
 </dd>
 
 <dt id="sal:funcall">Function call notation</dt>
-<dd><p>A function name followed by zero or more comma-delimited arguments enclosed within <code>()</code>. Several different types of parameters are supported:
-</p>
-
-<dl >
-<dt id="sal:required-parameters">Required parameters</dt>
-<dd>Required parameters must be specified. A required parameter appears in the function definition documentation as <var class="arg">parameter</var>.</dd>
-
-<dt id="sal:optional-parameters">Optional parameters</dt>
-<dd>Optional parameters may be specified or not.  If not they receive a default value, which is false if not otherwise indicated.  An optional parameter is shown in the function definition documentation as <code>[<var class="arg">parameter</var> <var class="optval">value</var>]</code></dd>
-
-<dt id="sal:optkey-parameters">Opt/key parameters</dt>
-<dd>Opt/key parameters are optional parameters that can be specified either positionally or by preceding the value by the keyword name of the parameter (the name of the parameter with a colon at the end.) For example if a function <code>foo</code> has two opt/key parameters named <var>a</var> and <var>b</var> then it could be called in any of the following ways: <code>(foo) (foo 4) (foo 2 3)  (foo a: 3) (foo b: 99) (foo a: 2 b: 4)  (foo b: 99 a: 2)</code>   
-An opt/key parameter is shown in the documentation as <var class="optkey">parameter</var> <var class="optval"> = value</var>
-</dd>
-<dt id="sal:variable-parameters">Variable parameters</dt>
-<dd>Variable parameters may be specified zero or more times.  A variable parameter is shown in the function definition documentation as <code><var class="rest">parameter...</var></code> where  <var>...</var> means "the rest of the arguments".
-<p></p>
-</dd>
-</dl>
+<dd><p>A function name followed by zero or more comma-delimited arguments enclosed within <code>()</code>.</p>
 </dd>
 </dl>
 
@@ -4097,7 +4261,8 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
 <table class="entry" id="set">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">set</span> <var class="arg">variable</var> <var class="arg">op</var> <var class="arg">value</var> {<code>,</code> <var class="arg">variable</var> <var class="arg">op</var> <var class="arg">value</var>}*</td>
+<!--      <span class="commandname">set</span> <var class="arg">variable</var> <var class="arg">op</var> <var class="arg">value</var> <span class="meta">{</span><code>,</code> <var class="arg">variable</var> <var class="arg">op</var> <var class="arg">value</var>}*</td> -->
+      <span class="commandname">set</span> <var class="arg">variable</var> <var class="arg">op</var> <var class="arg">value</var> <span class="meta">[</span><code>,</code> <var class="arg">variable</var> <var class="arg">op</var> <var class="arg">value</var> ...<span class="meta">]</span></td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -4132,56 +4297,18 @@ Assigns each <var>variable</var> to <var>value</var> according to the assignment
   <tr class="entry">
     <td class="formals">
       <span class="commandname">if</span>
-      <var class="arg">test</var> <span class="reserved">then</span> [<var class="arg">true</var>] [<span class="reserved">else</span> <var class="arg">false</var>]
+      (<var class="arg">test</var>) ... <span class="meta">[</span><span class="commandname">else</span> ...<span class="meta">]</span>  <span class="commandname">end</span>
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; value of last expression</td></tr>
 </table>
 <blockquote>
 <p>
-If <var>test</var> is true execute <var>true</var> statement otherwise execute an optional <var>false</var> statement. See also: <a href="#condval">conditional value</a>.
+If <var>test</var> is true execute statements otherwise execute optional <var>else</var> statements. See also: <a href="#condval">conditional value</a>. Note that the parentheses around the <var>test</var> expression are required.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table class="entry" id="when">
-    <tr class="entry">
-    <td class="formals">
-      <span class="commandname">when</span>
-      <var class="arg">test</var> <var class="arg">statement</var>
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Execute <var>statement</var> if <var>test</var> is true.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table class="entry" id="unless">
-  <tr class="entry">
-    <td class="formals">
-      <span class="commandname">unless</span>
-      <var class="arg">test</var> <var class="arg">statement</var>
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Execute <var>statement</var> if <var>test</var> is false.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-
 
 <h3 id="sequencing">Sequencing</h3>
 
@@ -4189,16 +4316,15 @@ Execute <var>statement</var> if <var>test</var> is false.
 <table class="entry" id="begin">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">begin</span> [<a href="#with"><var class="arg">with-decl</var></a>] {<var class="arg">statement</var>}+ <span class="commandname">end</span>
+      <span class="commandname">begin</span> <span class="meta">[</span><span class="commandname">with</span> ...<span class="meta">]</span> ... <span class="commandname">end</span>
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; value of last expression</td></tr>
 </table>
 <blockquote>
 <p>
-
-Sequences one or more SAL statements as a single statement.  <var>With-decl</var> is an optional local variable declaration that can appear at the start of block statements like <a href="#begin"><code>begin</code></a>, <a href="#loop"><code>loop</code></a> and <a href="#run"><code>run</code></a>:
+Sequences one or more SAL statements as a single statement. The optional <a href="#with"><span class="commandname">with</span></a> statement is a local variable declaration that can appear at the start of block statements like <a href="#begin"><code>begin</code></a>, <a href="#loop"><code>loop</code></a>, <a href="#function"><code>function</code></a> and <a href="#process"><code>process</code></a>:
 </p>
 
 
@@ -4206,15 +4332,15 @@ Sequences one or more SAL statements as a single statement.  <var>With-decl</var
 <table class="entry" id="with">
   <tr class="entry">
     <td class="formals">
-      <span class="reserved">with</span> <var class="arg">var</var> [= <var class="arg">value</var>] {, <var class="arg">var</var> = <var class="arg">value</var>]}*
+      <span class="commandname">with</span> <var class="arg">var</var> <span class="meta">[</span>= <var class="arg">expr</var><span class="meta">]</span> <span class="meta">{</span>, <var class="arg">var</var> <span class="meta">[</span>= <var class="arg">expr</var><span class="meta">]</span><span class="meta">}*</span>
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
-<p>
-Declares one or more comma-delimited variables and sets them to an optional initial value or to false if no value is specified. 
+<p>which will
+Define one or more local variables (within the surrounding block), optionally setting inital values to <var>expr</var> (or to false if <var>expr</var> is not provided).
 </p>
 </blockquote>
 </blockquote>
@@ -4222,33 +4348,31 @@ Declares one or more comma-delimited variables and sets them to an optional init
 
 <h3 id="definitions">Definitions</h3>
 
-<h4 id="variables">Variables</h4>
-
 <!-- DEFINITION -->
-<table class="entry" id="define-variable">
+<table class="entry" id="variable">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">define</span> <span class="class">variable</span>
-<var class="arg">symbol</var> [= <var class="arg">value</var>] {, <var class="arg">symbol</var> [= <var class="arg">value</var>]}*
+       <span class="commandname">variable</span>
+<var class="arg">var</var> <span class="meta">[</span>= <var class="arg">expr</var><span class="meta">]</span> <span class="meta">{</span>, <var class="arg">var</var> <span class="meta">[</span>= <var class="arg">expr</var><span class="meta">]</span><span class="meta">}*</span>
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; value of last expression</td></tr>
 </table>
 <blockquote>
-<p> Defines <var>symbol</var> to  <var>value</var> or to false if <var>value</var> is not provided. More than one variable can be defined in the statement by using commas to delimit each variable declaration.
+<p> Defines one or more variables as "global" within the current context.
 </p>
 
 </blockquote>
-<!-- END DEFINITION -->
-
-<h4 id="functions">Functions</h4>
+<!-- END DEFINITION [arg [, arg] ... [&optkey arg [= expr] [, arg [= [expr]]] ...]]
+<span class="meta">[</span><var class="arg">arg</var> <span class="meta">[</span>, <var class="arg">arg</var><span class="meta">]</span> ... <span class="meta">[</span><span class="reserved">&optkey</span> <var class="arg">arg</var> <span class="meta">[</span>= <var class="arg">expr</var><span class="meta">]</span> <span class="meta">[</span>, <var class="arg">arg</var> <span class="meta">[</span>= <var class="arg">expr</var><span class="meta">]</span><span class="meta">]</span> ...<span class="meta">]</span><span class="meta">]</span>
+ -->
 
 <!-- DEFINITION -->
-<table class="entry" id="define-function">
+<table class="entry" id="function">
   <tr class="entry">
     <td class="formals">
-      <span class="commandname">define</span> <span class="class"> function</span> <var class="arg">name</var> ({<var class="arg">parameter</var>}*) {<var class="arg">statement</var>}
+      <span class="commandname">function</span> <var class="arg">name</var> (<span class="meta">{</span><var class="arg">parameters</var><span class="meta">}*</span>) <span class="meta">[</span><span class="commandname">with</span> ...<span class="meta">]</span> <span class="meta">{</span><var class="arg">statement</var><span class="meta">}+</span> <span class="commandname">end</span>
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -4257,269 +4381,185 @@ Declares one or more comma-delimited variables and sets them to an optional init
 <blockquote>
 <p>
 A function definition consists of the <var>name</var> of the function,
-a series of zero or more <var>parameters</var> (input variables)
-enclosed within <code>()</code> and followed by a single statement
-which will be executed when the function is called.
-
-Use a <a href="#begin"><code>begin</code></a> block to declare local
-variables inside the function or to execute more than one statement as
-the body of the function.
-
-Values passed into the function will be available in the corresponding
-<var>parameter</var>. To define a function that accepts a variable
-number of arguments append <code>...</code> to the name of the last
-<var>parameter</var>.  This will cause that parameter to receive the
-remainder of the arguments as a list of values.
-
-Use the <a href="#return"><code>return</code></a> statement to return a value from the function:</p>
-
+a parameter list containing zero or more <var>required parameters</var> optionally followed by <code><span class="reserved">&amp;optkey</span></code> and any <a href="#optkey_arguments">optkey argument</a>.
+Following the parameter list comes the statements to be executed when the function is called. The first of these statements can be a <a href="#with">with</a> declaration.
+The last statement in the body of the function becomes the value of the function call.
+</p>
 </blockquote>
 
+<!-- END DEFINITION -->
+
+<h3 id="files">Files</h3>
+
 <!-- DEFINITION -->
-<table class="entry" id="return">
+
+<table class="entry" id="file">
   <tr class="entry">
     <td class="formals">
-      <span class="reserved">return</span> <var class="arg">value</var></td>
-    <!-- td class="label">SAL</td -->
+      <span class="commandname">file</span> "<var class="arg">file.ext</var>" (<span class="meta">{</span><var class="arg">keyword value</var><span class="meta">}*</span>) <span class="meta">[</span><span class="commandname">with</span> ...<span class="meta">]</span> <span class="meta">{</span><var class="arg">statement</var><span class="meta">}+</span> <span class="commandname">end</span>
+    </td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; value</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
 <p>
-Causes the function to evaluate to <var>value</var>.
+A score file definition. The string "<var>file.ext</var>" is the pathname of the file to create, where <var>file</var> can include a directory component and <var>ext</var> must be one of the <a href="#score_file_types">supported score file types</a>. Following the name of the file comes zero or more keyword options as suitable for the type of file being created. Inside the body of <code>file</code> you can write any expressions that <code><a href="#send">send</a></code> data to the currently open score file.
 </p>
 </blockquote>
 
-<!-- DEFINITION -->
+<h2 id="appendix">Appendix</h2>
 
-<h4 id="processes">Processes</h4>
+
+<h3 id="metasyntax">A. Documentation Meta-syntax</h3>
+<ul>
+
+<li>
+Definition terms are printed in fixed-width bold face:
+<blockquote>
+<p><code class="entry">cents-&gt;scaler</code></p>
+</blockquote>
+</li>
+
+<li>
+Literals and programming code are printed in fixed-width face:
+<blockquote>
+<p><code>list(note(60), rhythm(<span class="string">"h."</span>))</code></p>
+</blockquote>
+</li>
+
+<li>
+Variables and metavariables (names that stand for pieces of code) are printed in italic face:
+<blockquote>
+<p><var>number</var></p>
+</blockquote>
+</li>
+
+<li>Terms separated by | are exclusive choices where exactly one must apply:
+<blockquote>
+<p><var>number</var> | <var>boolean</var></p>
+</blockquote>
+</li>
+
+<li>
+<p>Braces <span class="meta">{ }</span> and brackets <span class="meta">[ ]</span> are sometimes used to associate or group
+the enclosed terms and are not part of actual code.
+</p>
+<ul>
+<li>
+Braces group the enclosed terms into a single entity. Thus:
+<blockquote>
+<p><span class="meta">{</span><var>number</var> | <var>boolean</var><span class="meta">}</span></p>
+</blockquote>
+<p>describes single value that is either a number or a boolean.</p>
+</li>
+
+<li>
+Brackets make the enclosed term optional. An optional term may appear
+at most one time. For example, in the following definition:
+
+<blockquote>
 <p>
-Processes are functions you <a href="#sprout"> <code>sprout</code></a> into the scheduler to execute. In SAL you create a process using the <a href="defprocess">define process</a> command. In Scheme you create a process using the <a href="#run">process</a> macro. The following two example are equivalent:
+<code></code><code class="entry">odds</code>(<var>prob</var> <span class="meta">[</span>,<var>trueval</var><span class="meta">]</span> <span class="meta">[</span>,<var>falseval</var><span class="meta">]</span><code>)</code>
+</p>
+</blockquote>
+<var>prob</var> is a required argument that may be followed by up to
+two optional values. Thus, each of the following calls is correct: 
+<blockquote>
+<pre>odds(.5)
+odds(1, <span class="constant">#t</span>)
+odds(.2, <span class="string">"Yup"</span>, <span class="string">"Nope"</span>)</pre>
+</blockquote>
+</li>
+
+</ul>
+</li>
+
+<li>
+A star <span class="meta">*</span> after a brace means that the enclosed terms may be specified
+zero or more times. For example:
+<blockquote>
+<p>
+<code> <span class="meta">{</span><var>keyword value</var><span class="meta">}*</span></code>
+</p>
+</blockquote>
+
+means that any number of <var>keyword</var> and <var>value</var> pairs,
+including none, may be specified.
+</li>
+
+<li>
+<p>A plus <span class="meta">+</span> after a brace means that the enclosed terms may be specified one or more times.</p>
+</li>
+
+<li>
+A sequence of three dots means the rest of the arguments, no matter how many. For example:
+
+<blockquote>
+<p>
+<code>pick(<var>arg ...</var>)</code>
+</p>
+</blockquote>
+means that any number of additional values, including none, may
+follow <var>arg</var>.
+</li>
+
+<li>Syntax highlighting distinguishes important syntactic units:
+
+<blockquote>
+<table width="90%" cellspacing="10">
+<tr><th >keyword</th><th>string</th>  <th >constant</th>  <th >reserved</th><th >comment</th></tr>
+<tr><td style="text-align:center;"><code><span class="keyword">music:</span></code></td>
+    <td style="text-align:center;"><code><span class="string">"Hello, world"</span></code></td>
+    <td style="text-align:center;"><code><span class="constant">#t</span></code></td>
+    <td style="text-align:center;"><code><span class="reserved">loop</span></code></td><td><code><span class="comment">;; bug!</span></code></td></tr>
+</table>
+</blockquote>
+</li>
+</ul>
+
+
+<h3 id="funargs">B. Function Arguments</h3>
+
+<p>Several different types of function arguments are supported:
 </p>
 
-<div class="float">
-<pre class="code">
-<span class="command">define</span> <span class="class">process</span> simp (reps, rate, low, hi)
-  <span class="reserved">run</span> <span class="reserved">repeat</span> reps
-      <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> between(low, hi)
-      <span class="reserved">wait</span> rate
-  <span class="reserved">end</span>
+<dl >
+<dt id="sal:required-parameters">Required arguments</dt>
+<dd>Required arguments must be specified. A required argument appears in the function definition documentation as <var class="arg">parameter</var>.</dd>
 
-(<span class="command">define</span> (simp reps rate low hi)
-  (<span class="reserved">process</span> <span class="reserved">repeat</span> reps
-           <span class="reserved">do</span>
-           (send <span class="string">"mp:midi"</span> <span class="keyword">:key</span> (between low hi))
-           (wait rate)))
-</pre>
-</div>
+<dt id="sal:optional-parameters">Optional argument</dt>
+<dd>Optional arguments may be specified or not.  If not, they receive a default value, which is false if not otherwise indicated.  An optional argument appears in function definitions  as <code><span class="meta">[</span><var class="arg">arg</var> <var class="optval">value</var><span class="meta">]</span></code></dd>
 
+<dt id="sal:optkey-parameters">Opt/key argument</dt>
+<dd>Opt/key arguments are optional arguments that can be specified either positionally or by preceding the value by the keyword name of the argument (the name of the argument with a colon at the end.) For example if the function <code>foo</code> is defined:
 
-<!-- DEFINITION -->
-<table class="entry" id="defprocess">
-    <tr class="entry">
-    <td class="formals">
-       <span class="commandname">define</span> <span class="class">process</span> <var class="arg">name</var> ({<var class="arg">parameter</var>}*) {<var class="arg">statement</var>}*  <a href="#run"><span class="reserved">run</span></a> {<var class="arg">clause</var>}+ <span class="reserved">end</span>  
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
   
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
+<pre><span class="reserved">function</span> foo (<span class="reserved">&amp;optkey</span> a, b = -99)
+  list(a,b)
+<span class="reserved">end</span>
+</pre>
+  
+<p> then it could be called in any of the following ways:</p>
+
+<code>foo() foo(4) foo(2,3)  foo(a: 3) foo( b: 99) foo(a: 2, b: 4)  foo(b: 99, a: 2)</code>   
+
 <p>
-Defines a function that executes in the scheduler. The definition must contain a <a href="#run"> run</a> statement.
+  An opt/key parameter declaration is shown in the documentation as <var class="optkey">parameter</var> <var class="optval"> = value</var>
 </p>
-</blockquote>
-<!-- END DEFINITION -->
+</dd>
 
-<!-- DEFINITION -->
-<table class="entry" id="run">
-  <tr class="entry">
-    <td class="formals"><span class="commandname">run</span>
-      [<a href="#with"><var class="arg">with-decl</var></a>] {<var class="arg">stepping</var>}* {<var class="arg">stopping</var>}* {<var class="arg">statement</var>}+ [<var class="arg">finally</var>]
-      <span class="commandname">end</span>
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr class="entry">
-    <td class="formals">
-      (<span class="funcname">process</span> {<var class="arg">clause</var>}+)
-    </td>
-    <!-- td class="label">Scheme Macro</td -->
-  </tr>
-
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>Identical to <a href="#iteration">loop</a> in almost all respects but iteration is managed by the <a href="#scheduler">scheduler</a>. </p>
-</blockquote>
-
-<!-- DEFINITION -->
-<table class="entry" id="wait">
-  <tr class="entry">
-    <td class="formals"><span class="commandname">wait</span>
-      <var class="arg">time</var>
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr class="entry">
-    <td class="formals"><span class="funcname">wait</span> (<var class="arg">time</var>)
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>  
-
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Causes the process to wait <var>time</var> seconds before the next iteration. To stop the process provide negative <var>time</var> value. This function only exists within the lexical scope of a process definition.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table class="entry" id="elapsed">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">elapsed</span> ([<var class="opt">scoretime?</var> <var class="optval">#f</var>])
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
-</table>
-<blockquote>
-<p>
-Returns the amount of time since the process was first sprouted, or the true (absolute) score time if the optional <var>scoretime</var> argument is <code>#t</code> This function only exists within the lexical scope of a process definition.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-
-<h3 id="environment">Environment</h3>
-
-
-
-<!-- DEFINITION -->
-<table class="entry" id="print">
- <tr class="entry">
-    <td class="formals">
-      <span class="commandname">print</span>
-     <a href="#expressions"><var class="arg">expr</var></a> {, <a href="#expressions"><var class="arg">expr</var></a>}*
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p> Prints the value of one or more comma delimited <a href="#expressions"><var>exprs</var></a> to the Console window.</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table class="entry" id="exec">
-  <tr class="entry">
-    <td class="formals">
-      <span class="commandname">exec</span>
-      <a href="#expressions"><var class="arg">expr</var></a> {, <a href="#expressions">expr<var class="arg"></var></a>}*
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-
-Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>.  The <var>exprs</var> should produce side effect(s) since nothing is printed or returned by the command itself.
-
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-
-<!-- DEFINITION -->
-<table class="entry" id="load">
-  <tr class="entry">
-    <td class="formals">
-      <span class="commandname">load</span>  <var class="arg">file</var>
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-
-<p> Loads a Lisp <var>file</var> (or a Lisp/SAL  <var>file</var> in the case of the SAL command.)
-</p>
-
-</blockquote>
-<!-- END DEFINITION -->
-
-
-<h3 id="sal_reserved">SAL Reserved Symbols</h3>
-
-<table width="66%">
-<tr>
-<td>
-<table>
-<tr><td> <a href="#begin"><code>begin</code></a> </td></tr>
-<tr><td> <a href="#loop"><code>below</code></a> </td></tr>
-<tr><td> <a href="#loop"><code>by</code></a> </td></tr>
-<tr><td> <a href="#chdir"><code>chdir</code></a> </td></tr>
-<tr><td> <a href="#define"><code>define</code></a> </td></tr>
-<tr><td> <a href="#if"><code>else</code></a> </td></tr>
-<tr><td> <a href="#exec"><code>exec</code></a> </td></tr>
-<tr><td> <a href="#begin"><code>end</code></a> </td></tr>
-</table>
-</td>
-<td>
-<table>
-<tr><td>  <a href="#loop"><code>finally</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>for</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>from</code></a> </td></tr>
-<tr><td>  <a href="#define_function"><code>function</code></a> </td></tr>
-<tr><td>  <a href="#if"><code>if</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>in</code></a> </td></tr>
-<tr><td>  <a href="#load"><code>load</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>loop</code></a> </td></tr>
-</table>
-</td>
-
-<td>
-<table>
-<tr><td>  <a href="#run"><code>over</code></a> </td></tr>
-<tr><td>  <a href="#print"><code>print</code></a> </td></tr>
-<tr><td>  <a href="#define_process"><code>process</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>repeat</code></a> </td></tr>
-<tr><td>  <a href="#return"><code>return</code></a> </td></tr>
-<tr><td>  <a href="#run"><code>run</code></a> </td></tr>
-<tr><td>  <a href="#send"><code>send</code></a> </td></tr>
-<tr><td>  <a href="#then"><code>then</code></a> </td></tr>
-</table>
-</td>
-
-<td>
-<table>
-<tr><td>  <a href="#loop"><code>to</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>unless</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>until</code></a> </td></tr>
-<tr><td>  <a href="#define_variable"><code>variable</code></a> </td></tr>
-<tr><td>  <a href="#wait"><code>wait</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>when</code></a> </td></tr>
-<tr><td>  <a href="#loop"><code>while</code></a> </td></tr>
-<tr><td>  <a href="#with"><code>with</code></a> </td></tr>
-</table>
-</td>
-
-</tr>
-</table>
-
+<dt id="sal:variable-parameters">Variable parameters</dt>
+<dd>Variable parameters may be specified zero or more times.  A variable parameter is shown in the function definition documentation as <code><var class="rest">parameter...</var></code> where  <var>...</var> means "the rest of the arguments".
+<p></p>
+</dd>
+</dl>
 
 <!-- EXAMPLES -->
 
-<h3 id="sal_scheme_cltl">Table of SAL, Scheme and Common Lisp</h3>
+<h3 id="sal_scheme_cltl">c. Table of SAL, Scheme and Common Lisp</h3>
 
 <table>
-  <caption>Translation table for SAL, Scheme and Common Lisp entities.
+  <caption>A. Translation table for SAL, Scheme and Common Lisp entities.
 </caption>
   <thead>
   <tr>
@@ -4575,7 +4615,7 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
       foobar:
     </td>
     <td class="schemetd">
-      #:foobar <var>or</var> foobar:
+      #:foobar <var>or</var> :foobar
     </td>
     <td class="cltltd">
       :foobar
@@ -4598,9 +4638,9 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
   </tr>
 
   <!-- Constant Lists -->
+  
   <tr>    
     <th class="headingth"> </th>
-
     <td class="saltd">
       {a b {1 2 3} c}
     </td>
@@ -4611,10 +4651,8 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
       '(a b (1 2 3) e)
     </td>
   </tr>
-
   <tr>    
     <th class="headingth"> </th>
-
     <td class="saltd">
       {a #$ ran(100) c}
     </td>
@@ -4638,9 +4676,9 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
       `(a ,@(list (random 100) (random 100)) c)
     </td>
   </tr>
+ 
+  <!-- Arithmetic -->
 
-  
-    <!-- Constant Lists -->
   <tr>    
     <th class="headingth">Arithmetic</th>
     <td class="saltd">
@@ -4749,6 +4787,7 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
   </tr>
 
   <!-- Logic -->
+
   <tr>    
     <th class="headingth">Logic </th>
     <td class="saltd">
@@ -4790,60 +4829,8 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
     </td>
   </tr>
 
-  <tr>
-    <th class="headingth"> Conditionals</th>
-    <td class="saltd">
-      if a = b then ... else ...
-    </td>
-    <td class="schemetd">
-
-      (if (= a b) ... ...)
-    </td>
-    <td class="cltltd">
-      (if (= a b) ... ...)
-    </td>
-  </tr>
-
-  <tr>
-    <th class="headingth"> </th>
-    <td class="saltd">
-      when a = b ...
-    </td>
-    <td class="schemetd">
-     (when (= a b) ...)
-    </td>
-    <td class="cltltd">
-     (when (= a b) ...)
-    </td>
-  </tr>
-  <tr>
-    <th class="headingth"> </th>
-    <td class="saltd">
-      unless a = b ...
-    </td>
-    <td class="schemetd">
-     (unless (= a b) ...)
-    </td>
-    <td class="cltltd">
-     (unless (= a b) ...)
-    </td>
-  </tr>
-  <tr>
-    <th class="headingth"> </th>
-    <td class="saltd">
-      #?(a = b, -99, 2)
-    </td>
-    <td class="schemetd">
-
-      (if (= a b) -99 2)
-    </td>
-    <td class="cltltd">
-      (if (= a b) -99 2)
-    </td>
-  </tr>
-
-
   <!-- Function calls -->
+
   <tr>    
     <th class="headingth">Function calls</th>
 
@@ -4888,7 +4875,7 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
   <tr>
     <th class="headingth"></th>
     <td class="saltd">
-      list(1, 2, ran(10))
+      list(1, 2, random(10))
     </td>
     <td class="schemetd">
 
@@ -4899,13 +4886,41 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
     </td>
   </tr>
 
+  <!-- Conditionals -->
+
+  <tr>
+    <th class="headingth"> Conditionals</th>
+    <td class="saltd">
+      if (a = b)<br/>&nbsp;&nbsp;list(1,2)<br/>else<br/>&nbsp;&nbsp;list(3,4)<br/>end
+    </td>
+    <td class="schemetd">
+      (if (= a b)<br/>&nbsp;&nbsp;(list 1 2)<br/>&nbsp;&nbsp;(list 3 4))
+    </td>
+    <td class="cltltd">
+      (if (= a b)<br/>&nbsp;&nbsp;(list 1 2)<br/>&nbsp;&nbsp;(list 3 4))
+    </td>
+  </tr>
+  <tr>
+    <th class="headingth"> </th>
+    <td class="saltd">
+      #?(a = b, -99, 2)
+    </td>
+    <td class="schemetd">
+
+      (if (= a b) -99 2)
+    </td>
+    <td class="cltltd">
+      (if (= a b) -99 2)
+    </td>
+  </tr>
 
   <!-- Global Variables -->
+
   <tr>    
     <th class="headingth">Global variables</th>
 
     <td class="saltd">
-      define variable a
+      variable a
     </td>
     <td class="schemetd">
       (define a #f)
@@ -4915,32 +4930,14 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
     </td>
   </tr>
 
-  <!-- Global Variables 2
-  <tr>    
-    <th class="headingth"> </th>
-    <td class="saltd">
-      define variable a = 123,<br/>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b = a + 1
-    </td>
-    <td class="schemetd">
-
-      (define a 123)<br/>
-      (define b (+ a 1))
-    </td>
-    <td class="cltltd">
-      (defparameter a 123)<br/>
-      (defparameter b (+ a 1))
-    </td>
-  </tr>  -->
-
   <!-- Function Definitions -->
 
   <tr>    
     <th class="headingth">Function definitions </th>
     <td class="saltd">
-      define function foo (a)<br/>
-      &nbsp;&nbsp;return a + ran(10)
-
+      function foo (a)<br/>
+      &nbsp;&nbsp;a + ran(10)<br/>
+      end
     </td>
     <td class="schemetd">
 
@@ -5167,58 +5164,6 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
 
 
 
-
-
-<!-- 
-<h2 id="xml">XML Description</h2>
-
-<p>Plotter saves, loads, imports and exports data using
-XML entities defined in the DTD file "grace/doc/grace.dtd". </p>
-
-<p>Users can define their own Plotter points by declaring the
-point using the XML <code>&lt;<span
-class="xmlentity">pointdef</span>&gt;</code> ... <code>&lt;<span
-class="xmlentity">/pointdef</span>&gt;</code> entity.  Here is the
-definition of Plotter's (predefined) xy point: </p>
-
-<pre>
-&lt;<span class="xmlentity">pointdef</span>&gt;
-  &lt;<span class="xmlentity">name</span>&gt;xy&lt;<span class="xmlentity">/name</span>&gt;
-  &lt;<span class="xmlentity">fieldlist</span>&gt;
-    &lt;<span class="xmlentity">field</span>&gt; &lt;<span class="xmlentity">name</span>&gt;x&lt;<span class="xmlentity">/name</span>&gt; &lt;<span class="xmlentity">type</span>&gt;float 0 1&lt;<span class="xmlentity">/type</span>&gt; &lt;<span class="xmlentity">default</span>&gt;0&lt;<span class="xmlentity">/default</span>&gt; &lt;<span class="xmlentity">/field</span>&gt;
-    &lt;<span class="xmlentity">field</span>&gt; &lt;<span class="xmlentity">name</span>&gt;y&lt;<span class="xmlentity">/name</span>&gt; &lt;<span class="xmlentity">type</span>&gt;float 0 1&lt;<span class="xmlentity">/type</span>&gt; &lt;<span class="xmlentity">default</span>&gt;0&lt;<span class="xmlentity">/default</span>&gt; &lt;<span class="xmlentity">/field</span>&gt;
-  &lt;<span class="xmlentity">/fieldlist</span>&gt;
-&lt;<span class="xmlentity">/pointdef</span>&gt;
-</pre>
-
-
-<p>Point definitions can be converted to sound by providing a <code>
-&lt;<span class="xmlentity">soundmap</span>&gt; ... &lt;<span
-class="xmlentity">/soundmap</span>&gt; </code> entity that describes
-how to transform the point's field values into data sent to a
-port. For example, this description would convert an xy point into a
-Midi Port note by converting point's <var>x</var> field to a time value
-between 0 and 10, the <var>y</var> field to a key number between 60 72, and
-constant values for duration (.5) amplitude (.25) and channel (0):</p>
-
-<pre>
-&lt;<span class="xmlentity">soundmap</span>&gt;
-  &lt;<span class="xmlentity">mp:midi </span>&gt;
-    &lt;<span class="xmlentity">mp:time</span>&gt; &lt;<span class="xmlentity">source</span>&gt;x&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">scaler</span>&gt;10&lt;<span class="xmlentity">/scaler</span>&gt; &lt;<span class="xmlentity">/mp:time</span>&gt;
-    &lt;<span class="xmlentity">mp:dur</span>&gt; &lt;<span class="xmlentity">source</span>&gt;.5&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">/mp:dur</span>&gt;
-    &lt;<span class="xmlentity">mp:key</span>&gt; &lt;<span class="xmlentity">source</span>&gt;y&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">scaler</span>&gt;12&lt;<span class="xmlentity">/scaler</span>&gt; &lt;<span class="xmlentity">offset</span>&gt;60&lt;<span class="xmlentity">/offset</span>&gt; &lt;<span class="xmlentity">/mp:key</span>&gt;
-    &lt;<span class="xmlentity">mp:amp</span>&gt; &lt;<span class="xmlentity">source</span>&gt;.25&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">scaler</span>&gt;127&lt;<span class="xmlentity">/scaler</span>&gt; &lt;<span class="xmlentity">/mp:amp</span>&gt;
-    &lt;<span class="xmlentity">mp:chan</span>&gt; &lt;<span class="xmlentity">source</span>&gt;0&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">/mp:chan</span>&gt;
-  &lt;<span class="xmlentity">/mp:midi</span>&gt;
-&lt;<span class="xmlentity">/soundmap</span>&gt;
-</pre>
-
-
-<p>User defined XML descriptions are saved in the
-Grace.prefs file:
-</p>
-
--->
 
 </div>
 

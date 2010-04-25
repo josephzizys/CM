@@ -163,7 +163,8 @@ class TextIDs
   {
     if (id.equalsIgnoreCase(T("text"))) return Text;
     if (id.equalsIgnoreCase(T("lisp"))) return Lisp;
-    if (id.equalsIgnoreCase(T("sal"))) return Sal;
+    if (id.equalsIgnoreCase(T("sal1"))) return Sal;
+    if (id.equalsIgnoreCase(T("sal"))) return Sal2;
     if (id.equalsIgnoreCase(T("sal2"))) return Sal2;
     if (id.equalsIgnoreCase(T("fomus"))) return Fomus;
     if (id.equalsIgnoreCase(T("csound"))) return Csound;
@@ -680,28 +681,27 @@ class CommandIDs
 
   static const CommandID EditorUndo = COMID(Editor, 16);
   static const CommandID EditorRedo = COMID(Editor, 17);
-  static const CommandID EditorCut = COMID(Editor, 18);
-  static const CommandID EditorCopy = COMID(Editor, 19);
-  static const CommandID EditorPaste = COMID(Editor, 20);
-  
-  static const CommandID EditorSelectAll = COMID(Editor, 21);
-  static const CommandID EditorUnselectAll = COMID(Editor, 22);
-  static const CommandID EditorFind = COMID(Editor, 23);
-  static const CommandID EditorReplace = COMID(Editor, 24);
+  static const CommandID EditorDelete = COMID(Editor, 18);
+  static const CommandID EditorCut = COMID(Editor, 19);
+  static const CommandID EditorCopy = COMID(Editor, 20);
+  static const CommandID EditorPaste = COMID(Editor, 21);  
+  static const CommandID EditorSelectAll = COMID(Editor, 22);
+  static const CommandID EditorUnselectAll = COMID(Editor, 23);
+  static const CommandID EditorFind = COMID(Editor, 24);
+  static const CommandID EditorReplace = COMID(Editor, 25);
 
   static const CommandID EditorSyntax = COMID(Editor, 32);
-  static const CommandID EditorFont = COMID(Editor, 33);
-  static const CommandID EditorFontSize = COMID(Editor, 34);
-  static const CommandID EditorTabWidth = COMID(Editor, 35);
+  static const CommandID EditorFontSize = COMID(Editor, 33);
+  static const CommandID EditorFontLarger = COMID(Editor, 34);
+  static const CommandID EditorFontSmaller = COMID(Editor, 35);
   static const CommandID EditorParensMatching = COMID(Editor, 36);
-  static const CommandID EditorHighlighting = COMID(Editor, 37);
-  static const CommandID EditorEmacsMode = COMID(Editor, 38);
-  static const CommandID EditorReadCustom = COMID(Editor, 39);
-  static const CommandID EditorSaveCustom = COMID(Editor, 40);
-  static const CommandID EditorTheme = COMID(Editor, 41);
-  static const CommandID EditorDefaultFontSize = COMID(Editor, 42);
-  static const CommandID EditorDefaultSyntax = COMID(Editor, 43);
-  static const CommandID EditorDefaultTheme = COMID(Editor, 44);
+  static const CommandID EditorEmacsMode = COMID(Editor, 37);
+  static const CommandID EditorReadCustom = COMID(Editor, 38);
+  static const CommandID EditorSaveCustom = COMID(Editor, 39);
+  static const CommandID EditorTheme = COMID(Editor, 40);
+  static const CommandID EditorDefaultFontSize = COMID(Editor, 41);
+  static const CommandID EditorDefaultSyntax = COMID(Editor, 42);
+  static const CommandID EditorDefaultTheme = COMID(Editor, 43);
 
   static const CommandID EditorExecute = COMID(Editor, 48);
   static const CommandID EditorExpand = COMID(Editor, 49);
@@ -710,49 +710,6 @@ class CommandIDs
   static const CommandID EditorUncommentOut = COMID(Editor, 52);
   static const CommandID EditorFormatComments = COMID(Editor, 53);
   static const CommandID EditorSymbolHelp = COMID(Editor, 54);
-
-  static const CommandID EditorAddTrigger = COMID(Editor, 55);
-  static const CommandID EditorRemoveTrigger = COMID(Editor, 56);
-  static const CommandID EditorLoadTrigger = COMID(Editor, 57);
-  static const CommandID EditorSaveTrigger = COMID(Editor, 58);
-  static const CommandID EditorImportTrigger = COMID(Editor, 59);
-  static const CommandID EditorExportTrigger = COMID(Editor, 60);
-  static const CommandID EditorConfigureTrigger = COMID(Editor, 61);
-
-  // these are messages for coloration not commands
-  static const CommandID EditorDelete = COMID(Editor, 64);
-  static const CommandID EditorBackspace = COMID(Editor, 65);
-  static const CommandID EditorNewline = COMID(Editor, 66);
-  static const CommandID EditorTextChanged= COMID(Emacs, 67);
-
-  // Emacs Commands
-  static const CommandID EmacsCharForward = COMID(Emacs, 1);
-  static const CommandID EmacsCharBackward = COMID(Emacs, 2);
-  static const CommandID EmacsWordForward = COMID(Emacs, 3);
-  static const CommandID EmacsWordBackward = COMID(Emacs, 4);
-  static const CommandID EmacsExprForward = COMID(Emacs, 5);
-  static const CommandID EmacsExprBackward = COMID(Emacs, 6);
-  static const CommandID EmacsLineForward = COMID(Emacs, 7);
-  static const CommandID EmacsLineBackward = COMID(Emacs, 8);
-  static const CommandID EmacsPageForward = COMID(Emacs, 9);
-  static const CommandID EmacsPageBackward = COMID(Emacs, 10);
-  static const CommandID EmacsGotoEOL = COMID(Emacs, 11);
-  static const CommandID EmacsGotoBOL = COMID(Emacs, 12);
-  static const CommandID EmacsGotoEOB = COMID(Emacs, 13);
-  static const CommandID EmacsGotoBOB = COMID(Emacs, 14);
-  static const CommandID EmacsKillChar = COMID(Emacs, 15);
-  static const CommandID EmacsKillWord = COMID(Emacs, 16);
-  static const CommandID EmacsKillExpr = COMID(Emacs, 17);
-  static const CommandID EmacsKillWhite = COMID(Emacs, 18);
-  static const CommandID EmacsKillLine = COMID(Emacs, 19);
-  static const CommandID EmacsKillRegion = COMID(Emacs, 20);
-  static const CommandID EmacsOpenLine = COMID(Emacs, 21);
-  static const CommandID EmacsYank = COMID(Emacs, 22);
-  static const CommandID EmacsCapitalize = COMID(Emacs, 23);
-  static const CommandID EmacsUppercase = COMID(Emacs, 24);
-  static const CommandID EmacsLowercase = COMID(Emacs, 25);
-  static const CommandID EmacsFormatComments = COMID(Emacs, 26);
-  static const CommandID EmacsControlX = COMID(Emacs, 27);
 
   // MidiOut Port
   static const CommandID MidiOutOpen = COMID(MidiOut, 1);
@@ -844,17 +801,18 @@ class CommandIDs
   // Help Menu
   static const CommandID HelpSymbolLookup = COMID(Help, 1);
   static const CommandID HelpManual = COMID(Help, 2);
-  static const CommandID HelpSalTutorial = COMID(Help, 3);
-  static const CommandID HelpSchemeTutorial = COMID(Help, 4);
-  static const CommandID HelpSalExample = COMID(Help, 5);
-  static const CommandID HelpSchemeExample = COMID(Help, 6);
-  static const CommandID HelpWebSite = COMID(Help, 7);
-  static const CommandID HelpShowDirectory = COMID(Help, 8);
+  static const CommandID HelpGUI = COMID(Help, 3);
+  static const CommandID HelpSalTutorial = COMID(Help, 4);
+  static const CommandID HelpSchemeTutorial = COMID(Help, 5);
+  static const CommandID HelpSalExample = COMID(Help, 6);
+  static const CommandID HelpSchemeExample = COMID(Help, 7);
+  static const CommandID HelpWebSite = COMID(Help, 8);
+  static const CommandID HelpShowDirectory = COMID(Help, 9);
 
-  static const CommandID HelpSalTutorialsRestore = COMID(Help, 9);  
-  static const CommandID HelpSchemeTutorialsRestore = COMID(Help, 10);  
-  static const CommandID HelpSalExamplesRestore = COMID(Help, 11);  
-  static const CommandID HelpSchemeExamplesRestore = COMID(Help, 12);  
+  static const CommandID HelpSalTutorialsRestore = COMID(Help, 10);  
+  static const CommandID HelpSchemeTutorialsRestore = COMID(Help, 11);  
+  static const CommandID HelpSalExamplesRestore = COMID(Help, 12);  
+  static const CommandID HelpSchemeExamplesRestore = COMID(Help, 13);  
 
   // Plotter commands
   static const CommandID PlotterNew = COMID(Plotter, 1);

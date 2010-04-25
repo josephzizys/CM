@@ -346,7 +346,8 @@ span.special {color: #a020f0; }
 span.defined {color: #0000ff;}
 span.command {color: #0000cd;}
 span.constant {color: #5f9ea0;}
-span.reserved {color: #a020f0;}
+span.reserved {color: #950083;} /* #a020f0; */
+span.meta {color: #663300;}
 span.class {color: #228b22;}
 
 span.result {font-weight: bold; color: silver;}
@@ -466,7 +467,7 @@ span.funcname {
     font-weight: bold;
 }
 span.commandname {
-    color:  #0000cd;
+    color: #950083 ; /*  #0000cd */
     font-weight: bold;
 }
 

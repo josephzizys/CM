@@ -26,6 +26,7 @@ class CodeBuffer : public CodeEditorComponent //, public Timer
   ~CodeBuffer() ;
   bool keyPressed (const KeyPress& key);
   void mouseDoubleClick (const MouseEvent &e);
+  void mouseDown (const MouseEvent &e);
   void focusGained(Component::FocusChangeType cause);
 
   KeyPress prevkey;
@@ -63,7 +64,8 @@ class CodeBuffer : public CodeEditorComponent //, public Timer
   void startParensMatching(const CodeDocument::Position pos1, const CodeDocument::Position pos2);
   void stopParensMatching();
   void timerCallback();
-
+  void addPopupMenuItems (PopupMenu& m, const MouseEvent*);
+  void performPopupMenuAction (int menuItemID);
   // cursor postion functions
   CodeDocument::Position getBOB();
   CodeDocument::Position getEOB();
@@ -108,7 +110,9 @@ class CodeBuffer : public CodeEditorComponent //, public Timer
   bool replaceAndFind(String str, String rep);
   bool findPrevious(String str, bool wrap=true);
   bool findNext(String str, bool wrap=true);
-
+  // Help
+  void lookupHelpAtPoint();
+  // Evaluation
   void eval(bool expandonly);
   void evalLisp(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
   void evalSal(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);

@@ -273,6 +273,15 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::HelpManual + 6,
     CommandIDs::HelpManual + 7,
 
+    CommandIDs::HelpGUI + 0,
+    CommandIDs::HelpGUI + 1,
+    CommandIDs::HelpGUI + 2,
+    CommandIDs::HelpGUI + 3,
+    CommandIDs::HelpGUI + 4,
+    CommandIDs::HelpGUI + 5,
+    CommandIDs::HelpGUI + 6,
+    CommandIDs::HelpGUI + 7,
+
     CommandIDs::HelpSalExample + 0,
     CommandIDs::HelpSalExample + 1,
     CommandIDs::HelpSalExample + 2,
@@ -787,6 +796,9 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
     case CommandIDs::HelpManual:
       info.shortName=T("Help Manual ")+String(data);
       break;
+    case CommandIDs::HelpGUI:
+      info.shortName=T("Help GUI ")+String(data);
+      break;
     case CommandIDs::HelpWebSite:
       info.shortName=T("Web Site ")+String(data);
       break;
@@ -1120,6 +1132,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       Preferences::getInstance()->recentlyOpened.clear();
       break;
     case CommandIDs::HelpManual:
+    case CommandIDs::HelpGUI:
     case CommandIDs::HelpSalExample:
     case CommandIDs::HelpSchemeExample:
     case CommandIDs::HelpSalTutorial:
