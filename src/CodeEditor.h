@@ -25,6 +25,7 @@ class CodeBuffer : public CodeEditorComponent //, public Timer
   CodeBuffer(CodeDocument& _document, Syntax* _tokenizer, ApplicationCommandManager* commands, XmlElement* custom);
   ~CodeBuffer() ;
   bool keyPressed (const KeyPress& key);
+  void insertTextAtCaret (const String& textToInsert); 
   void mouseDoubleClick (const MouseEvent &e);
   void mouseDown (const MouseEvent &e);
   void focusGained(Component::FocusChangeType cause);

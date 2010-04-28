@@ -105,7 +105,8 @@
             (if (not arg) 
                 (ffi_osc_set_hook "" #f) ; clear default hook     
                 (if (and (procedure? arg)
-                         (= (car (procedure-arity arg) ) 1))
+                         ;(= (car (procedure-arity arg) ) 1)
+                         )
                     (ffi_osc_set_hook "" arg)
                     (error "osc:receive: receiver not #f or a procedure of one argument: ~S"
                            arg)))
@@ -117,7 +118,8 @@
                   (if (string? op)
                       (if (or (not proc) ;; clear/set valid hook
                               (and (procedure? proc)
-                                   (= (car (procedure-arity proc)) 1)))
+                                   ;(= (car (procedure-arity proc)) 1)
+                                   ))
                           (ffi_osc_set_hook op proc)
                           (error "osc:receive: receiver not #f or a procedure of one argument: ~S"
                                  proc))

@@ -1295,6 +1295,66 @@ CodeBuffer::~CodeBuffer()
 {
 }
 
+void CodeBuffer::insertTextAtCaret (const String& textToInsert)
+{
+  bool add=true;
+  bool match=false;
+  if (isParensMatchingActive()) 
+    stopParensMatching();
+  if (textToInsert.length()==1)
+    {
+      const juce_wchar c=textToInsert[0];
+      const bool e=isEmacsMode();
+      //      std::cout << "CodeBuffer::insertTextAtCaret='" << c << "'\n";  
+      add=false;
+      switch (c)
+        {
+        case T(')') :
+        case T('}') :
+        case T(']') :
+          add=true;
+          match=(syntax->isCloseChar(c) && isParensMatching()) ;
+          break;
+        case 8747: // Meta-b
+          if (e) moveWordBackward();
+          break;
+        case 231:  // Meta-c
+          if (e) changeCase(2);
+          break;
+        case 8706: // Meta-d
+          if (e) killWordForward();
+          break;
+        case 402:  // Meta-f
+          if (e) moveWordForward();
+          break;
+        case 172:  // Meta-l
+          if (e) changeCase(0);
+          break;
+        case 168:  // Meta-u
+          if (e) changeCase(1);
+          break;
+        case 8730: // Meta-v
+          if (e) movePageBackward();
+          break;
+        case 160:  // Meta-spaceKey
+          if (e) killWhite();  
+          break;
+          // case  Meta-backspaceKey
+          // killWordBackward();
+        default:
+          add=true;
+          break;
+        }
+    }
+  if (add)
+    {
+      CodeEditorComponent::insertTextAtCaret(textToInsert);        
+      if (match)
+        matchParens();
+      isChanged(true);
+    }
+}
+
 bool CodeBuffer::keyPressed (const KeyPress& key)
 {
   const int ctrl = ModifierKeys::ctrlModifier;
@@ -1399,12 +1459,13 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
       prevkey=KeyPress(key);
       if (CodeEditorComponent::keyPressed(key)) // search component's keypress
         {
-          juce_wchar chr=key.getTextCharacter();
-          if (isParensMatching() && (chr==T(')') || chr==T('}')))
-            matchParens();
-          //std::cout << "returning true from CodeEditorComponent";
-          isChanged(true); // if handled give up and 
-          //(KeyPress::leftKey)(KeyPress::rightKey) (KeyPress::upKey) (KeyPress::downKey) (KeyPress::pageDownKey) (KeyPress::pageUpKey) (KeyPress::homeKey) (KeyPress::endKey)
+          // ')' moved to insertTextAtCursor
+          //          juce_wchar chr=key.getTextCharacter();
+          //          if (isParensMatching() && (chr==T(')') || chr==T('}')))
+          //            matchParens();
+          //          //std::cout << "returning true from CodeEditorComponent";
+          //          isChanged(true); // if handled give up and 
+          //          //(KeyPress::leftKey)(KeyPress::rightKey) (KeyPress::upKey) (KeyPress::downKey) (KeyPress::pageDownKey) (KeyPress::pageUpKey) (KeyPress::homeKey) (KeyPress::endKey)
           return true;
         }
       //std::cout << "searching window manager for keypress=" << key.getTextDescription().toUTF8() << "\n";

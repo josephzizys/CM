@@ -42,8 +42,8 @@
 #define __JUCE_STANDARDHEADER_JUCEHEADER__
 
 #define JUCE_MAJOR_VERSION	  1
-#define JUCE_MINOR_VERSION	  51
-#define JUCE_BUILDNUMBER	14
+#define JUCE_MINOR_VERSION	  52
+#define JUCE_BUILDNUMBER	0
 
 #define JUCE_VERSION		((JUCE_MAJOR_VERSION << 16) + (JUCE_MINOR_VERSION << 8) + JUCE_BUILDNUMBER)
 
@@ -189,11 +189,11 @@
 #endif
 
 #ifndef JUCE_FORCE_DEBUG
-  //#define JUCE_FORCE_DEBUG 1
+  //#define JUCE_FORCE_DEBUG 0
 #endif
 
 #ifndef JUCE_LOG_ASSERTIONS
-//  #define JUCE_LOG_ASSERTIONS 1
+  #define JUCE_LOG_ASSERTIONS 0
 #endif
 
 #ifndef JUCE_ASIO
@@ -201,7 +201,7 @@
 #endif
 
 #ifndef JUCE_WASAPI
-//  #define JUCE_WASAPI 1
+  #define JUCE_WASAPI 0
 #endif
 
 #ifndef JUCE_DIRECTSOUND
@@ -213,7 +213,7 @@
 #endif
 
 #ifndef JUCE_JACK
-  #define JUCE_JACK 1
+  #define JUCE_JACK 0
 #endif
 
 #if ! (defined (JUCE_QUICKTIME) || JUCE_LINUX || JUCE_IPHONE || (JUCE_WINDOWS && ! JUCE_MSVC))
@@ -241,15 +241,15 @@
 #endif
 
 #ifndef JUCE_USE_CDREADER
-  #define JUCE_USE_CDREADER 1
+  #define JUCE_USE_CDREADER 0
 #endif
 
 #if (JUCE_QUICKTIME || JUCE_WINDOWS) && ! defined (JUCE_USE_CAMERA)
-//  #define JUCE_USE_CAMERA 1
+  #define JUCE_USE_CAMERA 0
 #endif
 
 #ifndef JUCE_ENABLE_REPAINT_DEBUGGING
-//  #define JUCE_ENABLE_REPAINT_DEBUGGING 1
+  #define JUCE_ENABLE_REPAINT_DEBUGGING 0
 #endif
 
 #ifndef JUCE_USE_XINERAMA
@@ -261,7 +261,7 @@
 #endif
 
 #ifndef JUCE_USE_XRENDER
-  //#define JUCE_USE_XRENDER 1
+  #define JUCE_USE_XRENDER 0
 #endif
 
 #ifndef JUCE_USE_XCURSOR
@@ -269,15 +269,15 @@
 #endif
 
 #ifndef JUCE_PLUGINHOST_VST
-//  #define JUCE_PLUGINHOST_VST 1
+  #define JUCE_PLUGINHOST_VST 0
 #endif
 
 #ifndef JUCE_PLUGINHOST_AU
-//  #define JUCE_PLUGINHOST_AU 1
+  #define JUCE_PLUGINHOST_AU 0
 #endif
 
 #ifndef JUCE_ONLY_BUILD_CORE_LIBRARY
-  //#define JUCE_ONLY_BUILD_CORE_LIBRARY  1
+  #define JUCE_ONLY_BUILD_CORE_LIBRARY  0
 #endif
 
 #ifndef JUCE_WEB_BROWSER
@@ -1860,24 +1860,15 @@ static int findInsertIndexInSortedArray (ElementComparator& comparator,
 }
 
 template <class ElementType>
-class IntegerElementComparator
+class DefaultElementComparator
 {
-public:
-	static int compareElements (const ElementType first,
-								const ElementType second) throw()
-	{
-		return (first < second) ? -1 : ((first == second) ? 0 : 1);
-	}
-};
+private:
+	typedef PARAMETER_TYPE (ElementType) ParameterType;
 
-template <class ElementType>
-class FloatElementComparator
-{
 public:
-	static int compareElements (const ElementType first,
-								const ElementType second) throw()
+	static int compareElements (ParameterType first, ParameterType second)
 	{
-		return (first < second) ? -1 : ((first == second) ? 0 : 1);
+		return (first < second) ? -1 : ((first < second) ? 1 : 0);
 	}
 };
 
@@ -2295,6 +2286,12 @@ public:
 	{
 		const ScopedLockType lock (getLock());
 		insert (findInsertIndexInSortedArray (comparator, data.elements.getData(), newElement, 0, numUsed), newElement);
+	}
+
+	void addUsingDefaultSort (ParameterType newElement)
+	{
+		DefaultElementComparator <ElementType> comparator;
+		addSorted (comparator, newElement);
 	}
 
 	template <class ElementComparator>
@@ -3135,14 +3132,26 @@ private:
 	Atomic& operator= (const Atomic&);
 };
 
-#if (JUCE_MAC || JUCE_IPHONE)	   //  Mac and iPhone...
+#if JUCE_MAC && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))  //  Older Mac builds using gcc4.1 or earlier...
 
 	inline void  Atomic::increment (int32& variable)		{ OSAtomicIncrement32 (static_cast <int32_t*> (&variable)); }
 	inline int32 Atomic::incrementAndReturn (int32& variable)	   { return OSAtomicIncrement32 (static_cast <int32_t*> (&variable)); }
 	inline void  Atomic::decrement (int32& variable)		{ OSAtomicDecrement32 (static_cast <int32_t*> (&variable)); }
 	inline int32 Atomic::decrementAndReturn (int32& variable)	   { return OSAtomicDecrement32 (static_cast <int32_t*> (&variable)); }
+
 	inline int32 Atomic::compareAndExchange (int32& destination, int32 newValue, int32 oldValue)
-																	{ return OSAtomicCompareAndSwap32Barrier (oldValue, newValue, static_cast <int32_t*> (&destination)); }
+	{
+		for (;;) // Annoying workaround for OSX only having a bool CAS operation..
+		{
+			if (OSAtomicCompareAndSwap32Barrier (oldValue, newValue, static_cast <int32_t*> (&destination)))
+				return oldValue;
+
+			const uint32 result = destination;
+			if (result != oldValue)
+				return result;
+		}
+	}
+
 	inline void* Atomic::swapPointers (void* volatile* value1, void* value2)
 	{
 		void* currentVal = *value1;
@@ -3155,9 +3164,8 @@ private:
 		return currentVal;
 	}
 
-#elif JUCE_LINUX			// Linux...
+#elif JUCE_LINUX && __INTEL_COMPILER  // Linux with Intel compiler...
 
-  #if __INTEL_COMPILER
 	inline void  Atomic::increment (int32& variable)		{ _InterlockedIncrement (&variable); }
 	inline int32 Atomic::incrementAndReturn (int32& variable)	   { return _InterlockedIncrement (&variable); }
 	inline void  Atomic::decrement (int32& variable)		{ _InterlockedDecrement (&variable); }
@@ -3174,7 +3182,8 @@ private:
 	  #endif
 	}
 
-  #else
+#elif JUCE_GCC	   // On GCC, use intrinsics...
+
 	inline void  Atomic::increment (int32& variable)		{ __sync_add_and_fetch (&variable, 1); }
 	inline int32 Atomic::incrementAndReturn (int32& variable)	   { return __sync_add_and_fetch (&variable, 1); }
 	inline void  Atomic::decrement (int32& variable)		{ __sync_add_and_fetch (&variable, -1); }
@@ -3188,7 +3197,6 @@ private:
 		while (! __sync_bool_compare_and_swap (value1, currentVal, value2)) { currentVal = *value1; }
 		return currentVal;
 	}
-  #endif
 
 #elif JUCE_USE_INTRINSICS		   // Windows...
 
@@ -3247,7 +3255,7 @@ protected:
 
 private:
 
-	int refCounts;
+	int32 refCounts;
 };
 
 template <class ReferenceCountedObjectClass>
@@ -3333,6 +3341,11 @@ public:
 
 	// the -> operator is called on the referenced object
 	inline ReferenceCountedObjectClass* operator->() const throw()
+	{
+		return referencedObject;
+	}
+
+	inline ReferenceCountedObjectClass* getObject() const throw()
 	{
 		return referencedObject;
 	}
@@ -3484,6 +3497,12 @@ private:
 
 	// (Required as an alternative to the overloaded & operator).
 	const ScopedPointer* getAddress() const throw()				 { return this; }
+
+  #if ! JUCE_MSVC  // (MSVC can't deal with multiple copy constructors)
+	// This is private to stop people accidentally copying a const ScopedPointer (the compiler
+	// will let you do so by implicitly casting the source to its raw object pointer).
+	ScopedPointer (const ScopedPointer&);
+  #endif
 };
 
 template <class ObjectType>
@@ -4237,7 +4256,7 @@ public:
 						   bool includeSeconds = true,
 						   bool use24HourClock = false) const throw();
 
-	const String formatted (const juce_wchar* format) const throw();
+	const String formatted (const String& format) const throw();
 
 	const Time operator+ (const RelativeTime& delta) const throw()  { return Time (millisSinceEpoch + delta.inMilliseconds()); }
 
@@ -4360,6 +4379,8 @@ public:
 
 	bool operator== (const File& otherFile) const;
 	bool operator!= (const File& otherFile) const;
+	bool operator< (const File& otherFile) const;
+	bool operator> (const File& otherFile) const;
 
 	bool hasWriteAccess() const;
 
@@ -4497,7 +4518,7 @@ public:
 
 	static const juce_wchar separator;
 
-	static const juce_wchar* separatorString;
+	static const String separatorString;
 
 	static const String createLegalFileName (const String& fileNameToFix);
 
@@ -4509,6 +4530,8 @@ public:
 
 	static const File createFileWithoutCheckingPath (const String& path);
 
+	static const String addTrailingSeparator (const String& path);
+
 	juce_UseDebuggingNewOperator
 
 private:
@@ -4519,6 +4542,10 @@ private:
 	friend class DirectoryIterator;
 	File (const String&, int);
 	const String getPathUpToLastSlash() const;
+
+	void createDirectoryInternal (const String& fileName) const;
+	static const String parseAbsolutePath (const String& path);
+	static bool fileTypeMatches (int whatToLookFor, bool isDir, bool isHidden);
 };
 
 #endif   // __JUCE_FILE_JUCEHEADER__
@@ -4741,8 +4768,6 @@ public:
 	XmlElement* getXmlValue (const String& keyName) const;
 
 	void setValue (const String& keyName, const String& value) throw();
-
-	void setValue (const String& keyName, const tchar* const value) throw();
 
 	void setValue (const String& keyName, const int value) throw();
 
@@ -5870,9 +5895,8 @@ public:
 		{
 			removeRange (firstValue, numValuesToAdd);
 
-			IntegerElementComparator<Type> sorter;
-			values.addSorted (sorter, firstValue);
-			values.addSorted (sorter, firstValue + numValuesToAdd);
+			values.addUsingDefaultSort (firstValue);
+			values.addUsingDefaultSort (firstValue + numValuesToAdd);
 
 			simplify();
 		}
@@ -5906,13 +5930,11 @@ public:
 				}
 			}
 
-			IntegerElementComparator<Type> sorter;
-
 			if (onAtStart)
-				values.addSorted (sorter, firstValue);
+				values.addUsingDefaultSort (firstValue);
 
 			if (onAtEnd)
-				values.addSorted (sorter, lastValue);
+				values.addUsingDefaultSort (lastValue);
 
 			simplify();
 		}
@@ -6678,6 +6700,8 @@ class JUCE_API  ValueTree
 {
 public:
 
+	ValueTree() throw();
+
 	explicit ValueTree (const String& type);
 
 	ValueTree (const ValueTree& other);
@@ -6700,21 +6724,23 @@ public:
 
 	const var& getProperty (const var::identifier& name) const;
 
+	const var getProperty (const var::identifier& name, const var& defaultReturnValue) const;
+
 	const var& operator[] (const var::identifier& name) const;
 
-	void setProperty (const var::identifier& name, const var& newValue, UndoManager* const undoManager);
+	void setProperty (const var::identifier& name, const var& newValue, UndoManager* undoManager);
 
 	bool hasProperty (const var::identifier& name) const;
 
-	void removeProperty (const var::identifier& name, UndoManager* const undoManager);
+	void removeProperty (const var::identifier& name, UndoManager* undoManager);
 
-	void removeAllProperties (UndoManager* const undoManager);
+	void removeAllProperties (UndoManager* undoManager);
 
 	int getNumProperties() const;
 
 	const var::identifier getPropertyName (int index) const;
 
-	Value getPropertyAsValue (const var::identifier& name, UndoManager* const undoManager) const;
+	Value getPropertyAsValue (const var::identifier& name, UndoManager* undoManager) const;
 
 	int getNumChildren() const;
 
@@ -6724,15 +6750,19 @@ public:
 
 	ValueTree getChildWithProperty (const var::identifier& propertyName, const var& propertyValue) const;
 
-	void addChild (ValueTree child, int index, UndoManager* const undoManager);
+	void addChild (ValueTree child, int index, UndoManager* undoManager);
 
-	void removeChild (ValueTree& child, UndoManager* const undoManager);
+	void removeChild (const ValueTree& child, UndoManager* undoManager);
 
-	void removeChild (const int childIndex, UndoManager* const undoManager);
+	void removeChild (int childIndex, UndoManager* undoManager);
 
-	void removeAllChildren (UndoManager* const undoManager);
+	void removeAllChildren (UndoManager* undoManager);
+
+	void moveChild (int currentIndex, int newIndex, UndoManager* undoManager);
 
 	bool isAChildOf (const ValueTree& possibleParent) const;
+
+	int indexOf (const ValueTree& child) const;
 
 	ValueTree getParent() const;
 
@@ -6772,18 +6802,22 @@ public:
 		}
 	}
 
-	static ValueTree invalid;
+	static const ValueTree invalid;
 
 	juce_UseDebuggingNewOperator
 
 private:
-	friend class ValueTreeSetPropertyAction;
-	friend class ValueTreeChildChangeAction;
+	class SetPropertyAction;
+	friend class SetPropertyAction;
+	class AddOrRemoveChildAction;
+	friend class AddOrRemoveChildAction;
+	class MoveChildAction;
+	friend class MoveChildAction;
 
 	class JUCE_API  SharedObject	: public ReferenceCountedObject
 	{
 	public:
-		SharedObject (const String& type);
+		explicit SharedObject (const String& type);
 		SharedObject (const SharedObject& other);
 		~SharedObject();
 
@@ -6799,16 +6833,19 @@ private:
 		void sendChildChangeMessage (ValueTree& tree);
 		void sendParentChangeMessage();
 		const var& getProperty (const var::identifier& name) const;
-		void setProperty (const var::identifier& name, const var& newValue, UndoManager* const undoManager);
+		const var getProperty (const var::identifier& name, const var& defaultReturnValue) const;
+		void setProperty (const var::identifier& name, const var& newValue, UndoManager*);
 		bool hasProperty (const var::identifier& name) const;
-		void removeProperty (const var::identifier& name, UndoManager* const undoManager);
-		void removeAllProperties (UndoManager* const undoManager);
-		bool isAChildOf (const SharedObject* const possibleParent) const;
+		void removeProperty (const var::identifier& name, UndoManager*);
+		void removeAllProperties (UndoManager*);
+		bool isAChildOf (const SharedObject* possibleParent) const;
+		int indexOf (const ValueTree& child) const;
 		ValueTree getChildWithName (const String& type) const;
 		ValueTree getChildWithProperty (const var::identifier& propertyName, const var& propertyValue) const;
-		void addChild (SharedObject* child, int index, UndoManager* const undoManager);
-		void removeChild (const int childIndex, UndoManager* const undoManager);
-		void removeAllChildren (UndoManager* const undoManager);
+		void addChild (SharedObject* child, int index, UndoManager*);
+		void removeChild (int childIndex, UndoManager*);
+		void removeAllChildren (UndoManager*);
+		void moveChild (int currentIndex, int newIndex, UndoManager*);
 		XmlElement* createXml() const;
 
 		juce_UseDebuggingNewOperator
@@ -6830,17 +6867,19 @@ private:
 
 	private:
 		ElementComparator& comparator;
+
+		ComparatorAdapter (const ComparatorAdapter&);
+		ComparatorAdapter& operator= (const ComparatorAdapter&);
 	};
 
 	friend class SharedObject;
-
 	typedef ReferenceCountedObjectPtr <SharedObject> SharedObjectPtr;
 
-	ReferenceCountedObjectPtr <SharedObject> object;
+	SharedObjectPtr object;
 	ListenerList <Listener> listeners;
 
 public:
-	explicit ValueTree (SharedObject* const object_);  // (can be made private when VC6 support is finally dropped)
+	explicit ValueTree (SharedObject*);  // (can be made private when VC6 support is finally dropped)
 };
 
 #endif   // __JUCE_VALUETREE_JUCEHEADER__
@@ -7713,6 +7752,9 @@ public:
 
 	bool next();
 
+	bool next (bool* isDirectory, bool* isHidden, int64* fileSize,
+			   Time* modTime, Time* creationTime, bool* isReadOnly);
+
 	const File getFile() const;
 
 	float getEstimatedProgress() const;
@@ -7720,12 +7762,39 @@ public:
 	juce_UseDebuggingNewOperator
 
 private:
-	Array <File> filesFound;
-	Array <File> dirsFound;
-	String wildCard;
+	friend class File;
+
+	class NativeIterator
+	{
+	public:
+		NativeIterator (const File& directory, const String& wildCard);
+		~NativeIterator();
+
+		bool next (String& filenameFound,
+				   bool* isDirectory, bool* isHidden, int64* fileSize,
+				   Time* modTime, Time* creationTime, bool* isReadOnly);
+
+		juce_UseDebuggingNewOperator
+
+	private:
+		class Pimpl;
+		friend class DirectoryIterator;
+		friend class ScopedPointer<Pimpl>;
+		ScopedPointer<Pimpl> pimpl;
+
+		NativeIterator (const NativeIterator&);
+		NativeIterator& operator= (const NativeIterator&);
+	};
+
+	friend class ScopedPointer<NativeIterator::Pimpl>;
+	NativeIterator fileFinder;
+	String wildCard, path;
 	int index;
+	mutable int totalNumFiles;
 	const int whatToLookFor;
+	const bool isRecursive;
 	ScopedPointer <DirectoryIterator> subIterator;
+	File currentFile;
 
 	DirectoryIterator (const DirectoryIterator&);
 	DirectoryIterator& operator= (const DirectoryIterator&);
@@ -7810,6 +7879,9 @@ private:
 	int64 currentPosition;
 	int bufferSize, bytesInBuffer;
 	HeapBlock <char> buffer;
+
+	void flushInternal();
+	int64 getPositionInternal() const;
 
 	FileOutputStream (const FileOutputStream&);
 	FileOutputStream& operator= (const FileOutputStream&);
@@ -9261,7 +9333,6 @@ private:
 #define __JUCE_MOUSECURSOR_JUCEHEADER__
 
 class Image;
-class SharedMouseCursorInternal;
 class ComponentPeer;
 class Component;
 
@@ -9297,17 +9368,17 @@ public:
 		BottomRightCornerResizeCursor   /**< A platform-specific cursor for resizing the bottom-right-corner of a window. */
 	};
 
-	MouseCursor() throw();
+	MouseCursor();
 
-	MouseCursor (StandardCursorType type) throw();
+	MouseCursor (StandardCursorType type);
 
-	MouseCursor (const Image& image, int hotSpotX, int hotSpotY) throw();
+	MouseCursor (const Image& image, int hotSpotX, int hotSpotY);
 
-	MouseCursor (const MouseCursor& other) throw();
+	MouseCursor (const MouseCursor& other);
 
-	MouseCursor& operator= (const MouseCursor& other) throw();
+	MouseCursor& operator= (const MouseCursor& other);
 
-	~MouseCursor() throw();
+	~MouseCursor();
 
 	bool operator== (const MouseCursor& other) const throw();
 
@@ -9320,11 +9391,12 @@ public:
 	juce_UseDebuggingNewOperator
 
 private:
-	ReferenceCountedObjectPtr <SharedMouseCursorInternal> cursorHandle;
+	class SharedCursorHandle;
+	SharedCursorHandle* cursorHandle;
 
 	friend class MouseInputSourceInternal;
-	void showInWindow (ComponentPeer* window) const throw();
-	void showInAllWindows() const throw();
+	void showInWindow (ComponentPeer* window) const;
+	void showInAllWindows() const;
 	void* getHandle() const throw();
 };
 
@@ -10257,6 +10329,12 @@ public:
 		const int y2 = (int) floorf ((float) (y + h + 0.9999f));
 
 		return Rectangle<int> (x1, y1, x2 - x1, y2 - y1);
+	}
+
+	const Rectangle<float> toFloat() const throw()
+	{
+		return Rectangle<float> (static_cast<float> (x), static_cast<float> (y),
+								 static_cast<float> (w), static_cast<float> (h));
 	}
 
 	static bool intersectRectangles (ValueType& x1, ValueType& y1, ValueType& w1, ValueType& h1,
@@ -12769,7 +12847,7 @@ private:
 	MouseCursor cursor_;
 	ImageEffectFilter* effect_;
 	Image* bufferedImage_;
-	VoidArray* mouseListeners_;
+	Array <MouseListener*>* mouseListeners_;
 	VoidArray* keyListeners_;
 	ListenerList <ComponentListener> componentListeners;
 	NamedValueSet properties;
@@ -13457,7 +13535,8 @@ public:
 
 	PropertiesFile (const File& file,
 					int millisecondsBeforeSaving,
-					int optionFlags);
+					int optionFlags,
+					InterProcessLock* processLock = 0);
 
 	~PropertiesFile();
 
@@ -13478,7 +13557,8 @@ public:
 														   const String& folderName,
 														   bool commonToAllUsers,
 														   int millisecondsBeforeSaving,
-														   int propertiesFileOptions);
+														   int propertiesFileOptions,
+														   InterProcessLock* processLock = 0);
 
 	static const File getDefaultAppSettingsFile (const String& applicationName,
 												 const String& fileNameSuffix,
@@ -13496,6 +13576,10 @@ private:
 	int timerInterval;
 	const int options;
 	bool loadedOk, needsWriting;
+
+	InterProcessLock* processLock;
+	typedef const ScopedPointer<InterProcessLock::ScopedLockType> ProcessScopedLock;
+	InterProcessLock::ScopedLockType* createProcessLock() const;
 
 	void timerCallback();
 
@@ -13943,7 +14027,7 @@ public:
 
 protected:
 	AudioFormat (const String& formatName,
-				 const tchar** const fileExtensions);
+				 const juce_wchar** const fileExtensions);
 
 private:
 
@@ -14505,19 +14589,19 @@ public:
 
 	~WavAudioFormat();
 
-	static const tchar* const bwavDescription;
+	static const char* const bwavDescription;
 
-	static const tchar* const bwavOriginator;
+	static const char* const bwavOriginator;
 
-	static const tchar* const bwavOriginatorRef;
+	static const char* const bwavOriginatorRef;
 
-	static const tchar* const bwavOriginationDate;
+	static const char* const bwavOriginationDate;
 
-	static const tchar* const bwavOriginationTime;
+	static const char* const bwavOriginationTime;
 
-	static const tchar* const bwavTimeReference;
+	static const char* const bwavTimeReference;
 
-	static const tchar* const bwavCodingHistory;
+	static const char* const bwavCodingHistory;
 
 	static const StringPairArray createBWAVMetadata (const String& description,
 													 const String& originator,
@@ -15683,6 +15767,8 @@ public:
 
 	void swapWith (MidiBuffer& other);
 
+	void ensureSize (size_t minimumNumBytes);
+
 	class Iterator
 	{
 	public:
@@ -16122,6 +16208,8 @@ public:
 
 	void setAutoHide (bool shouldHideWhenFullRange);
 
+	bool autoHides() const throw();
+
 	void setRangeLimits (const Range<double>& newRangeLimit);
 
 	void setRangeLimits (double minimum, double maximum);
@@ -16188,9 +16276,10 @@ private:
 	int thumbAreaStart, thumbAreaSize, thumbStart, thumbSize;
 	int dragStartMousePos, lastMousePos;
 	int initialDelayInMillisecs, repeatDelayInMillisecs, minimumDelayInMillisecs;
-	bool vertical, isDraggingThumb, alwaysVisible;
-	Button* upButton;
-	Button* downButton;
+	bool vertical, isDraggingThumb, autohides;
+	class ScrollbarButton;
+	ScrollbarButton* upButton;
+	ScrollbarButton* downButton;
 	ListenerList <ScrollBarListener> listeners;
 
 	void updateThumbPosition();
@@ -16481,7 +16570,6 @@ public:
 /*** End of inlined file: juce_TextInputTarget.h ***/
 
 class TextEditor;
-class TextHolderComponent;
 
 class JUCE_API  TextEditorListener
 {
@@ -16504,7 +16592,7 @@ class JUCE_API  TextEditor  : public Component,
 public:
 
 	explicit TextEditor (const String& componentName = String::empty,
-						 tchar passwordCharacter = 0);
+						 juce_wchar passwordCharacter = 0);
 
 	virtual ~TextEditor();
 
@@ -16533,9 +16621,9 @@ public:
 
 	bool areScrollbarsShown() const				 { return scrollbarVisible; }
 
-	void setPasswordCharacter (tchar passwordCharacter);
+	void setPasswordCharacter (juce_wchar passwordCharacter);
 
-	tchar getPasswordCharacter() const			  { return passwordCharacter; }
+	juce_wchar getPasswordCharacter() const			 { return passwordCharacter; }
 
 	void setPopupMenuEnabled (bool menuEnabled);
 
@@ -16687,6 +16775,14 @@ protected:
 
 private:
 
+	class Iterator;
+	class UniformTextSection;
+	class TextHolderComponent;
+	class InsertAction;
+	class RemoveAction;
+	friend class InsertAction;
+	friend class RemoveAction;
+
 	ScopedPointer <Viewport> viewport;
 	TextHolderComponent* textHolder;
 	BorderSize borderSize;
@@ -16715,10 +16811,10 @@ private:
 	Font currentFont;
 	mutable int totalNumChars;
 	int caretPosition;
-	VoidArray sections;
+	Array <UniformTextSection*> sections;
 	String textToShowWhenEmpty;
 	Colour colourForTextWhenEmpty;
-	tchar passwordCharacter;
+	juce_wchar passwordCharacter;
 	Value textValue;
 
 	enum
@@ -16731,15 +16827,12 @@ private:
 	String allowedCharacters;
 	ListenerList <TextEditorListener> listeners;
 
-	friend class TextEditorInsertAction;
-	friend class TextEditorRemoveAction;
-
 	void coalesceSimilarSections();
 	void splitSection (int sectionIndex, int charToSplitAt);
 	void clearInternal (UndoManager* um);
 	void insert (const String& text, int insertIndex, const Font& font,
 				 const Colour& colour, UndoManager* um, int caretPositionToMoveTo);
-	void reinsert (int insertIndex, const VoidArray& sections);
+	void reinsert (int insertIndex, const Array <UniformTextSection*>& sections);
 	void remove (const Range<int>& range, UndoManager* um, int caretPositionToMoveTo);
 	void getCharPosition (int index, float& x, float& y, float& lineHeight) const;
 	void updateCaretPosition();
@@ -17469,7 +17562,7 @@ private:
 	MidiFile (const MidiFile&);
 	MidiFile& operator= (const MidiFile&);
 
-	void readNextTrack (const char* data, int size);
+	void readNextTrack (const uint8* data, int size);
 	void writeTrack (OutputStream& mainOut, const int trackNum);
 };
 
@@ -19149,7 +19242,8 @@ public:
 
 private:
 	Viewport* viewport;
-	Component* propertyHolderComponent;
+	class PropertyHolderComponent;
+	PropertyHolderComponent* propertyHolderComponent;
 	String messageWhenEmpty;
 
 	void updatePropHolderLayout() const;
@@ -20401,10 +20495,11 @@ public:
 	juce_UseDebuggingNewOperator
 
 private:
-	VoidArray tasks;
+	class AnimationTask;
+	Array <AnimationTask*> tasks;
 	uint32 lastTime;
 
-	void* findTaskFor (Component* component) const;
+	AnimationTask* findTaskFor (Component* component) const;
 	void timerCallback();
 };
 
@@ -20525,7 +20620,7 @@ private:
 	Array <ToolbarItemComponent*> items;
 
 	friend class ItemDragAndDropOverlayComponent;
-	static const tchar* const toolbarDragDescriptor;
+	static const char* const toolbarDragDescriptor;
 
 	void addItemInternal (ToolbarItemFactory& factory, const int itemId, const int insertIndex);
 
@@ -20692,7 +20787,7 @@ public:
 
 		const Position movedByLines (int deltaLines) const throw();
 
-		const tchar getCharacter() const throw();
+		const juce_wchar getCharacter() const throw();
 
 		const String getLineText() const throw();
 
@@ -20803,7 +20898,7 @@ private:
 	UndoManager undoManager;
 	int currentActionIndex, indexOfSavedState;
 	int maximumLineLength;
-	VoidArray listeners;
+	ListenerList <Listener> listeners;
 	String newLineChars;
 
 	void sendListenerChangeMessage (int startLine, int endLine);
@@ -20979,7 +21074,8 @@ private:
 
 	CodeDocument::Position caretPos;
 	CodeDocument::Position selectionStart, selectionEnd;
-	Component* caret;
+	class CaretComponent;
+	CaretComponent* caret;
 	ScrollBar* verticalScrollBar;
 	ScrollBar* horizontalScrollBar;
 
@@ -21344,6 +21440,8 @@ public:
 
 	void setTextValueSuffix (const String& suffix);
 
+	const String getTextValueSuffix() const;
+
 	virtual double proportionOfLengthToValue (double proportion);
 
 	virtual double valueToProportionOfLength (double value);
@@ -21392,6 +21490,8 @@ protected:
 	void colourChanged();
 	void valueChanged (Value& value);
 
+	int getNumDecimalPlacesToDisplay() const throw()	{ return numDecimalPlaces; }
+
 private:
 	ListenerList <SliderListener> listeners;
 	Value currentValue, valueMin, valueMax;
@@ -21419,7 +21519,6 @@ private:
 	bool incDecButtonsSideBySide : 1, sendChangeOnlyOnRelease : 1, popupDisplayEnabled : 1;
 	bool menuEnabled : 1, menuShown : 1, mouseWasHidden : 1, incDecDragged : 1;
 	bool scrollWheelEnabled : 1, snapsToMousePos : 1;
-	Font font;
 	Label* valueBox;
 	Button* incButton;
 	Button* decButton;
@@ -22031,7 +22130,7 @@ public:
 
 	void scrollToKeepItemVisible (TreeViewItem* item);
 
-	Viewport* getViewport() const throw()			   { return viewport; }
+	Viewport* getViewport() const throw();
 
 	int getIndentSize() const throw()				   { return indentSize; }
 
@@ -22071,11 +22170,14 @@ public:
 private:
 	friend class TreeViewItem;
 	friend class TreeViewContentComponent;
-	Viewport* viewport;
+	class TreeViewport;
+	TreeViewport* viewport;
 	CriticalSection nodeAlterationLock;
 	TreeViewItem* rootItem;
-	Component* dragInsertPointHighlight;
-	Component* dragTargetGroupHighlight;
+	class InsertPointHighlight;
+	class TargetGroupHighlight;
+	InsertPointHighlight* dragInsertPointHighlight;
+	TargetGroupHighlight* dragTargetGroupHighlight;
 	int indentSize;
 	bool defaultOpenness : 1;
 	bool needsRecalculating : 1;
@@ -22283,7 +22385,7 @@ public:
 
 	void setIgnoresHiddenFiles (bool shouldIgnoreHiddenFiles);
 
-	bool ignoresHiddenFiles() const		 { return ignoreHiddenFiles; }
+	bool ignoresHiddenFiles() const;
 
 	struct FileInfo
 	{
@@ -22320,19 +22422,20 @@ private:
 	File root;
 	const FileFilter* fileFilter;
 	TimeSliceThread& thread;
-	bool includeDirectories, includeFiles, ignoreHiddenFiles;
+	int fileTypeFlags;
 
 	CriticalSection fileListLock;
 	OwnedArray <FileInfo> files;
 
-	void* volatile fileFindHandle;
+	ScopedPointer <DirectoryIterator> fileFindHandle;
 	bool volatile shouldStop;
 
 	void changed();
 	bool checkNextFile (bool& hasChanged);
-	bool addFile (const String& filename, bool isDir, bool isHidden,
+	bool addFile (const File& file, bool isDir,
 				  const int64 fileSize, const Time& modTime,
 				  const Time& creationTime, bool isReadOnly);
+	void setTypeFlags (int newFlags);
 
 	DirectoryContentsList (const DirectoryContentsList&);
 	DirectoryContentsList& operator= (const DirectoryContentsList&);
@@ -23459,9 +23562,9 @@ private:
 	ListBox* listBox;
 	Button* addButton;
 	Button* removeButton;
-	Button* changeButton;
-	Button* upButton;
-	Button* downButton;
+	TextButton* changeButton;
+	DrawableButton* upButton;
+	DrawableButton* downButton;
 
 	void changed();
 	void updateButtons();
@@ -24613,41 +24716,41 @@ class JUCE_API  TextLayout
 {
 public:
 
-	TextLayout() throw();
+	TextLayout();
 
-	TextLayout (const TextLayout& other) throw();
+	TextLayout (const TextLayout& other);
 
-	TextLayout (const String& text, const Font& font) throw();
+	TextLayout (const String& text, const Font& font);
 
-	~TextLayout() throw();
+	~TextLayout();
 
-	TextLayout& operator= (const TextLayout& layoutToCopy) throw();
+	TextLayout& operator= (const TextLayout& layoutToCopy);
 
-	void clear() throw();
+	void clear();
 
 	void appendText (const String& textToAppend,
-					 const Font& fontToUse) throw();
+					 const Font& fontToUse);
 
 	void setText (const String& newText,
-				  const Font& fontToUse) throw();
+				  const Font& fontToUse);
 
 	void layout (int maximumWidth,
 				 const Justification& justification,
-				 bool attemptToBalanceLineLengths) throw();
+				 bool attemptToBalanceLineLengths);
 
-	int getWidth() const throw();
+	int getWidth() const;
 
-	int getHeight() const throw();
+	int getHeight() const;
 
-	int getNumLines() const throw()		 { return totalLines; }
+	int getNumLines() const			 { return totalLines; }
 
-	int getLineWidth (int lineNumber) const throw();
+	int getLineWidth (int lineNumber) const;
 
-	void draw (Graphics& g, int topLeftX, int topLeftY) const throw();
+	void draw (Graphics& g, int topLeftX, int topLeftY) const;
 
 	void drawWithin (Graphics& g,
 					 int x, int y, int w, int h,
-					 const Justification& layoutFlags) const throw();
+					 const Justification& layoutFlags) const;
 
 	juce_UseDebuggingNewOperator
 
@@ -26055,7 +26158,7 @@ protected:
 
 public:
 
-	SliderPropertyComponent (Value& valueToControl,
+	SliderPropertyComponent (const Value& valueToControl,
 							 const String& propertyName,
 							 double rangeMin,
 							 double rangeMax,
@@ -26166,16 +26269,17 @@ public:
 	juce_UseDebuggingNewOperator
 
 private:
-	class ActiveXControlData;
-	friend class ActiveXControlData;
-	void* control;
+	class Pimpl;
+	friend class Pimpl;
+	friend class ScopedPointer <Pimpl>;
+	ScopedPointer <Pimpl> control;
 	bool mouseEventsAllowed;
-
-	ActiveXControlComponent (const ActiveXControlComponent&);
-	ActiveXControlComponent& operator= (const ActiveXControlComponent&);
 
 	void setControlBounds (const Rectangle<int>& bounds) const;
 	void setControlVisible (bool b) const;
+
+	ActiveXControlComponent (const ActiveXControlComponent&);
+	ActiveXControlComponent& operator= (const ActiveXControlComponent&);
 };
 
 #endif
@@ -26190,8 +26294,6 @@ private:
 /*** Start of inlined file: juce_AudioDeviceSelectorComponent.h ***/
 #ifndef __JUCE_AUDIODEVICESELECTORCOMPONENT_JUCEHEADER__
 #define __JUCE_AUDIODEVICESELECTORCOMPONENT_JUCEHEADER__
-
-class MidiInputSelectorComponentListBox;
 
 class JUCE_API  AudioDeviceSelectorComponent  : public Component,
 												public ComboBoxListener,
@@ -26230,6 +26332,7 @@ private:
 	const bool showChannelsAsStereoPairs;
 	const bool hideAdvancedOptionsWithButton;
 
+	class MidiInputSelectorComponentListBox;
 	MidiInputSelectorComponentListBox* midiInputsList;
 	Label* midiInputsLabel;
 	ComboBox* midiOutputSelector;
@@ -26401,14 +26504,17 @@ public:
 	juce_UseDebuggingNewOperator
 
 private:
+	class ColourSpaceView;
+	class HueSelectorComp;
+	class SwatchComponent;
 	friend class ColourSpaceView;
 	friend class HueSelectorComp;
+
 	Colour colour;
 	float h, s, v;
 	Slider* sliders[4];
-	Component* colourSpace;
-	Component* hueSelector;
-	class SwatchComponent;
+	ColourSpaceView* colourSpace;
+	HueSelectorComp* hueSelector;
 	OwnedArray <SwatchComponent> swatchComponents;
 	const int flags;
 	int topSpace, edgeGap;

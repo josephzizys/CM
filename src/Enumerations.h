@@ -200,6 +200,8 @@ class TextIDs
     else if (ext.equalsIgnoreCase(T(".sal2")))
       return Sal2;
     else if (ext.equalsIgnoreCase(T(".sal"))) 
+      return Sal2;
+    else if (ext.equalsIgnoreCase(T(".sal1"))) 
       return Sal;
     else if (ext.equalsIgnoreCase(T(".fms"))) 
       return Fomus;

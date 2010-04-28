@@ -297,7 +297,7 @@
 	  (fms:send fomus_par_note_settingval fomus_act_set (cadr e)))))
 
 (define (fms:note . args)
-  (with-optkeys (args (time 0) dur pitch part (voice 1) (dyn 0.5) grace (marks '()) (sets '()) &allow-other-keys)
+  (with-optkeys (args (time 0) dur pitch part (voice 1) (dyn 0) grace (marks '()) (sets '()) &allow-other-keys)
 		(unless (number? time) (ffi_fms_err) (error "expected a number for time argument"))
 		(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
 		(unless (or (number? pitch) (string? pitch) (symbol? pitch)) (ffi_fms_err) (error "expected a number or string for pitch argument"))
@@ -308,7 +308,7 @@
 		(unless (or (list? marks) (eq? marks #f) (string? marks) (symbol? marks)) (ffi_fms_err) (error "expected a list for marks argument"))
 		(unless (list? sets) (ffi_fms_err) (error "expected a list for sets argument"))
 		(fms:send fomus_par_pitch fomus_act_set pitch)
-		(when dyn (fms:send fomus_par_dynlevel fomus_act_set dyn))
+		(fms:send fomus_par_dynlevel fomus_act_set dyn)
 		(fms:entry time dur part voice grace marks (append &allow-other-keys sets))
 		(fms:send fomus_par_noteevent fomus_act_add #f))
   #t)
