@@ -100,27 +100,34 @@ class Csound
 #ifdef GRACE
 
 class CsoundSettingsDialog : public Component,
-  public LabelListener,
+                             //public LabelListener,
   public FilenameComponentListener,
-  public ButtonListener
+  public ButtonListener,
+  public ComboBoxListener,
+  public TextEditorListener
 {
  public:
   int mode;
   Label* csolab;
   FilenameComponent* csound;
   Label* optlab;
-  Label* options;
+  ComboBox* options;
   Label* orclab;
   FilenameComponent* orcfile;
   Label* hdrlab;
-  Label* header;
+  TextEditor* header;
   CsoundSettingsDialog();
   ~CsoundSettingsDialog();
   //  void paint (Graphics& g);
   void resized();
   void filenameComponentChanged (FilenameComponent* changed);
-  void labelTextChanged (Label *changed);
+  //void labelTextChanged (Label *changed);
+  void comboBoxChanged (ComboBox *comboBoxThatHasChanged);
   void buttonClicked (Button *clicked);
+  void textEditorTextChanged(TextEditor& ed);
+  void textEditorReturnKeyPressed(TextEditor& ed);
+  void textEditorEscapeKeyPressed(TextEditor& ed);
+  void textEditorFocusLost(TextEditor& ed);
 };
 
 class ExportCsoundDialog : public Component,

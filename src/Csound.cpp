@@ -60,6 +60,7 @@ void Csound::initPrefs()
       else
 	application=app;
     }
+  pref->setStringProp(T("CsoundCommandArgs"), T("-W -o test.wav -d"));
   commandargs=pref->getStringProp(T("CsoundCommandArgs"),
 				  T("-W -o test.wav -d"));
   scoreheader=pref->getStringProp(T("CsoundScoreHeader"));
@@ -382,19 +383,6 @@ void Csound::writeScore(int dest, int format, double start, double endtime,
                                   Dialogs
  *=======================================================================*/
 
-void Csound::openSettings()
-{
-  CsoundSettingsDialog* dialog=new CsoundSettingsDialog();
-  DialogWindow::showModalDialog(T("Csound Settings"),
-				dialog,
-				NULL,
-				Colour(0xffe5e5e5),
-				true,
-				true,
-				true);
-  delete dialog;
-}
-
 CsoundSettingsDialog::CsoundSettingsDialog ()
   : csolab (0),
     csound (0),
@@ -422,7 +410,7 @@ CsoundSettingsDialog::CsoundSettingsDialog ()
 				 false, 
 				 String::empty,
 				 String::empty,
-				 T("<choose csound executable>"));
+				 T("(choose csound executable)"));
   addAndMakeVisible(csound);
   csound->setBrowseButtonText(T("Browse..."));
   csound->addListener(this);
@@ -434,12 +422,14 @@ CsoundSettingsDialog::CsoundSettingsDialog ()
   optlab->setColour(TextEditor::textColourId, Colours::black);
   optlab->setColour(TextEditor::backgroundColourId, Colour (0x0));
   
-  addAndMakeVisible(options = new Label(T("Options"), String::empty));
-  options->setColour(Label::backgroundColourId, Colours::white);
-  options->setColour(Label::outlineColourId,  Colour (0xb2808080));
-  options->setEditable(true, true, false);
-  options->setText(cs->getApplicationArgs(), false);
+  addAndMakeVisible(options = new ComboBox(T("Options")));
+  options->setEditableText(true);
+  options->addItem(cs->getApplicationArgs(), 1);
+  options->addSeparator();
+  options->addItem(T("New"), 1000);
   options->addListener(this);
+  options->setSelectedId(1,false);
+
 
   addAndMakeVisible(orclab = new Label(String::empty, T("Orchestra:")));
   orclab->setFont(Font (15.0000f, Font::plain));
@@ -453,7 +443,7 @@ CsoundSettingsDialog::CsoundSettingsDialog ()
 				  false, 
 				  T("*.orc;*.csd"),
 				  String::empty,
-				  T("<choose .orc file>"));
+				  T("(choose .orc file)"));
   orcfile->setBrowseButtonText(T("Browse..."));
   orcfile->addListener(this);
   StringArray files=cs->orchestras.getAllFilenames();
@@ -469,15 +459,16 @@ CsoundSettingsDialog::CsoundSettingsDialog ()
   hdrlab->setColour(TextEditor::textColourId, Colours::black);
   hdrlab->setColour(TextEditor::backgroundColourId, Colour (0x0));
   
-  addAndMakeVisible(header = new Label(String::empty, String::empty));
-  header->setColour(Label::backgroundColourId, Colours::white);
-  header->setColour(Label::outlineColourId,  Colour (0xb2808080));
-  header->setEditable(true, true, false);
+  addAndMakeVisible(header = new TextEditor(String::empty));
+  header->setColour(TextEditor::backgroundColourId, Colours::white);
+  header->setColour(TextEditor::outlineColourId,  Colour (0xb2808080));
+  header->setMultiLine(true);
+  header->setReturnKeyStartsNewLine(true);
   header->setText(cs->getScoreHeader(), false);
   header->addListener(this);
   int m=8, l=24;
   //  setSize (600, 96 + 24 + 16);
-  setSize (600,m+l+m+l+m+l+m+l+m);
+  setSize (600,m+l+m+l+m+l+m+l+l+m);
 }
 
 CsoundSettingsDialog::~CsoundSettingsDialog()
@@ -490,6 +481,20 @@ CsoundSettingsDialog::~CsoundSettingsDialog()
   deleteAndZero(orcfile);
   deleteAndZero(hdrlab);
   deleteAndZero(header);
+}
+
+
+void Csound::openSettings()
+{
+  CsoundSettingsDialog* dialog=new CsoundSettingsDialog();
+  DialogWindow::showModalDialog(T("Csound Settings"),
+				dialog,
+				NULL,
+				Colour(0xffe5e5e5),
+				true,
+				true,
+				true);
+  delete dialog;
 }
 
 void CsoundSettingsDialog::resized()
@@ -517,15 +522,60 @@ void CsoundSettingsDialog::resized()
   y=y+24+m;
   hdrlab->setBounds(x1, y, m1, 24);
   header->setBounds(x2, y, w-x2-m, h-y-m);
-
 }
 
-void CsoundSettingsDialog::labelTextChanged(Label* label)
+void CsoundSettingsDialog::textEditorTextChanged(TextEditor& ed)
 {
-  if (label==options)
-    Csound::getInstance()->setApplicationArgs(label->getText());
-  else if (label==header)
-    Csound::getInstance()->setScoreHeader(label->getText());
+  //  std::cout << "textEditorTextChanged" << "\n";
+}
+
+void CsoundSettingsDialog::textEditorReturnKeyPressed(TextEditor& ed)
+{
+  //  std::cout << "textEditorReturnKeyPressed" << "\n";
+}
+
+void CsoundSettingsDialog::textEditorEscapeKeyPressed(TextEditor& ed)
+{
+  //  std::cout << "textEditorEscapeKeyPressed" << "\n";
+}
+
+void CsoundSettingsDialog::textEditorFocusLost(TextEditor& ed)
+{
+  //  std::cout << "textEditorFocusLost" << "\n";
+  Csound::getInstance()->setScoreHeader(ed.getText());
+}
+
+void CsoundSettingsDialog::comboBoxChanged(ComboBox* box)
+{
+  // this method gets called when items are selected in the pulldown
+  // menu or the current item's text changes. if its the latter then
+  // for some reason getSelectedId() == 0 at that time. so we need to
+  // cache the ID of the last chosen item so we can change its text
+  static int ID=1;
+  int id=box->getSelectedId();
+  if (id==0) id=ID; 
+  if (id==1000)
+    {
+      StringArray items;
+      int i,j;
+      for (i=0; i<box->getNumItems()-1; i++) // dont include "New" item at last index
+        items.add(box->getItemText(i));
+      box->clear(true);
+      j=1;
+      for (i=0; i<items.size(); i++)
+        box->addItem(items[i], j++);
+      box->addItem(T("(add text)"), j);
+      ID=j;
+      box->setText(T("(add text)"), true);
+      box->addSeparator();
+      box->addItem(T("New"), 1000);
+    }
+  else if (id>0)
+    {
+      ID=id;
+      box->changeItemText(id, box->getText());
+      Csound::getInstance()->setApplicationArgs(box->getText());      
+    }
 }
 
 void CsoundSettingsDialog::filenameComponentChanged(FilenameComponent* comp)
@@ -690,7 +740,7 @@ ExportCsoundDialog::ExportCsoundDialog ()
 				       true, 
 				       String::empty,
 				       String::empty,
-				       T("<choose file>"));
+				       T("(choose file)"));
   filechooser->setEnabled(false);
   filechooser->addListener(this);
   addAndMakeVisible(filechooser);

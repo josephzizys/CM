@@ -10,7 +10,7 @@ This is the readme for Common Music 3.
                                APPLICATIONS
 ==========================================================================
 
-The CM source tree builds three different applications:
+The CM source tree builds two different applications:
 
 Grace (Graphical Realtime Algorithmic Composition Environment) 
 
@@ -23,24 +23,32 @@ cm
    A console version of Grace that you can run in the Terminal or as
    an 'inferior process' under Emacs (see section 4 below).
 
-GraceCL
-    
-   A version of Grace for use with Common Lisp (either SBCL or CLISP)
-   and the older CM2 branch of Common Music. It is intended as a
-   replacement for working with CLM4/CM2 in Emacs. GraceCL is not
-   realtime and has no Audio menu.
-
 ==========================================================================
                                DEPENDENCIES                               
 ==========================================================================
 
-Premake 3.7 available at:
+1. Premake 3.7 available at:
 
   http://premake.sourceforge.net/download
 
-SndLib with S7 Scheme, available at:
+2. SndLib with S7 Scheme, available at:
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
+
+3. (LINUX) the following packages must be installed: 
+
+  sudo apt-get install g++ libx11-dev libasound2-dev libfreetype6-dev libxinerama-dev libglu1-mesa-dev libxcursor-dev
+  (add libboost-dev if you are going to build Fomus)
+
+OPTIONAL
+
+4. Fomus available at:
+
+  http://fomus.sourceforge.net/
+
+5. Liblo (OSC) available at:
+
+  http://liblo.sourceforge.net/
 
 ==========================================================================
                                  BUILDING                                 
@@ -49,26 +57,30 @@ SndLib with S7 Scheme, available at:
 Use premake to create your make files and then make the targets. For
 example this is how I build the basic system on my mac:
 
-  $ premake --target gnu --sndlib ../sndlib
+  $ premake --verbose --target gnu --sndlib ../sndlib
+  $ make
+
+And this is how I build the complete system (with Fomus and OSC)
+
+  $ premake --verbose --target gnu --sndlib ../sndlib --liblo ../liblo-0.26 --fomus /usr/local
   $ make
 
 You MUST specify a --target option (either gnu or vs2008) and a --sndlib
 installation directory
 
 To use an external JUCE installation rather than CM's amalgamated JUCE
-sources (part of the CM source tree) pass an optinal --juce
-installation directory.  To build with Fomus add your --fomus
-installation root as well, typically '--fomus /usr/local'
+sources pass an optinal --juce installation directory.  To build with
+Fomus add your --fomus installation root as well, typically '--fomus
+/usr/local'
 
-The --sndlib --juce and --fomus options all allow their
-path to be either the source directory (eg '--juce ../juce-1.46') or
-an install root (eg '--juce /usr/local').
+The --sndlib --liblo and --fomus options all allow their path to be
+either the source directory (eg '--juce ../juce-1.46') or an install
+root (eg '--juce /usr/local').
 
 Executables are saved in bin/:
 
   bin/cm                      console app    
   bin/Grace                   gui app
-  bin/GraceCL                 gui app (for cm2/common lisp)
 
 EXAMPLE: BUILDING SNDLIB AND CM FROM SOURCES ON OSX AND LINUX
 
@@ -123,22 +135,14 @@ EXAMPLE: BUILDING SNDLIB AND CM FROM SOURCES ON WINDOWS
   7. Double click the file 'cm.sln' , select the RELEASE configuration
   in the pulldown menu and press F7.
 
-Building a static, uninstalled liblo for CM
+EXAMPLE: BUILDING WITH A STATIC, UNINSTALLED LIBLO
 
-         $ cd liblo-0.26
-         $ ./configure --enable-static=yes --enable-shared=no
-         $ make
-         $ mkdir lib
-         $ cp src/.libs/liblo.a lib
-         $ mkdir include
-         $ cp -r lo include
-         
-         $ cd ../cm
-         $ premake ... --liblo ../liblo-0.26
-
-libtool: link: ar cru .libs/liblo.a  liblo_la-address.o liblo_la-send.o liblo_la-message.o liblo_la-server.o liblo_la-method.o liblo_la-server_thread.o liblo_la-blob.o liblo_la-bundle.o liblo_la-timetag.o liblo_la-pattern_match.o
-libtool: link: ranlib .libs/liblo.a
-
+  cd liblo-0.26
+  ./configure --enable-static=yes --enable-shared=no
+  make
+  cd ../cm
+  premake --verbose --target gnu --sndlib ../sndlib --liblo ../liblo
+  make
 
 ==========================================================================
                                  CM IN EMACS                             
