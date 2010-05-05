@@ -4,12 +4,12 @@ project.configs = {"Release", "Debug"}
 
 amalgamated = true
 
-addoption("juce", "Location of JUCE source directory or install prefix")
-addoption("sndlib", "Optional location of SNDLIB source directory or install prefix")
+addoption("sndlib", "Location of SNDLIB source directory or install prefix")
+addoption("liblo", "Optional LIBLO directory or install prefix")
 addoption("fomus", "Optional FOMUS install prefix")
-addoption("liblo", "Optional LIBLO install prefix")
 addoption("svnversion", "Optional SVN version number")
-addoption("gracecl", "Optional build gracecl appliation")
+--addoption("gracecl", "Optional build gracecl application")
+--addoption("juce", "Optional JUCE directory or install prefix")
 
 if options["juce"] then
    amalgamated = false
@@ -20,6 +20,9 @@ fomus = nil
 liblo = nil
 svnvers = nil
 juce_config = {"JUCE_OPENGL=0", "JUCE_CHECK_MEMORY_LEAKS=0"}
+if linux then
+   table.insert(juce_config, "JUCE_JACK=1")
+end
 
 function insure_slash(path) 
   --insure slash at end of directory so concatenation works
@@ -131,6 +134,9 @@ for i = 1,numtargets do
       "src/Csound.cpp", "src/Csound.h",
       "src/Main.cpp", "src/Main.h",
       "src/Resources.cpp", "src/Resources.h",
+      "src/SndLib.cpp", "src/SndLib.h",
+      "src/SndLibBridge.cpp", "src/SndLibBridge.h",
+      "src/Instruments.cpp", "src/Instruments.h"
    }
 
    if options["liblo"] then
@@ -185,8 +191,6 @@ for i = 1,numtargets do
       add(mypackage.files, "src/Commands.h")
       add(mypackage.files, "src/Menus.cpp")
       add(mypackage.files, "src/Menus.h")
---      add(mypackage.files, "src/TextEditor.cpp")
---      add(mypackage.files, "src/TextEditor.h")
       add(mypackage.files, "src/CodeEditor.cpp")
       add(mypackage.files, "src/CodeEditor.h")
       add(mypackage.files, "src/Documentation.cpp")
@@ -195,8 +199,6 @@ for i = 1,numtargets do
       add(mypackage.files, "src/Images.h")
       add(mypackage.files, "src/Audio.cpp")
       add(mypackage.files, "src/Audio.h")
---      add(mypackage.files, "src/Triggers.cpp")
---      add(mypackage.files, "src/Triggers.h")
       add(mypackage.files, "src/Cells.h")
       add(mypackage.files, "src/Cells.cpp")
       add(mypackage.files, "src/Plot.h")
@@ -254,9 +256,6 @@ for i = 1,numtargets do
    if options["sndlib"] then
       sndlib = insure_slash(options["sndlib"])
       add(mypackage.defines, "SNDLIB=1")
-      add(mypackage.files, "src/SndLib.cpp")
-      add(mypackage.files, "src/SndLibBridge.cpp")
-      add(mypackage.files, "src/Instruments.cpp")
       if os.fileexists(sndlib .. "mus-config.h") then
          add(mypackage.includepaths, sndlib)
          add(mypackage.libpaths, sndlib )
@@ -264,8 +263,12 @@ for i = 1,numtargets do
 	    add(mypackage.config["Debug"].links, "sndlib_debug")
 	    add(mypackage.config["Release"].links, "sndlib")
 	 else
-	    add(mypackage.links, "sndlib" )
 	    sndlib_config = sndlib .. "sndlib-config"
+            if os.fileexists(sndlib .. "libsndlib.a") then
+               add(mypackage.linkoptions, sndlib .. "libsndlib.a")
+            else
+               error("--sndlib: can't find static sndlib library " .. sndlib .. "libsndlib.a")
+            end
 	 end
 
       elseif os.fileexists(sndlib .. "include/mus-config.h") then

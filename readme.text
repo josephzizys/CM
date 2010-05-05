@@ -37,7 +37,7 @@ cm
 
 3. (LINUX) the following packages must be installed: 
 
-  sudo apt-get install g++ libx11-dev libasound2-dev libfreetype6-dev libxinerama-dev libglu1-mesa-dev libxcursor-dev
+  sudo apt-get install g++ libx11-dev libasound2-dev libfreetype6-dev libxinerama-dev libglu1-mesa-dev libxcursor-dev libjack-dev
   (add libboost-dev if you are going to build Fomus)
 
 OPTIONAL
