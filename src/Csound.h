@@ -40,7 +40,7 @@ class Csound
   };
   File scorefile;
   File application;
-  String commandargs;
+  XmlElement* commandargs;
   String scoreheader;
 
   bool playafter;
@@ -67,7 +67,9 @@ class Csound
   bool canRunApplication();
   void runApplication();
   String getApplicationArgs();
+  int findApplicationArgs(String args);
   void setApplicationArgs(String args);
+  XmlElement* getCommandArgs();
 
   RecentlyOpenedFilesList orchestras;
 
@@ -128,6 +130,7 @@ class CsoundSettingsDialog : public Component,
   void textEditorReturnKeyPressed(TextEditor& ed);
   void textEditorEscapeKeyPressed(TextEditor& ed);
   void textEditorFocusLost(TextEditor& ed);
+  void updateOptions();
 };
 
 class ExportCsoundDialog : public Component,

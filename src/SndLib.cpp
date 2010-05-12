@@ -112,7 +112,7 @@ s7_pointer s7_void_value(s7_scheme *sc, s7_pointer args)
 #define OUTBUFSIZ 1024
 #define MAXBUFPOS OUTBUFSIZ-2 // leave room for null char
 
-static void cm_stdout(s7_scheme *sc, char c, s7_pointer port)
+static void cm_stdout(s7_scheme *sc, unsigned char c, s7_pointer port)
 {
   static char stdoutbuf[OUTBUFSIZ];
   static int stdoutpos = 0;
@@ -137,7 +137,7 @@ static void cm_stdout(s7_scheme *sc, char c, s7_pointer port)
   */
 }
 
-static void cm_stderr(s7_scheme *sc, char c, s7_pointer port)
+static void cm_stderr(s7_scheme *sc, unsigned char c, s7_pointer port)
 {
   static char stderrbuf[OUTBUFSIZ];
   static int stderrpos = 0;

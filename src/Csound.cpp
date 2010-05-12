@@ -21,7 +21,7 @@ juce_ImplementSingleton (Csound);
 Csound::Csound () 
   : scorefile (File::nonexistent),
     application (File::nonexistent),
-    commandargs (String::empty),
+    commandargs (0),
     scoreheader (String::empty),
     writeafter (true),
     playafter (false)
@@ -60,21 +60,29 @@ void Csound::initPrefs()
       else
 	application=app;
     }
-  pref->setStringProp(T("CsoundCommandArgs"), T("-W -o test.wav -d"));
-  commandargs=pref->getStringProp(T("CsoundCommandArgs"),
-				  T("-W -o test.wav -d"));
+  //pref->setStringProp(T("CsoundCommandArgs"), T("-W -o test.wav -d"));
+  commandargs=pref->getXmlProp(T("CsoundCommandArgs"));
+  if (!commandargs)
+    {
+      XmlElement* child=0;
+      commandargs=new XmlElement(T("CsoundCommandArgs"));
+      // index of currently selected args
+      commandargs->setAttribute(T("index"), 0); 
+      child=commandargs->createNewChildElement(T("CommandArgs"));
+      child->setAttribute(T("text"),T("-W -odac -d"));
+      child=commandargs->createNewChildElement(T("CommandArgs"));
+      child->setAttribute(T("text"),T("-W -o test.wav -d"));
+    }
   scoreheader=pref->getStringProp(T("CsoundScoreHeader"));
   orchestras.restoreFromString(pref->getStringProp(T("CsoundOrchestras")));
   playafter=pref->getBoolProp(T("CsoundPlayAfter"), false);
-  // WriteAfter is NOT a preference
 }
 
 void Csound::savePrefs()
 {
   Preferences* pref=Preferences::getInstance();
-  pref->setStringProp(T("CsoundApplication"),
-		      application.getFullPathName());
-  pref->setStringProp(T("CsoundCommandArgs"), commandargs);
+  pref->setStringProp(T("CsoundApplication"),  application.getFullPathName());
+  pref->setXmlProp(T("CsoundCommandArgs"), commandargs);
   pref->setStringProp(T("CsoundOrchestras"), orchestras.toString());
   pref->setStringProp(T("CsoundScoreHeader"), scoreheader);
   pref->setBoolProp(T("CsoundPlayAfter"), playafter);
@@ -104,9 +112,47 @@ void Csound::setApplication(File file)
   savePrefs();
 }
 
-String Csound::getApplicationArgs()
+XmlElement* Csound::getCommandArgs()
 {
   return commandargs;
+}
+
+String Csound::getApplicationArgs()
+{
+  // return current application args
+  int index=commandargs->getIntAttribute(T("index")); // index of current
+  XmlElement* sub=commandargs->getChildElement(index);
+  if (sub)
+    return sub->getStringAttribute(T("text"));
+  return String::empty;
+}
+
+int Csound::findApplicationArgs(String str)
+{
+  // return index of str or -1 if not there
+  int index=0;
+  forEachXmlChildElement (*commandargs, e)
+    {
+      if (e->getStringAttribute(T("text"))==str)
+        return index;
+      index++;
+    }
+  return -1;
+}
+
+void Csound::setApplicationArgs(String str)
+{
+  // add or select str as the application's command args
+  int i=findApplicationArgs(str);
+  if (i==-1) // add new command args
+    {
+      XmlElement* e=commandargs->createNewChildElement(T("CommandArgs"));
+      e->setAttribute(T("text"), str);
+      i=commandargs->getNumChildElements()-1;
+    }
+  // select str as current args
+  commandargs->setAttribute(T("index"), i);
+  savePrefs();
 }
 
 bool Csound::canRunApplication()
@@ -130,12 +176,6 @@ void Csound::runApplication()
   else
     Console::getInstance()->
       printError(">>> Error: Csound: application not set.");
-}
-
-void Csound::setApplicationArgs(String str)
-{
-  commandargs=str;
-  savePrefs();
 }
 
 String Csound::getScoreHeader()
@@ -394,8 +434,6 @@ CsoundSettingsDialog::CsoundSettingsDialog ()
     header (0)
 {
   Csound* cs=Csound::getInstance();
-
-
   addAndMakeVisible(csolab = new Label(String::empty, T("Csound:")));
   csolab->setFont(Font(15.0000f, Font::plain));
   csolab->setJustificationType(Justification::centredRight);
@@ -424,12 +462,8 @@ CsoundSettingsDialog::CsoundSettingsDialog ()
   
   addAndMakeVisible(options = new ComboBox(T("Options")));
   options->setEditableText(true);
-  options->addItem(cs->getApplicationArgs(), 1);
-  options->addSeparator();
-  options->addItem(T("New"), 1000);
+  updateOptions();
   options->addListener(this);
-  options->setSelectedId(1,false);
-
 
   addAndMakeVisible(orclab = new Label(String::empty, T("Orchestra:")));
   orclab->setFont(Font (15.0000f, Font::plain));
@@ -494,6 +528,7 @@ void Csound::openSettings()
 				true,
 				true,
 				true);
+  savePrefs();
   delete dialog;
 }
 
@@ -524,57 +559,70 @@ void CsoundSettingsDialog::resized()
   header->setBounds(x2, y, w-x2-m, h-y-m);
 }
 
-void CsoundSettingsDialog::textEditorTextChanged(TextEditor& ed)
-{
-  //  std::cout << "textEditorTextChanged" << "\n";
-}
+void CsoundSettingsDialog::textEditorTextChanged(TextEditor& ed) {}
 
-void CsoundSettingsDialog::textEditorReturnKeyPressed(TextEditor& ed)
-{
-  //  std::cout << "textEditorReturnKeyPressed" << "\n";
-}
+void CsoundSettingsDialog::textEditorReturnKeyPressed(TextEditor& ed) {}
 
-void CsoundSettingsDialog::textEditorEscapeKeyPressed(TextEditor& ed)
-{
-  //  std::cout << "textEditorEscapeKeyPressed" << "\n";
-}
+void CsoundSettingsDialog::textEditorEscapeKeyPressed(TextEditor& ed) {}
 
 void CsoundSettingsDialog::textEditorFocusLost(TextEditor& ed)
 {
-  //  std::cout << "textEditorFocusLost" << "\n";
+  // if NOT modal
   Csound::getInstance()->setScoreHeader(ed.getText());
 }
 
-void CsoundSettingsDialog::comboBoxChanged(ComboBox* box)
+void CsoundSettingsDialog::updateOptions()
 {
-  // this method gets called when items are selected in the pulldown
-  // menu or the current item's text changes. if its the latter then
-  // for some reason getSelectedId() == 0 at that time. so we need to
-  // cache the ID of the last chosen item so we can change its text
-  static int ID=1;
-  int id=box->getSelectedId();
-  if (id==0) id=ID; 
-  if (id==1000)
+  options->clear();
+  XmlElement* args=Csound::getInstance()->getCommandArgs();
+  int num=args->getNumChildElements();
+  // create a combo item for each arg with id set to index+1;
+  for (int index=0; index<num; index++)
+    options->addItem(args->getChildElement(index)->getStringAttribute(T("text")), index+1);
+  options->addSeparator();
+  options->addItem(T("New"), 1000);
+  options->addItem(T("Delete"), 1001);
+  // disable Delete if only one item
+  if (num<2)
+    options->setItemEnabled(1001, false);
+  int sel=args->getIntAttribute(T("index")); // selected arg
+  options->setSelectedId(sel+1, true);
+  options->setText(Csound::getInstance()->getApplicationArgs(), true);
+  //  std::cout << "updateOptions: selected item is " << sel << " (id " << sel+1 << ")\n";
+}
+
+void CsoundSettingsDialog::comboBoxChanged(ComboBox* combobox)
+{
+  XmlElement* commandargs=Csound::getInstance()->getCommandArgs();
+  int id=combobox->getSelectedId();
+  if (id==1000) // New item
     {
-      StringArray items;
-      int i,j;
-      for (i=0; i<box->getNumItems()-1; i++) // dont include "New" item at last index
-        items.add(box->getItemText(i));
-      box->clear(true);
-      j=1;
-      for (i=0; i<items.size(); i++)
-        box->addItem(items[i], j++);
-      box->addItem(T("(add text)"), j);
-      ID=j;
-      box->setText(T("(add text)"), true);
-      box->addSeparator();
-      box->addItem(T("New"), 1000);
+      Csound::getInstance()->setApplicationArgs(T("(add text)"));
+      updateOptions();
     }
-  else if (id>0)
+  else if (id==1001) // Delete item
     {
-      ID=id;
-      box->changeItemText(id, box->getText());
-      Csound::getInstance()->setApplicationArgs(box->getText());      
+      int ind=commandargs->getIntAttribute(T("index"));
+      XmlElement* sel=commandargs->getChildElement(ind);
+      commandargs->removeChildElement(sel, true);
+      commandargs->setAttribute(T("index"), 0);
+      updateOptions();
+    }
+  else if (id>0) // selected an arg
+    {
+      int index=combobox->indexOfItemId(id);
+      commandargs->setAttribute(T("index"), index);
+    }
+  else // edited current arg
+    {
+      int index=commandargs->getIntAttribute(T("index"));
+      if (XmlElement* xml=commandargs->getChildElement(index))
+        {
+          String text=combobox->getText();
+          xml->setAttribute(T("text"), text);
+          combobox->changeItemText(index+1, text);
+        }
+      else std::cout << "no CommandArgs xml element for index=" << index << "\n";
     }
 }
 

@@ -191,9 +191,8 @@ void Preferences::setStringProp(String name, String val)
 
 XmlElement* Preferences::getXmlProp(String name, XmlElement* def)
 {
-  XmlElement* val=props->getXmlValue(name);
-  if (val==NULL)
-    return (XmlElement *)NULL;
+  if (XmlElement* val=props->getXmlValue(name))
+    return val;
   else
     return def;
 }

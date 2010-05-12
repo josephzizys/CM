@@ -1,30 +1,101 @@
-;; fm-hook plays an fm generated chord centered around the key you
-;; play. the harder you play the denser the chord
+; MIDI Input receiving
 
-define function fm-hook( op, ch, ky, vel)
-  if ((op = mm:on) & (vel > 0)) then
+; A basic receiver routes midi ons and offs to the output port
+
+function myplayer (data)
+  with opcode = first(data),
+       channel = second(data),
+       keynum = third(data),
+       velocity = fourth(data)
+  if (opcode = mm:on)
+    send("mp:on", key: keynum, vel: velocity, chan: channel)
+  else 
+    if (opcode = mm:off)
+      send("mp:off", key: keynum, chan: channel)
+    end
+  end
+end
+
+;; set receiver
+
+send("mp:receive", myplayer)
+
+;; when you are done clear it...
+
+send("mp:receive", #f)
+
+
+; An opcode receiver that plays a major or minor chord whenever a
+; Note On arrives
+
+function mychord (data)
+  with channel = second(data),
+       keynum = third(data),       
+       velocity = fourth(data)
+  send("mp:midi", key: key, vel: vel, chan: chan)
+  send("mp:midi", key: key + pick(3,4), vel: vel, chan: chan)
+  send("mp:midi", key: key + 7, vel: vel, chan: chan)
+end
+
+;; assign receiver for the mm:on opcode (Note Ons)
+
+send("mp:receive", mm:on, mychord)
+
+;; when you are done clear it...
+
+send("mp:receive", mm:on, #f)
+
+; A more comple midi receive example that takes pairs of input midi
+; notes and creates an accompanyment figure for them using
+; fm-spectrum.
+
+; generator uses two key numbers and velocity to generate fm spectrum
+; 1. key2  -> carrier
+; 2. key1 / key2 -> c/m ratio
+; 3. velocity -> fm index
+; 4. time delta -> gestural rhythm
+
+function fmgesture(key1, key2, rhy, vel &optkey ord = 1, bot = 21, top = 108)
+  with fmrat = #?( key2 > key1, hz(key2) / hz(key1), hz(key1) / hz(key2)), 
+       fmind = rescale(vel, 30, 120, 2, 5),
+       spec = fm-spectrum(hz(key2), fmrat, fmind)
+  spectrum-keys(spec, quant: 1, order: ord, min: bot, max: top, unique: #t)
+end
+
+fmgesture(48 ,60, .1, 60)
+
+; Note On hook takes two notes and generates a
+; boogie-woogie accompanyment figure below it.
+
+variable lastdata = #f
+
+function myboogie (mididata) 
+  if (! lastdata) ; store time and keynum
+    set lastdata = list(now(), third(mididata))
+  else
     begin
-      with ind = rescale( vel, 60, 120, 2, 4),
-           spec = fm-spectrum(hz(ky), between(1.0, pi),  ind)
-      loop for k in spectrum-keys(spec, min: ky - 18,
-                                        max: ky + 18)
-        send "mp:midi", 0, .5, k, vel
+      with k1 = second(lastdata), 
+           k2 = third(mididata), 
+           vel = fourth(mididata),
+           lowest = min(k1, k2),
+           delta = max(now() - first(lastdata), .2),
+           gest = fmgesture(k1, k2, #f, vel, 1, top: lowest)
+      set lastdata = #f
+      ;; boogie woogie figure goes up and down
+      set gest = concat(gest, rest(reverse( gest)))
+      ;; send the gesture
+      loop for n in gest 
+        for i from delta by (delta * 2)
+        send("mp:midi", i , .5, n, vel)
+        send("mp:midi", i + delta , .5, n + 12, vel)
       end
     end
+  end
+end
 
-;; use quarter-tone tuning
+send "mp:receive", mm:on, myboogie
 
-send "mp:tuning", 2
-
-;; set the hook
-
-send "mp:inhook", fm-hook
-
-;; now play your keyboard ...
-;; clear the hook when you are done
-
-send "mp:inhook", #f
-
+send "mp:receive", mm:on, #f
 
 
 
