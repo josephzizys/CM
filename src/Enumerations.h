@@ -216,12 +216,12 @@ class TextIDs
 
   static const bool canExecute(const int ttyp)
   {
-    return ((ttyp==Lisp) || (ttyp==Sal2) ||(ttyp==Sal));
+    return ((ttyp==Lisp) || (ttyp==Sal2) || (ttyp==Sal) || (ttyp==Fomus));
   }
 
   static const bool canExpand(const int ttyp)
   {
-    return ((ttyp==Lisp) || (ttyp==Sal2) ||(ttyp==Sal));
+    return ((ttyp==Lisp) || (ttyp==Sal2) || (ttyp==Sal));
   }
 };
 

@@ -25,6 +25,9 @@
 #include <stack>
 #include <cctype>
 
+// #warning "remove `#include <iostream>'"
+// #include <iostream>
+
 #include "Enumerations.h"
 #include "Fomus.h"
 #include "Console.h"
@@ -196,11 +199,11 @@ void initfomus() {
       fapi_fomus_api_version = (fomus_api_version_type)fdlsym(ha, "fomus_api_version");
       fapi_info_infoapi_version = (info_infoapi_version_type)fdlsym(ha, "info_infoapi_version");
       if (FOMUS_API_VERSION < fapi_fomus_api_version() || FOMUS_INFOAPI_VERSION < fapi_info_infoapi_version()) {
-	Console::getInstance()->printError((char*)">>> Error: Fomus: installed FOMUS is too old--update to a newer version\n");      
+	Console::getInstance()->printError((char*)">>> Error: Fomus: FOMUS library has changed--recompile Grace with current version or downgrade to an older version\n");      
 	return;	
       }
       if (FOMUS_API_VERSION > fapi_fomus_api_version() || FOMUS_INFOAPI_VERSION > fapi_info_infoapi_version()) {
-	Console::getInstance()->printError((char*)">>> Error: Fomus: installed FOMUS is too recent--recompile Grace with current version or downgrade to an older version\n");      
+	Console::getInstance()->printError((char*)">>> Error: Fomus: FOMUS library is too old--update to a newer version\n");      
 	return;	
       }
       fapi_fomus_err = (int*)fdlsym(ha, "fomus_err");
@@ -246,13 +249,6 @@ void initfomus() {
     fapi_fomus_init();
     fapi_fomus_set_outputs(&spitout, &spitout, true);
     fomus_exists = true;
-    // doesn't work      
-    // #ifdef MACOS
-    //       CFStringRef key = CFSTR("DialogType");
-    //       CFStringRef value = CFSTR("Server");
-    //       CFStringRef appID = CFSTR("com.apple.CrashReporter");
-    //       CFPreferencesSetAppValue(key, value, appID);
-    // #endif      
   }
 }
 
@@ -262,10 +258,6 @@ void Fomus::newScore(const String& nam, const bool fromscm)
   FomusScore* score = new FomusScore();
 #ifdef GRACE
   if (!fromscm && nam.isEmpty() && scores.size() > 0) {
-    //WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
-    //FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
-    //FileChooserDialogBox dialogBox(T("New Score"), T("Specify an output file path (`filename' setting value)..."),
-    //browser, false, Colours::white);
     FileChooser choose(T("New Score"), File::getCurrentWorkingDirectory(), getwildcards());    
     if (choose.browseForFileToSave(true)) {
       File fn(choose.getResult());
@@ -388,10 +380,6 @@ scoped_timeshift::~scoped_timeshift() {
   }
 }
 
-// inline void processtime(Fomus& score) {
-//   if (SchemeThread::getInstance()->scoremode) fapi_fomus_fval(score.getfomusdata(), fomus_par_time, fomus_act_set, SchemeThread::getInstance()->scoretime);
-// }
-
 void Fomus::ival(int par, int act, fomus_int val)
 {
   scoped_timeshift xxx(*this);
@@ -423,14 +411,6 @@ void Fomus::sval(int par, int act, const String& val)
 void Fomus::act(int par, int act) 
 {
   scoped_timeshift xxx(*this);
-  // switch (par) {
-  // case fomus_par_noteevent:
-  // case fomus_par_restevent:
-  // case fomus_par_markevent:
-  // case fomus_par_meas:
-  //   if (act == fomus_act_add && SchemeThread::getInstance()->scoremode)
-  //     fapi_fomus_fval(getfomusdata(), fomus_par_time, fomus_act_set, SchemeThread::getInstance()->scoretime);
-  // }
   fapi_fomus_act(getfomusdata(), par, act);
   if (*fapi_fomus_err) fomuserr = true;
 }
@@ -1884,60 +1864,77 @@ FomusSyntax::FomusSyntax () // syntab
 {
   type=TextIDs::Fomus;
 
-  setCharSyntax(T("~!@#$%^&*-_?/'\"\\[]"), ScanIDs::SYN_SYMBOL);
+  //setCharSyntax(T("~!@#$%^&*-_?/'\"\\[]"), ScanIDs::SYN_SYMBOL);
 
-  stickkeyword(T("voice"), HiliteIDs::Hilite7);
-  stickkeyword(T("voi"), HiliteIDs::Hilite7);
-  stickkeyword(T("vo"), HiliteIDs::Hilite7);
-  stickkeyword(T("v"), HiliteIDs::Hilite7);
-  stickkeyword(T("time"), HiliteIDs::Hilite6);
-  stickkeyword(T("tim"), HiliteIDs::Hilite6);
-  stickkeyword(T("ti"), HiliteIDs::Hilite6);
-  stickkeyword(T("t"), HiliteIDs::Hilite6);
-  stickkeyword(T("grace"), HiliteIDs::Hilite6);
-  stickkeyword(T("gra"), HiliteIDs::Hilite6);
-  stickkeyword(T("gr"), HiliteIDs::Hilite6);
-  stickkeyword(T("g"), HiliteIDs::Hilite6);
-  stickkeyword(T("dynamic"), HiliteIDs::Hilite7);
-  stickkeyword(T("dyn"), HiliteIDs::Hilite7);
-  stickkeyword(T("dy"), HiliteIDs::Hilite7);
-  stickkeyword(T("y"), HiliteIDs::Hilite7);
-  stickkeyword(T("duration"), HiliteIDs::Hilite6);
-  stickkeyword(T("dur"), HiliteIDs::Hilite6);
-  stickkeyword(T("du"), HiliteIDs::Hilite6);
-  stickkeyword(T("d"), HiliteIDs::Hilite6);
-  stickkeyword(T("part"), HiliteIDs::Hilite5);
-  stickkeyword(T("par"), HiliteIDs::Hilite5);
-  stickkeyword(T("pa"), HiliteIDs::Hilite5);
-  stickkeyword(T("a"), HiliteIDs::Hilite5);
-  stickkeyword(T("pitch"), HiliteIDs::Hilite7);
-  stickkeyword(T("pit"), HiliteIDs::Hilite7);
-  stickkeyword(T("pi"), HiliteIDs::Hilite7);
-  stickkeyword(T("p"), HiliteIDs::Hilite7);
-  stickkeyword(T("note"), HiliteIDs::Hilite5);
-  stickkeyword(T("mark"), HiliteIDs::Hilite5);
-  stickkeyword(T("rest"), HiliteIDs::Hilite5);
-  stickkeyword(T("measure"), HiliteIDs::Hilite5);
-  stickkeyword(T("meas"), HiliteIDs::Hilite5);
+  stickkeyword(T("voice"), TokenPartKeyword);
+  stickkeyword(T("voi"), TokenPartKeyword);
+  stickkeyword(T("vo"), TokenPartKeyword);
+  stickkeyword(T("v"), TokenPartKeyword);
+  stickkeyword(T("time"), TokenTimeKeyword);
+  stickkeyword(T("tim"), TokenTimeKeyword);
+  stickkeyword(T("ti"), TokenTimeKeyword);
+  stickkeyword(T("t"), TokenTimeKeyword);
+  stickkeyword(T("grace"), TokenTimeKeyword);
+  stickkeyword(T("gra"), TokenTimeKeyword);
+  stickkeyword(T("gr"), TokenTimeKeyword);
+  stickkeyword(T("g"), TokenTimeKeyword);
+  stickkeyword(T("dynamic"), TokenKeyword);
+  stickkeyword(T("dyn"), TokenKeyword);
+  stickkeyword(T("dy"), TokenKeyword);
+  stickkeyword(T("y"), TokenKeyword);
+  stickkeyword(T("duration"), TokenKeyword);
+  stickkeyword(T("dur"), TokenKeyword);
+  stickkeyword(T("du"), TokenKeyword);
+  stickkeyword(T("d"), TokenKeyword);
+  stickkeyword(T("part"), TokenPartKeyword);
+  stickkeyword(T("par"), TokenPartKeyword);
+  stickkeyword(T("pa"), TokenPartKeyword);
+  stickkeyword(T("a"), TokenPartKeyword);
+  stickkeyword(T("pitch"), TokenKeyword);
+  stickkeyword(T("pit"), TokenKeyword);
+  stickkeyword(T("pi"), TokenKeyword);
+  stickkeyword(T("p"), TokenKeyword);
+  
+  stickkeyword(T("note"), TokenKeyword);
+  stickkeyword(T("not"), TokenKeyword);
+  stickkeyword(T("no"), TokenKeyword);
+  stickkeyword(T("n"), TokenKeyword);
+  stickkeyword(T("mark"), TokenKeyword);
+  stickkeyword(T("mar"), TokenKeyword);
+  stickkeyword(T("ma"), TokenKeyword);
+  stickkeyword(T("m"), TokenKeyword);
+  stickkeyword(T("rest"), TokenKeyword);
+  stickkeyword(T("res"), TokenKeyword);
+  stickkeyword(T("re"), TokenKeyword);
+  stickkeyword(T("r"), TokenKeyword);
+  
+  stickkeyword(T("measure"), TokenTimeKeyword);
+  stickkeyword(T("meas"), TokenTimeKeyword);
+  stickkeyword(T("mea"), TokenTimeKeyword);
+  stickkeyword(T("me"), TokenTimeKeyword);
+  stickkeyword(T("e"), TokenTimeKeyword);
   // settings
   info_setfilter fi0 = {0, 0, 0, module_nomodtype, 0, module_noloc, 3, info_none};
   info_setfilterlist fi = {1, &fi0};
   info_setlist lst = fapi_info_list_settings(0, &fi, 0, 0, 0);
-  for (info_setting* s = lst.sets, *se = lst.sets + lst.n; s < se; ++s) stickkeyword(s->name, HiliteIDs::Hilite4);
+  for (info_setting* s = lst.sets, *se = lst.sets + lst.n; s < se; ++s) stickkeyword(s->name, TokenSetting);
   // built-in
-  stickkeyword(T("template"), HiliteIDs::Hilite5);
-  stickkeyword(T("id"), HiliteIDs::Hilite5);
-  stickkeyword(T("imports"), HiliteIDs::Hilite5);
-  stickkeyword(T("export"), HiliteIDs::Hilite5);
-  stickkeyword(T("parts"), HiliteIDs::Hilite5);
-  stickkeyword(T("metapart"), HiliteIDs::Hilite5);
-  stickkeyword(T("percinsts"), HiliteIDs::Hilite5);
-  stickkeyword(T("percinst"), HiliteIDs::Hilite5);
-  stickkeyword(T("inst"), HiliteIDs::Hilite5);
-  stickkeyword(T("clefs"), HiliteIDs::Hilite5);
-  stickkeyword(T("staves"), HiliteIDs::Hilite5);
-  stickkeyword(T("staff"), HiliteIDs::Hilite5);
-  stickkeyword(T("measdef"), HiliteIDs::Hilite5);
+  stickkeyword(T("template"), TokenKeyword);
+  stickkeyword(T("id"), TokenKeyword);
+  stickkeyword(T("imports"), TokenKeyword);
+  stickkeyword(T("export"), TokenKeyword);
+  stickkeyword(T("parts"), TokenKeyword);
+  stickkeyword(T("metapart"), TokenPartKeyword);
+  stickkeyword(T("percinsts"), TokenKeyword);
+  stickkeyword(T("percinst"), TokenKeyword);
+  stickkeyword(T("inst"), TokenPartKeyword);
+  stickkeyword(T("clefs"), TokenKeyword);
+  stickkeyword(T("staves"), TokenKeyword);
+  stickkeyword(T("staff"), TokenKeyword);
+  stickkeyword(T("measdef"), TokenPartKeyword);
+
+  stickkeyword(T("include"), TokenKeyword);
+  stickkeyword(T("macro"), TokenKeyword);
 }
 
 FomusSyntax::~FomusSyntax()
@@ -1946,11 +1943,11 @@ FomusSyntax::~FomusSyntax()
 }
 
 void FomusSyntax::stickkeyword(String str, const int hl) {
-  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
+  addSynTok(str, hl);
   str[0] = toupper(str[0]);
-  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
+  addSynTok(str, hl);
   for (int i = 1; i < str.length(); ++i) str[i] = toupper(str[i]);
-  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
+  addSynTok(str, hl);
 }
 
 const StringArray FomusSyntax::getTokenTypes () 
@@ -1969,26 +1966,190 @@ const StringArray FomusSyntax::getTokenTypes ()
   //-------------------------------------------
   names.add(T("error"));      // TokenError
   names.add(T("plaintext"));  // TokenPlaintext
+  names.add(T("comment"));    // TokenComment
+  names.add(T("string"));     // TokenString
+  names.add(T("keyword1"));   // TokenSharpsign
+  names.add(T("keyword2"));   // TokenLispKeyword
+  names.add(T("literal2"));   // TokenTimeKeyword
+  names.add(T("literal3"));   // TokenPartKeyword
   return names;
 }
 
 const Colour FomusSyntax::getDefaultColour (int tokenType)
 {
-  // FIXME FOR NEW CODE EDITOR
-  return Colours::black;
+  switch (tokenType)
+    {
+    case TokenError: return Colours::red;
+    case TokenPlaintext: return Colours::black;
+    case TokenComment: return Colour(0xce, 0x00, 0x1a); //Colours::firebrick;
+    case TokenString: return Colour(0xa1, 0x11, 0x53); //Colours::rosybrown;
+    case TokenKeyword: return Colours::cadetblue; // Sharp Sign
+    case TokenSetting: return Colour(0x8a, 0x2f, 0x8f); //Colours::orchid;Lisp KeywordColour(0x8a, 0x2f, 0x8f)
+    case TokenTimeKeyword: return Colours::darkblue;
+    default: return Colours::black;
+    }
 }
 
 int FomusSyntax::readNextToken (CodeDocument::Iterator &source)
 {
-  // FIXME FOR NEW CODE EDITOR
-  source.skipToEndOfLine(); 
-  return TokenPlaintext;
+  static int par = 0;
+  int typ = TokenError;
+  source.skipWhitespace();
+  tchar chr = source.peekNextChar();
+  switch (chr)
+    {
+    case 0:
+      source.skip();
+      break;
+    case T('/'): { // COMMENT
+      CodeDocument::Iterator source1(source);
+      source1.skip();
+      switch (source1.peekNextChar()) {
+      case T('/'): 
+	source.skipToEndOfLine();
+	typ = TokenComment;
+	break;
+      case T('-'):
+	source.skip();
+	source.skip();
+	while (!source.isEOF()) {
+	  if (source.nextChar() == T('-')) {
+	    if (source.peekNextChar() == T('/')) break;
+	  }
+	}
+	typ = TokenComment;
+	break;
+      default:
+	source.skip();
+	typ = TokenPlaintext;      
+      }
+      break;
+    }
+    case T('"'): // STRING
+    case T('\''):
+      {
+        juce_wchar c, q = source.nextChar(); // pop quote char
+        for (c = source.nextChar(); (c != q && c != 0); c = source.nextChar()) {
+          if (c == T('\\')) source.skip(); // advance over \x
+	}
+        typ = TokenString;
+      }
+      break;
+    default:
+      {
+        // advance to end of token, check for special words
+        int i=0;
+        String check;
+        juce_wchar c, k=0;
+        do 
+          {
+            c=source.nextChar();
+            if (i<maxtoklen) // only gather maxtokenlen chars
+              check<<c;
+            i++;
+            k=c;
+          } while (isTokenChar(source.peekNextChar()));
+        // i is now one beyond last constituent character
+	if (i<=maxtoklen) // check for special word
+          {
+            SynTok* tok=getSynTok(check);
+            if (tok)
+	      {
+		typ=tok->getType();
+	      }
+            else
+              typ=SalIDs::TokenPlaintext;
+          }
+        else
+          typ=SalIDs::TokenPlaintext;        
+      }
+    }
+  return typ;
 }
+
+struct indpar {
+  char wh;
+  int i;
+  indpar(const char wh, const int i):wh(wh), i(i) {}
+  bool is(const char w) const {return w == wh;}
+};
 
 int FomusSyntax::getIndentation(CodeDocument& document, int line)
 {
-  // -1 means no special syntactic indentation (normal tabbing)
-  return -1;
+  int l = line;
+  bool inbr = false;
+  std::stack<indpar> sta;
+  if (l <= 0) return -1;
+  CodeDocument::Position st(&document, 0);
+  while (true) {
+    st.setLineAndIndex(--l, 0);
+    if (l <= 0) break;
+    switch (st.getCharacter()) {
+    case T(' '):
+    case T('\n'):
+    case T('\t'):
+      break;
+    default:
+      goto BREAK;
+    }
+  } 
+ BREAK:
+  CodeDocument::Position en(&document, line, 0);
+  while (st != en) {
+    juce_wchar ch(st.getCharacter());
+    switch (ch) {
+    case T('/'):
+      switch (st.movedBy(1).getCharacter()) {
+      case T('/'):
+	do {
+	  st.moveBy(1); if (st == en) goto DONE;
+	} while (st.getCharacter() != T('\n'));
+	break;
+      case T('-'):
+	st.moveBy(1); if (st == en) goto DONE;
+	st.moveBy(1); if (st == en) goto DONE;
+	while (true) {
+	  if (st.getCharacter() == T('-')) {
+	    if (st.movedBy(1).getCharacter() == T('/')) {
+	      st.moveBy(1); if (st == en) goto DONE;
+	      break;
+	    }
+	  } 
+	  st.moveBy(1); if (st == en) goto DONE;
+	}
+	break;
+      }
+      break;
+    case T('"'):
+    case T('\''):
+      {
+	juce_wchar g = st.getCharacter();
+	while (true) {
+	  st.moveBy(1); if (st == en) goto DONE;
+	  if (st.getCharacter() == g) break;
+	  if (st.getCharacter() == '\\') {
+	    st.moveBy(1); if (st == en) goto DONE;
+	  }
+	}
+      }
+      break;
+    case '[':
+      inbr = true; break;
+    case ']':
+      inbr = false; break; 
+    case '(':
+      if (!inbr) sta.push(indpar('(', st.getIndexInLine())); break;
+    case '<':
+      if (!inbr) sta.push(indpar('<', st.getIndexInLine())); break;
+    case ')':
+      if (!inbr) if (sta.top().is('(')) sta.pop(); break;
+    case '>':
+      if (!inbr) if (sta.top().is('>')) sta.pop(); break;
+    }
+    st.moveBy(1);
+  }
+ DONE:
+  return (sta.empty() ? -1 : sta.top().i + 1);
 }
 
 int FomusSyntax::backwardExpr(CodeDocument& document, CodeDocument::Position& start, CodeDocument::Position& end)
@@ -1999,93 +2160,18 @@ int FomusSyntax::backwardExpr(CodeDocument& document, CodeDocument::Position& st
 void FomusSyntax::eval(CodeDocument& document, const CodeDocument::Position start, const CodeDocument::Position end, 
                        bool expand, bool region)
 {
-  // no expression evaluation or macro expansion
-}
-
-/*
-
-int FomusSyntax::getIndent (const String text, int i, int top, int beg)
-{
-  std::stack<int> sta;
-  bool lc = false, cc = false, dq = false, sq = false, br = false;
-  int col = 0;
-  for (++i; i < beg; ++i) {
-    char x0 = i >= 1 ? text[i - 1] : 0;
-    char x = text[i];
-    ++col;
-    if (x0 == '/' && x == '/') {lc = true; continue;}
-    if (x == '\n') {lc = false; col = -1; continue;}
-    if (lc) continue;
-    if (x0 == '/' && x == '-') {cc = true; continue;}
-    if (x0 == '-' && x == '/') {cc = false; continue;}
-    if (cc) continue;
-    if (x == '"' && x0 != '\\' && !sq) {dq = !dq; continue;}
-    if (x == '\'' && x0 != '\\' && !dq) {sq = !sq; continue;}
-    if (dq || sq) continue;
-    if (x == '[') {sta.push(col + 1); br = true; continue;}
-    if (x == ']') {if (!sta.empty()) sta.pop(); br = false; continue;}
-    if (br) continue;
-    if (x == '{') {sta.push(sta.empty() ? 1 : sta.top() + 1); continue;}
-    if (x == '}') {if (!sta.empty()) sta.pop(); continue;}
-    if (x == '(' || x == '<') {sta.push(col + 1); continue;}
-    if (x == ')' || x == '>') {if (!sta.empty()) sta.pop(); continue;}
-  }
-  return sta.empty() ? 0 : sta.top();
-}
-
-HiliteID FomusSyntax::getHilite (const String text, int start, int end)
-{
-  bool lc = false, cc = false, dq = false, sq = false, br = false;
-  for (int i = 0; i <= start; ++i) {
-    char x0 = i >= 1 ? text[i - 1] : 0;
-    char x = text[i];
-    char x1 = i + 1 < end ? text[i + 1] : 0; // assuming start is always a valid string pos
-    if (x == '/' && x1 == '/') {lc = true; continue;}
-    if (x == '\n') {lc = false; continue;}
-    if (lc) continue;
-    if (x0 == '-' && x == '/') {cc = false; continue;}
-    if (x == '/' && x1 == '-') {cc = true; continue;}
-    if (cc) continue;
-    if (x == '"' && x0 != '\\' && !sq) {dq = !dq; continue;}
-    if (x == '\'' && x0 != '\\' && !dq) {sq = !sq; continue;}
-    if (dq || sq) continue;
-    if (x == '[') {br = true; continue;}
-    if (x == ']') {br = false; continue;}
-    if (br) continue;
-  }
-  if (lc || cc) return HiliteIDs::Comment;
-  if (dq || sq) return HiliteIDs::String;
-  if (br) return HiliteIDs::Hilite4; // mark
-  String str(text.substring(start, end));
-  SynTokMap::const_iterator f(tokens.find(str));
-  if (f != tokens.end()) return f->second->data1;
-  return HiliteIDs::None;
-} 
-
-void FomusSyntax::eval(String text, bool isRegion, bool expand) {
   FOMUS f = fapi_fomus_new();
-  fapi_fomus_parse(f, text.toUTF8());
+  fapi_fomus_parse(f, document.getTextBetween(start, end).toUTF8());
   if (*fapi_fomus_err) {
     fapi_fomus_free(f);
     return;
   }
-  // *** SAVE THIS ***
-  //   if (String(fomus_get_sval(f, "filename")).isEmpty()) {
-  //     WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
-  //     FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
-  //     FileChooserDialogBox dialogBox(T("Run FOMUS"), T("Specify an output file path (`filename' setting value)..."),
-  // 				   browser, false, Colours::white);
-  //     if (dialogBox.show()) {
-  //       fomus_sval(f, fomus_par_setting, fomus_act_set, "filename");
-  //       fomus_sval(f, fomus_par_settingval, fomus_act_set, browser.getCurrentFile().getFullPathName().toUTF8());
-  //     }
-  //   }
   if (String(fapi_fomus_get_sval(f, "filename")).isEmpty()) {
     fapi_fomus_sval(f, fomus_par_setting, fomus_act_set, "filename");
     fapi_fomus_sval(f, fomus_par_settingval, fomus_act_set, DEFAULT_OUT);
   }
   fapi_fomus_run(f); // fomus destroys instance automatically
+  
 }
 
-*/
 #endif

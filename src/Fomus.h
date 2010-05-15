@@ -197,8 +197,16 @@ class FomusSyntax : public Syntax
   FomusSyntax();
   ~FomusSyntax() ;
   // juce syntax tokens start at 0 or the defaults dont work
-  static const int TokenError = 0;
-  static const int TokenPlaintext = 1;
+  enum fomustoks {
+    TokenError,
+    TokenPlaintext,
+    TokenComment,
+    TokenString,
+    TokenKeyword,
+    TokenSetting,
+    TokenTimeKeyword,
+    TokenPartKeyword
+  };
 
   const StringArray getTokenTypes () ;
   const Colour getDefaultColour (int tokenType);

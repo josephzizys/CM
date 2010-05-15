@@ -422,7 +422,7 @@
 
 (define (fms:open-score filename . args)
   (unless (string? filename) (error "expected a string for filename argument"))
-  (with-optkeys (args (percinsts '()) (insts '()) (parts '()) (metaparts '()) (measdefs '()) (sets '()) (clear #t) (new #t) (run #t) &allow-other-keys)
+  (with-optkeys (args (percinsts '()) (insts '()) (parts '()) (metaparts '()) (measdefs '()) (sets '()) (clear #t) (new #t) (run #t) (midi #f) &allow-other-keys)
 		(unless (list? percinsts) (error "expected a list for percinsts argument"))
 		(unless (list? insts) (error "expected a list for insts argument"))
 		(unless (list? parts) (error "expected a list for parts argument"))
@@ -432,6 +432,7 @@
 		(unless (boolean? clear) (error "expected a boolean for clear argument"))
 		(unless (boolean? new) (error "expected a boolean for new argument"))
 		(unless (boolean? run) (error "expected a boolean for run argument"))
+		(unless (boolean? midi) (error "expected a boolean for midi argument"))
 		(let ((f (member (fms:string-downcase filename) '("" "fomus"))))
 		  (if new
 		      (if f (fms:new-score "") (fms:new-score filename))
@@ -440,6 +441,7 @@
 		(do ((a (append &allow-other-keys sets) (cddr a)))
 		    ((null? a))
 		  (fms:setting (car a) (cadr a)))
+		(when midi (fms:setting "extensions" '("mid") #t))
 		(map (lambda (x) (apply fms:percinst x)) (fms:force-dlist percinsts))
 		(map (lambda (x) (apply fms:inst x)) (fms:force-dlist insts))
 		(map (lambda (x) (apply fms:part x)) (fms:force-dlist parts))

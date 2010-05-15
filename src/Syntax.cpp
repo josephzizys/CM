@@ -1196,6 +1196,7 @@ int SalSyntax::readNextToken(CodeDocument::Iterator &source)
 int SalSyntax::getIndentation(CodeDocument& document, int line)
 // THIS METHOD IS SAL2 BUT WORKS OK FOR SAL SO DEFINED HERE
 {
+  int orig=line;
   CodeDocument::Position pos (&document, line, 0);
   Array<int> subtypes;
   Array<int> substarts;
@@ -1360,14 +1361,15 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
   // if we are looking at an 'end' or an 'else' in the cursor line
   // then adjust -2
 
-  CodeDocument::Position bol (&document, line, 0);
-  CodeDocument::Position eol (&document, line, INT_MAX); 
+  CodeDocument::Position bol (&document, orig, 0);
+  CodeDocument::Position eol (&document, orig, INT_MAX); 
   while (bol!=eol && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t'))) 
     bol.moveBy(1);
+  std::cout << "line is "<< bol.getLineText() << "\n";
   if (lookingAt(bol, T("end"), true, true) || lookingAt(bol, T("else"), true, true))
     {
       col-=2;
-      //std::cout << "cursor is looking at end or else\n";
+      std::cout << "cursor is looking at end or else\n";
     }
   return jmax(col,0);
 }

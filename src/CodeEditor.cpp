@@ -15,6 +15,9 @@
 #include "Scheme.h"
 #include "Main.h"
 #include "Help.h"
+#ifdef WITHFOMUS
+#include "Fomus.h"
+#endif
 #include <iostream>
 #include <limits>
 
@@ -61,6 +64,9 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
     case TextIDs::Sal: syntax=SalSyntax::getInstance(); break;
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
+    case TextIDs::Fomus:
+      if (fomus_exists) syntax=FomusSyntax::getInstance(); else syntax=TextSyntax::getInstance();
+      break;
     default: syntax=TextSyntax::getInstance(); break;
     }
   // create the code buffer and add it to the content component (the
@@ -188,6 +194,7 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
       CommandIDs::EditorSyntax + TextIDs::Lisp,
       CommandIDs::EditorSyntax + TextIDs::Sal,
       CommandIDs::EditorSyntax + TextIDs::Sal2,
+      CommandIDs::EditorSyntax + TextIDs::Fomus,
       CommandIDs::EditorFontSize + 10,
       CommandIDs::EditorFontSize + 12,
       CommandIDs::EditorFontSize + 14,
@@ -680,6 +687,7 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
       sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Lisp);
       sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal);
       sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal2);
+      sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Fomus);
       sub1.addSeparator();
       sub1.addCommandItem(&commands, CommandIDs::EditorDefaultSyntax);
       menu.addSubMenu(T("Syntax"), sub1);
@@ -798,6 +806,7 @@ void CodeEditorWindow::switchBufferSyntax(int newtype)
     case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
     case TextIDs::Sal: syntax=SalSyntax::getInstance(); break;
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
+    case TextIDs::Fomus: syntax=FomusSyntax::getInstance(); break;
     default: syntax=TextSyntax::getInstance(); break;
     }
   // pass in any existing customizations, the buffer does NOT look at
