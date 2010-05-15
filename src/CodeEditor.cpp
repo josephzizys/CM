@@ -1568,7 +1568,6 @@ void CodeBuffer::addPopupMenuItems (PopupMenu& m, const MouseEvent*)
 
 void CodeBuffer::matchParens()
 {
-  std::cout << "matchParens()\n";
   CodeDocument::Position pos (getCaretPos());
   pos.moveBy(-1);
   int b=pos.getPosition();

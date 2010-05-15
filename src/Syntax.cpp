@@ -1365,11 +1365,11 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
   CodeDocument::Position eol (&document, orig, INT_MAX); 
   while (bol!=eol && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t'))) 
     bol.moveBy(1);
-  std::cout << "line is "<< bol.getLineText() << "\n";
+  //std::cout << "line is "<< bol.getLineText() << "\n";
   if (lookingAt(bol, T("end"), true, true) || lookingAt(bol, T("else"), true, true))
     {
       col-=2;
-      std::cout << "cursor is looking at end or else\n";
+      //std::cout << "cursor is looking at end or else\n";
     }
   return jmax(col,0);
 }
