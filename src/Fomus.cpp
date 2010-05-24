@@ -25,9 +25,6 @@
 #include <stack>
 #include <cctype>
 
-// #warning "remove `#include <iostream>'"
-// #include <iostream>
-
 #include "Enumerations.h"
 #include "Fomus.h"
 #include "Console.h"
@@ -199,11 +196,11 @@ void initfomus() {
       fapi_fomus_api_version = (fomus_api_version_type)fdlsym(ha, "fomus_api_version");
       fapi_info_infoapi_version = (info_infoapi_version_type)fdlsym(ha, "info_infoapi_version");
       if (FOMUS_API_VERSION < fapi_fomus_api_version() || FOMUS_INFOAPI_VERSION < fapi_info_infoapi_version()) {
-	Console::getInstance()->printError((char*)">>> Error: Fomus: FOMUS library has changed--recompile Grace with current version or downgrade to an older version\n");      
+	Console::getInstance()->printError((char*)">>> Error: Fomus: FOMUS library has changed--upgrade Grace to a newer version that is compatible\n");
 	return;	
       }
       if (FOMUS_API_VERSION > fapi_fomus_api_version() || FOMUS_INFOAPI_VERSION > fapi_info_infoapi_version()) {
-	Console::getInstance()->printError((char*)">>> Error: Fomus: FOMUS library is too old--update to a newer version\n");      
+	Console::getInstance()->printError((char*)">>> Error: Fomus: FOMUS library is too old--upgrade FOMUS to a newer version that is compatible\n");
 	return;	
       }
       fapi_fomus_err = (int*)fdlsym(ha, "fomus_err");
@@ -455,13 +452,14 @@ public:
     kndef = true;
     return (def = (chstr == defstr));
   }
-  void validate() {
-    if (knvalid) return;
+  bool validate() {
+    if (knvalid) return true;
     valid = valid_aux();
     knvalid = true;
     if (!valid) Alerts::showMessageBox(AlertWindow::WarningIcon,
                                        T("FOMUS Settings"),
                                        T("Error in ") + what() + T(" `") + String(id) + T("'."));
+    return valid;
   }
   int getnum() const {return num;}
   void reset() {
@@ -476,17 +474,24 @@ public:
   void dec() {--num;}
   virtual bool issetting() const {return false;}
   virtual void remove() const {};
+  virtual bool needsreset() const {return false;}
 protected:
   virtual String what() const = 0;
   virtual bool valid_aux() = 0;
+  //virtual void post_valid() {}
 };
 
 // settings
+class fomusinfocont_sets;
 class fomus_set:public fomusinfo {
   String descdoc, modname, loc, uselevel, typedoc;
+  //const fomusinfocont_sets& cont;
+  bool reset;
 public:
-  fomus_set(int c, FOMUS fom, struct info_setting& set, const String& def):fomusinfo(c, fom, set.name, def, set.valstr), /*id(set.id),*/ descdoc(set.descdoc),
-									   modname(set.modname), loc(fapi_settingloc_to_str(set.loc)), typedoc(set.typedoc) {
+  fomus_set(int c, FOMUS fom, struct info_setting& set, const String& def):fomusinfo(c, fom, set.name, def, set.valstr),
+									   /*id(set.id),*/ descdoc(set.descdoc),
+									   modname(set.modname), loc(fapi_settingloc_to_str(set.loc)),
+									   typedoc(set.typedoc), reset(set.reset) {
     switch (set.uselevel) {
     case 0: uselevel = "beginner"; break;
     case 1: uselevel = "intermediate"; break;
@@ -500,12 +505,14 @@ public:
   const String& getloctext() const {return loc;}
   const String& getuselevel() const {return uselevel;}
   const String& gettypedoc() const {return typedoc;}
+  bool needsreset() const {return reset;}
 private:
   bool valid_aux() {
     fapi_fomus_parse(fom, (id + " = " + (chstr.isEmpty() ? String("\"\"") : chstr)).toUTF8());
     return !*fapi_fomus_err;
   }
   String what() const {return T("setting");}
+  //void post_valid();
 };
 
 inline String rempar(const char* str0) {
@@ -604,16 +611,20 @@ private:
   virtual void reset_aux() = 0;
 };
 
+class FOMUSSettings;
 class fomusinfocont_sets:public fomusinfocont {
   std::vector<String> defs;
+  FOMUSSettings *comp;
 public:
-  fomusinfocont_sets(FOMUS fom, int uselevel);
+  fomusinfocont_sets(FOMUS fom, int uselevel); // ***** pass and store component for refresh
   bool issetting() const {return true;}
+  FOMUSSettings* setcomp(FOMUSSettings *c) {return comp = c;}
+  void doreset() const;
 private:
   void reset_aux();
 };
 
-fomusinfocont_sets::fomusinfocont_sets(FOMUS fom, int uselevel):fomusinfocont(fom, uselevel) {
+fomusinfocont_sets::fomusinfocont_sets(FOMUS fom, int uselevel):fomusinfocont(fom, uselevel), comp(0) {
   struct info_setfilter se = {0, 0, 0, module_nomodtype, 0, module_noloc, 3, info_none}; 
   struct info_setfilterlist fi = {1, &se};
   info_setlist sets(fapi_info_list_settings(0, &fi, 0, 0, -1)); // config defaults
@@ -816,7 +827,7 @@ public:
   FOMUSListBoxModel& boxmodel;
   fomusinfo* inf;
   FOMUSSettingsEditor(fomusinfo* inf, FOMUSListBoxModel& boxmodel, FOMUSSettingsListBoxItem& lb, const String &componentName = String::empty,
-		      const tchar passwordCharacter = 0):TextEditor(componentName, passwordCharacter), inf(inf), boxmodel(boxmodel), lb(lb), dirty(false) {}
+		      const tchar passwordCharacter = 0):TextEditor(componentName, passwordCharacter), inf(inf), boxmodel(boxmodel), lb(lb), dirty(false), invalid(false) {}
   juce_UseDebuggingNewOperator
   private:
   FOMUSSettingsEditor(const FOMUSSettingsEditor&);
@@ -844,6 +855,7 @@ public:
   String getchangedstr() {return inf ? inf->getchangedstr() : String();}
   int getnum() const {return inf ? inf->getnum() : -1;}
   void setdirty() {dirty = true;}
+  bool invalid;
 };
 
 // SETTINGS LISTBOX ITEM
@@ -861,10 +873,7 @@ public:
   void updateset(fomusinfo* set);
   
   void textEditorTextChanged(TextEditor&) {defoff(); ValueText->setdirty();}
-  void textEditorReturnKeyPressed(TextEditor&) {
-    //defoff();
-    ValueText->validate();
-  }
+  void textEditorReturnKeyPressed(TextEditor&) {validate();}
   void textEditorEscapeKeyPressed(TextEditor&) {defon();}
   void textEditorFocusLost(TextEditor&) {}
 
@@ -881,8 +890,8 @@ public:
 private:
   Label* NameLabel;
   Label* NameText;
-  Label* ModuleLabel;
-  Label* ModuleText;
+  //Label* ModuleLabel;
+  //Label* ModuleText;
   Label* LocationLabel;
   Label* LocationText;
   Label* UseLevelLabel;
@@ -916,7 +925,7 @@ void FOMUSSettingsListBoxItem::updateset(fomusinfo* set) {
     NameText->setText(set->getid(), false);
     if (set->issetting()) {
       NameText->setTooltip(((fomus_set*)set)->getdescdoc());
-      ModuleText->setText(((fomus_set*)set)->getmodname(), false);
+      //ModuleText->setText(((fomus_set*)set)->getmodname(), false);
       LocationText->setText(((fomus_set*)set)->getloctext(), false);
       UseLevelText->setText(((fomus_set*)set)->getuselevel(), false);
       TypeText->setText(((fomus_set*)set)->gettypedoc(), false);
@@ -930,8 +939,8 @@ FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(fomusinfo* inf, FOMUSListBoxM
 												boxmodel(boxmodel),
 												NameLabel (0),
 												NameText (0),
-												ModuleLabel (0),
-												ModuleText (0),
+												//ModuleLabel (0),
+												//ModuleText (0),
 												LocationLabel (0),
 												LocationText (0),
 												UseLevelLabel (0),
@@ -960,21 +969,21 @@ FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(fomusinfo* inf, FOMUSListBoxM
   NameText->setColour (TextEditor::backgroundColourId, Colour (0x0));
 
   if (inf && inf->issetting()) {
-    addAndMakeVisible (ModuleLabel = new Label (T("Module Label"),
-						T("Module:")));
-    ModuleLabel->setFont (Font (13.0000f, Font::plain));
-    ModuleLabel->setJustificationType (Justification::centredLeft);
-    ModuleLabel->setEditable (false, false, false);
-    ModuleLabel->setColour (TextEditor::textColourId, Colours::black);
-    ModuleLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    // addAndMakeVisible (ModuleLabel = new Label (T("Module Label"),
+    // 						T("Module:")));
+    // ModuleLabel->setFont (Font (13.0000f, Font::plain));
+    // ModuleLabel->setJustificationType (Justification::centredLeft);
+    // ModuleLabel->setEditable (false, false, false);
+    // ModuleLabel->setColour (TextEditor::textColourId, Colours::black);
+    // ModuleLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
     
-    addAndMakeVisible (ModuleText = new Label (T("Module Text"),
-					       String::empty));
-    ModuleText->setFont (Font (13.0000f, Font::plain));
-    ModuleText->setJustificationType (Justification::centredLeft);
-    ModuleText->setEditable (false, false, false);
-    ModuleText->setColour (TextEditor::textColourId, Colours::black);
-    ModuleText->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    // addAndMakeVisible (ModuleText = new Label (T("Module Text"),
+    // 					       String::empty));
+    // ModuleText->setFont (Font (13.0000f, Font::plain));
+    // ModuleText->setJustificationType (Justification::centredLeft);
+    // ModuleText->setEditable (false, false, false);
+    // ModuleText->setColour (TextEditor::textColourId, Colours::black);
+    // ModuleText->setColour (TextEditor::backgroundColourId, Colour (0x0));
     
     addAndMakeVisible (LocationLabel = new Label (T("Location Label"),
 						  T("Location:")));
@@ -1059,8 +1068,8 @@ FOMUSSettingsListBoxItem::~FOMUSSettingsListBoxItem()
 {
   deleteAndZero (NameLabel);
   deleteAndZero (NameText);
-  deleteAndZero (ModuleLabel);
-  deleteAndZero (ModuleText);
+  //deleteAndZero (ModuleLabel);
+  //deleteAndZero (ModuleText);
   deleteAndZero (LocationLabel);
   deleteAndZero (LocationText);
   deleteAndZero (UseLevelLabel);
@@ -1077,12 +1086,12 @@ void FOMUSSettingsListBoxItem::resized()
 {
   NameLabel->setBounds (8 + 0, 8 + 0, 48, 16);
   NameText->setBounds (8 + 40, 8 + 0, 184, 16);
-  if (ModuleLabel) ModuleLabel->setBounds (8 + 232, 8 + 0, 56, 16);
-  if (ModuleText) ModuleText->setBounds (8 + 280, 8 + 0, 83, 16);
-  if (LocationLabel) LocationLabel->setBounds (8 + 368, 8 + 0, 56, 16);
-  if (LocationText) LocationText->setBounds (8 + 424, 8 + 0, 75, 16);
-  if (UseLevelLabel) UseLevelLabel->setBounds (8 + 504, 8 + 0, 56, 16);
-  if (UseLevelText) UseLevelText->setBounds (8 + 560, 8 + 0, 75, 16);
+  //if (ModuleLabel) ModuleLabel->setBounds (8 + 232, 8 + 0, 56, 16);
+  //if (ModuleText) ModuleText->setBounds (8 + 280, 8 + 0, 83, 16);
+  if (LocationLabel) LocationLabel->setBounds (8 + 232, 8 + 0, 56, 16);
+  if (LocationText) LocationText->setBounds (8 + 284, 8 + 0, 83, 16);
+  if (UseLevelLabel) UseLevelLabel->setBounds (8 + 368, 8 + 0, 56, 16);
+  if (UseLevelText) UseLevelText->setBounds (8 + 420, 8 + 0, 75, 16);
   if (TypeLabel) TypeLabel->setBounds (8 + 0, 8 + 16, 40, 16);
   if (TypeText) TypeText->setBounds (8 + 40, 8 + 16, getWidth() - 148, 16);
   if (DefaultButton) DefaultButton->setBounds (8 + getWidth() - 100, 8 + 16, 48, 16);
@@ -1102,9 +1111,9 @@ class FOMUSSettingsListBox;
 class FOMUSListBoxModel:public ListBoxModel {
 private:
   FOMUSSettingsListBox* textlistener;
-  fomusinfocont& infos;
   bool hasnew;
 public:
+  fomusinfocont& infos;
   FOMUSListBoxModel(fomusinfocont& infos, FOMUSSettingsListBox* textlistener):ListBoxModel(), textlistener(textlistener), infos(infos), hasnew(false) {}
   int getNumRows() {return hasnew ? infos.getn() + 1 : infos.getn();}
   void paintListBoxItem(int rowNumber, Graphics &g, int width, int height, bool rowIsSelected) {}
@@ -1115,10 +1124,18 @@ public:
 };
 
 void FOMUSSettingsEditor::validate() {
+  if (invalid) return;
   if (inf) {
     if (dirty) inf->change(getText().toUTF8());
-    inf->validate();
-    lb.setname(inf->getid());
+    bool iv = inf->validate();
+    if (iv && dirty && inf->needsreset()) {
+      invalid = true;
+      Alerts::showMessageBox(AlertWindow::InfoIcon,
+			     T("FOMUS Settings"),
+			     T("Other settings are being updated to reflect changes"));
+      ((const fomusinfocont_sets&)boxmodel.infos).doreset();
+      invalid = false;
+    } else lb.setname(inf->getid());
   } else lb.setname(boxmodel.createnew(getText(), inf));
   dirty = false;
 }
@@ -1193,25 +1210,23 @@ Component* FOMUSListBoxModel::refreshComponentForRow(int rowNumber, bool isRowSe
   }
 }
 
+class SetMessageListener:public MessageListener {
+  void handleMessage(const Message &message);
+};
+
 // SETTINGS COMPONENT
 class FOMUSSettings:public Component, public ButtonListener {
   fomusinfocont& infos;
 public:
+  SetMessageListener msg;
   FOMUSSettings (fomusinfocont& infos);
   ~FOMUSSettings();
   void resized();
   void buttonClicked (Button* buttonThatWasClicked);
   juce_UseDebuggingNewOperator
+  void resetsets();
   private:
-  void switchtouse(int lvl) {
-    if (lvl != infos.getuselevel()) {
-      removeChildComponent (component);
-      delete component;
-      infos.setuselevel(lvl);
-      addAndMakeVisible (component = new FOMUSSettingsListBox(infos));
-      component->setBounds (0, 16, getWidth(), getHeight() - 16);
-    }
-  }
+  void switchtouse(int lvl);
   FOMUSSettingsListBox* component;
   ToggleButton* BeginnerButton;
   ToggleButton* IntermediateButton;
@@ -1222,6 +1237,27 @@ public:
   FOMUSSettings (const FOMUSSettings&);
   const FOMUSSettings& operator= (const FOMUSSettings&);
 };
+
+inline void fomusinfocont_sets::doreset() const {comp->msg.postMessage(new Message(0, 0, 0, comp));}
+inline void SetMessageListener::handleMessage(const Message &message) {((FOMUSSettings*)message.pointerParameter)->resetsets();}
+
+void FOMUSSettings::switchtouse(int lvl) {
+  if (lvl != infos.getuselevel()) {
+    removeChildComponent (component);
+    delete component;
+    infos.setuselevel(lvl);
+    addAndMakeVisible (component = new FOMUSSettingsListBox(infos));
+    component->setBounds (0, 16, getWidth(), getHeight() - 16);
+  }
+}
+
+void FOMUSSettings::resetsets() {
+  removeChildComponent (component);
+  delete component;
+  infos.reset();
+  addAndMakeVisible (component = new FOMUSSettingsListBox(infos));
+  component->setBounds (0, 16, getWidth(), getHeight() - 16);
+}
 
 FOMUSSettings::FOMUSSettings(fomusinfocont& infos)
   :Component(T("FOMUSSettings") ),
@@ -1303,7 +1339,8 @@ void FOMUSSettings::buttonClicked (Button* buttonThatWasClicked) {
   } else if (buttonThatWasClicked == AddButton) {
     component->addnew();
   } else if (buttonThatWasClicked == RefreshButton) {
-    deleteAndZero(component);
+    removeChildComponent (component);
+    delete component;
     infos.reset();
     addAndMakeVisible (component = new FOMUSSettingsListBox (infos));
     component->setBounds (0, 0, getWidth(), getHeight() - 18);
@@ -1317,13 +1354,13 @@ struct FileTabs:public TabbedComponent {
   fomusinfocont_insts insts;
   fomusinfocont_percinsts percinsts;
   
-  FileTabs(FOMUS fom ):TabbedComponent(TabbedButtonBar::TabsAtTop), sets(fom, 0), parts(fom), metaparts(fom), /*measdefs(fom),*/ insts(fom), percinsts(fom) {
+  FileTabs(FOMUS fom):TabbedComponent(TabbedButtonBar::TabsAtTop), sets(fom, 0), parts(fom), metaparts(fom), /*measdefs(fom),*/ insts(fom), percinsts(fom) {
     sets.init();
     parts.init();
     metaparts.init();
     insts.init();
     percinsts.init();
-    addTab(T("Settings"), Colours::white, new FOMUSSettings(sets), true);
+    addTab(T("Settings"), Colours::white, sets.setcomp(new FOMUSSettings(sets)), true);
     addTab(T("Parts"), Colours::white, new FOMUSSettings(parts), true);
     addTab(T("Metaparts"), Colours::white, new FOMUSSettings(metaparts), true);
     addTab(T("Instruments"), Colours::white, new FOMUSSettings(insts), true);
@@ -1555,9 +1592,9 @@ inline void FOMUSSetsView::paint (Graphics& g)
 void FOMUSSetsView::resized() 
 {
   BegButton->setBounds (0, 0, 56, 16);
-  MedButton->setBounds (56, 0, 72, 16);
-  AdvButton->setBounds (128, 0, 64, 16);
-  GuruButton->setBounds (184, 0, 56, 16);
+  MedButton->setBounds (60, 0, 72, 16);
+  AdvButton->setBounds (136, 0, 64, 16);
+  GuruButton->setBounds (200, 0, 56, 16);
   viewport->setBounds (8, 24, getWidth() - 14, getHeight() - 30);
 }
 
@@ -1808,8 +1845,8 @@ void FOMUSDocTabs::resized()
 {
     Tabs->setBounds (0, 0, getWidth() - 0, getHeight() - 39);
     SearchLabel->setBounds (8, getHeight() - 26, 56, 16);
-    textEditor->setBounds (56, getHeight() - 31, getWidth() - 194, 21);
-    SearchName->setBounds (getWidth() - 130, getHeight() - 26, 48, 16);
+    textEditor->setBounds (56, getHeight() - 31, getWidth() - 200, 21);
+    SearchName->setBounds (getWidth() - 142, getHeight() - 26, 48, 16);
     SearchDoc->setBounds (getWidth() - 90, getHeight() - 26, 80, 16);
 }
 
@@ -1864,7 +1901,10 @@ FomusSyntax::FomusSyntax () // syntab
 {
   type=TextIDs::Fomus;
 
-  //setCharSyntax(T("~!@#$%^&*-_?/'\"\\[]"), ScanIDs::SYN_SYMBOL);
+  setCharSyntax(T("~!@#$%^&*-_.?/"), ScanIDs::SYN_SYMBOL);
+  setCharSyntax(T("\"'"), ScanIDs::SYN_STRING);
+  setCharSyntax(T("([{|"), ScanIDs::SYN_OPEN);
+  setCharSyntax(T(")]}|"), ScanIDs::SYN_CLOSE);
 
   stickkeyword(T("voice"), TokenPartKeyword);
   stickkeyword(T("voi"), TokenPartKeyword);
@@ -2154,11 +2194,14 @@ int FomusSyntax::getIndentation(CodeDocument& document, int line)
 
 int FomusSyntax::backwardExpr(CodeDocument& document, CodeDocument::Position& start, CodeDocument::Position& end)
 {
-  // 0 means no backward expression parsing
-  return 0;
+  if (start.getPosition() >= end.getPosition()) {
+    start.setPosition(0);
+    end.setPosition(std::numeric_limits<int>::max());
+  }
+  return 1;
 }
 void FomusSyntax::eval(CodeDocument& document, const CodeDocument::Position start, const CodeDocument::Position end, 
-                       bool expand, bool region)
+                       bool expand, bool region) // region=true if a selection is made
 {
   FOMUS f = fapi_fomus_new();
   fapi_fomus_parse(f, document.getTextBetween(start, end).toUTF8());
@@ -2171,7 +2214,6 @@ void FomusSyntax::eval(CodeDocument& document, const CodeDocument::Position star
     fapi_fomus_sval(f, fomus_par_settingval, fomus_act_set, DEFAULT_OUT);
   }
   fapi_fomus_run(f); // fomus destroys instance automatically
-  
 }
 
 #endif

@@ -1068,6 +1068,19 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::FomusDocumentation:
       Fomus::getInstance()->documentationWindow();
       break;
+    case CommandIDs::FomusRunCurr:
+      {
+	CodeEditorWindow* w = CodeEditorWindow::getFocusCodeEditor();
+	if (w) {
+	  CodeBuffer* buf=w->getCodeBuffer();
+	  if (buf->isTextType( TextIDs::Fomus))
+	    ((FomusSyntax*)buf->syntax)->eval(buf->document,
+					      CodeDocument::Position(&buf->document, 0),
+					      CodeDocument::Position(&buf->document, std::numeric_limits<int>::max()),
+					      false, false);
+	}
+      }
+      break;
 #endif
 
       //
