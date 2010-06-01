@@ -662,22 +662,18 @@
 	      (format port " ~S ~S ~S" (- size 1) (car freqs) (car amps)))
 	    (format port "~%")))))))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(define (clm-frame->spectrum data . args)
+  (with-optkeys (args (fundamental 1) (amplitude 1))
+     (let* ((frqs (list #f))
+            (tail1 frqs)
+            (amps (list #f))
+            (tail2 amps))
+       (do ((dat data (cddr dat))
+            (siz 0 (+ siz 1)))
+           ((null? dat)
+            (make-spectrum 0 siz (cdr frqs) (cdr amps)))
+         (set-cdr! tail1 (list (* (car dat) fundamental)))
+         (set! tail1 (cdr tail1))
+         (set-cdr! tail2 (list (* (cadr dat) amplitude)))
+         (set! tail2 (cdr tail2))))))
 
