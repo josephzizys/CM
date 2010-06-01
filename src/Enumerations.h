@@ -780,6 +780,7 @@ class CommandIDs
   static const CommandID MidiFilePlayer = COMID(Audio, 2);
   static const CommandID MidiPlotPlayer = COMID(Audio, 3);
   static const CommandID AudioSettings = COMID(Audio, 4);
+  static const CommandID AudioSamplerSettings = COMID(Audio, 5);
 
   // SndLib
   static const CommandID SndLibSrate = COMID(SndLib, 1);
@@ -967,6 +968,31 @@ class AudioFormatIDs
       default: 
         return String("No Audio Format");
       }
+  }
+};
+
+class MidiValues
+{
+ public:
+  static const int SHIFT = 4;
+  static const int Empty = 0;
+  static const int MidiValueTime = (1 << SHIFT) + 0xF;
+  static const int MidiValueDelta = (2 << SHIFT) + 0xF;
+  static const int MidiValueRhythm = (3 << SHIFT) + 0x9;
+  static const int MidiValueDuration = (4 << SHIFT) + 0x9;
+  static const int MidiValueKeyNumber = (5 << SHIFT) + 0x9;
+  static const int MidiValueAmplitude = (6 << SHIFT) + 0x9;
+  static const int MidiValueVelocity = (7 << SHIFT) + 0x9;
+  static const int MidiValueChannel = (8 << SHIFT) + 0xF;
+  static const int MidiValueTouch = (9 << SHIFT) + 0xA;
+  static const int MidiValueControlNumber = (10 << SHIFT) + 0xB;
+  static const int MidiValueControlValue = (11 << SHIFT) + 0xB;
+  static const int MidiValueProgram = (12 << SHIFT) + 0xC;
+  static const int MidiValuePressure = (13 << SHIFT) + 0xD;
+  static const int MidiValueBend = (14 << SHIFT) + 0xE;
+  static const bool testOpcode(int value, int opcode)
+  {
+    return (value & opcode)!=0;
   }
 };
 

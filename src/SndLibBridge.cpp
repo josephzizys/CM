@@ -777,6 +777,27 @@ s7_pointer ffi_pathname_to_key (s7_scheme *s7, s7_pointer args)
   return s7_make_integer(s7, i0);
 }
 
+s7_pointer ffi_midifile_import (s7_scheme *s7, s7_pointer args)
+{
+  int i0;
+  char* s0;
+  s7_pointer p0, p1;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_midifile_import", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_integer(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_midifile_import", 2, s7_car(args), "a int"));
+  i0=(int)s7_integer(s7_car(args));
+  args=s7_cdr(args);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_midifile_import", 3, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  p0=cm_midifile_import(s0, i0, p1);
+  return (s7, p0);
+}
+
 s7_pointer ffi_sal_allocate_tokens (s7_scheme *s7, s7_pointer args)
 {
   s7_pointer p0;
@@ -3051,6 +3072,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_pathname_directory_p", ffi_pathname_directory_p, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_directory", ffi_directory, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_pathname_to_key", ffi_pathname_to_key, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_midifile_import", ffi_midifile_import, 3, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_allocate_tokens", ffi_sal_allocate_tokens, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_free_tokens", ffi_sal_free_tokens, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_tokenize_file", ffi_sal_tokenize_file, 3, 0, false, "ffi function");

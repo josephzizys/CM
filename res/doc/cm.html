@@ -3106,6 +3106,70 @@ Enables MIDI input only for the specified MIDI opcodes. Opcodes are integers bet
 </blockquote>
 <!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table id="midifile-import" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">midifile-import</span> (<var class="arg">file</var>, <var class="arg">track</var>, <var class="arg">values</var>)
+  </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+
+<blockquote>
+<p>
+Returns a list of MIDI <var>values</var> from the specified <var>track</var> (zero based) in <var>file</var>. Messages that do not contain the importing values are skipped. <var>Values</var> can be a string, symbol, keyword or list of the same; if a list of values is specified then lists of the corresponding data are returned in the same order. Possible <var>values</var> to import are:
+</p>
+<blockquote>
+<table>
+  <tr>
+    <th class="lcol" style="padding-right: 2em;">Values</th> <th class="lcol" style="padding-right: 2em;">Applicable Messages</th> <th class="lcol">Description</th>
+  </tr>
+  <tr>
+    <td><span class="string">"chan"</span></td> <td> all </td> <td>the channel of the message 0-15</td>
+  </tr>
+  <tr>
+    <td><span class="string">"time"</span></td> <td>all</td> <td>the start time of the message in seconds</td>
+  </tr>
+  <tr>
+    <td><span class="string">"delta"</span></td> <td>all</td> <td>the time increment from the previous message</td>
+  </tr>
+  <tr>
+    <td><span class="string">"rhythm"</span></td> <td> notes </td> <td>the time increment from the previous note</td>
+  </tr>
+  <tr>
+    <td><span class="string">"dur"</span></td> <td> notes </td> <td>the duration of the note</td>
+  </tr>
+  <tr>
+    <td><span class="string">"key"</span></td> <td> notes </td> <td>the key number of the note</td>
+  </tr>
+  <tr>
+    <td><span class="string">"amp"</span></td> <td> notes </td> <td>the amplitude of the note 0.0-1.0</td>
+  </tr>
+  <tr>
+    <td><span class="string">"vel"</span></td> <td> notes </td> <td>the key velocity the note 0-127</td>
+  </tr>
+  <tr>
+    <td><span class="string">"touch"</span></td> <td> after touches </td> <td>the after touch value 0-127</td>
+  </tr>
+  <tr>
+    <td><span class="string">"ctrl1"</span></td> <td> control changes </td> <td>the controller number 0-127</td>
+  </tr>
+  <tr>
+    <td><span class="string">"ctrl2"</span></td> <td> control changes </td> <td>the controller value 0-127</td>
+  </tr>
+  <tr>
+    <td><span class="string">"prog"</span></td> <td> program changes </td> <td>the program value 0-127</td>
+  </tr>
+  <tr>
+    <td><span class="string">"press"</span></td> <td> channel pressures </td> <td>the pressure value 0-16383</td>
+  </tr>
+  <tr>
+    <td><span class="string">"bend"</span></td> <td> pitch bends </td> <td>the pitch bend value 0-16383</td>
+  </tr>
+</table>
+</blockquote>
+</blockquote>
+<!-- END DEFINITION -->
 
 
 <h3 id="clm">CLM/SndLib</h3>

@@ -1234,6 +1234,145 @@ void mp_set_message_mask(int mask)
   MidiInPort::getInstance()->setOpcodeMask(mask);
 }
 
+s7_pointer getMidiValue(s7_scheme* sc, MidiMessageSequence::MidiEventHolder* hold, int midival, 
+                        double lasttime, double lastontime)
+{
+  switch (midival)
+    {
+    case MidiValues::MidiValueTime:
+      return s7_make_real(sc, hold->message.getTimeStamp());
+      break;
+    case MidiValues::MidiValueDelta:
+      return s7_make_real(sc, hold->message.getTimeStamp() - lasttime);
+      break;
+    case MidiValues::MidiValueRhythm:
+      return s7_make_real(sc, hold->message.getTimeStamp() - lastontime);
+      break;
+    case MidiValues::MidiValueDuration:
+      if (hold->noteOffObject)
+        return s7_make_real(sc, hold->noteOffObject->message.getTimeStamp() - hold->message.getTimeStamp());
+      else // no dur if no paired off
+        return SchemeThread::getInstance()->schemeFalse;
+      break;
+    case MidiValues::MidiValueKeyNumber:
+      return s7_make_integer(sc, hold->message.getNoteNumber());
+      break;
+    case MidiValues::MidiValueAmplitude:
+      return s7_make_real(sc, hold->message.getFloatVelocity());
+      break;
+    case MidiValues::MidiValueVelocity:
+      return s7_make_integer(sc, hold->message.getVelocity());
+      break;
+    case MidiValues::MidiValueChannel:
+      return s7_make_integer(sc, hold->message.getChannel()-1);
+      break;
+    case MidiValues::MidiValueTouch:
+      return s7_make_integer(sc, hold->message.getAfterTouchValue());
+      break;
+    case MidiValues::MidiValueControlNumber:
+      return s7_make_integer(sc, hold->message.getControllerNumber());
+      break;
+    case MidiValues::MidiValueControlValue:
+      return s7_make_integer(sc, hold->message.getControllerValue());
+      break;
+    case MidiValues::MidiValueProgram:
+      return s7_make_integer(sc, hold->message.getProgramChangeNumber());
+      break;
+    case MidiValues::MidiValuePressure:
+      return s7_make_integer(sc, hold->message.getChannelPressureValue());
+      break;
+    case MidiValues::MidiValueBend:
+      return s7_make_integer(sc, hold->message.getPitchWheelValue());
+      break;
+    default:
+      return SchemeThread::getInstance()->schemeFalse;
+    }
+}
+
+s7_pointer cm_midifile_import(char* path, int track, s7_pointer midivalues)
+{
+  String name (path);
+  File file=completeFile(name);
+  if (!file.existsAsFile())
+    SchemeThread::getInstance()->signalSchemeError(T("midifile-import: file does not exist: ") + 
+                                                   file.getFullPathName());
+  FileInputStream* input=file.createInputStream();
+  MidiFile midifile;
+  midifile.readFrom(*input);
+  int numtracks=midifile.getNumTracks();
+  if (numtracks<1) 
+    SchemeThread::getInstance()->signalSchemeError(T("midifile-import: not a valid midifile: ") + 
+                                                   file.getFullPathName());
+  if (track<0 || track>=numtracks)
+    SchemeThread::getInstance()->signalSchemeError(T("midifile-import: not a valid track: ") + 
+                                                   String(track));
+  int format=midifile.getTimeFormat();
+  // get the track's midi data
+  MidiMessageSequence* seq=(MidiMessageSequence*)midifile.getTrack(track);
+  seq->updateMatchedPairs();
+  // juce time format is postive for beats and negative for SMTPE
+  if (format>0)
+    midifile.convertTimestampTicksToSeconds();    
+  else
+    {
+      // convert SMPTE ticks to seconds. The juce function
+      // convertTimestampTicksToSeconds doesnt seem to work for SMPTE
+      // ticks.
+      int tpf=format & 0xFF;
+      // juce smpte frames per second is negative upper byte
+      int fps=0xFF-((format & 0xFF00) >> 8)+1;
+      double smptetps=fps*tpf; // smpte ticks per second
+      for (int i=0; i<seq->getNumEvents(); i++)
+        {
+          MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
+          h->message.setTimeStamp(h->message.getTimeStamp()/smptetps);
+        }
+    }
+  // transfer midi values to array
+  Array<int> vals;
+  for (s7_pointer p=midivalues; s7_is_pair(p); p=s7_cdr(p))
+    vals.add((int)s7_integer(s7_car(p)));
+
+  double lasttime=0.0;
+  double lastontime=0.0;
+  s7_scheme* scheme=SchemeThread::getInstance()->scheme;
+  // initialize return list for rplacd value appending
+  s7_pointer head=s7_cons(scheme, SchemeThread::getInstance()->schemeFalse, 
+                          SchemeThread::getInstance()->schemeNil);
+  s7_pointer tail=head;
+  // tail now: (#f)
+  // map events and collect values
+  for (int i=0; i<seq->getNumEvents(); i++)  
+    {
+      MidiMessageSequence::MidiEventHolder* e=seq->getEventPointer(i);
+      if (e->message.getChannel()<1) continue; // not a channel message
+      int op=(e->message.getRawData()[0] & 0xf0)>>4;
+      s7_pointer p=NULL;
+      // all values must be applicable to the event
+      for (int j=0; j<vals.size() && op>0; j++)
+        if (!MidiValues::testOpcode(vals[j], op))
+          op=0;
+      // continue if noteOff or value not applicable
+      if (op<0x9) continue;
+      //std::cout << "event [" << i << "] op=" << op << " values are applicable\n";
+      if (vals.size()==1)
+        p=getMidiValue(scheme, e, vals[0], lasttime, lastontime);
+      else
+        {
+          // process in reverse order to cons values onto sublist
+          p=SchemeThread::getInstance()->schemeNil;
+          for (int j=vals.size(); --j>=0; )
+            p=s7_cons(scheme, getMidiValue(scheme, e, vals[j], lasttime, lastontime), p);
+        }
+      s7_set_cdr(tail, s7_cons(scheme, p, SchemeThread::getInstance()->schemeNil));
+      tail=s7_cdr(tail);
+      lasttime=e->message.getTimeStamp();
+      if (op==0x9)
+        lastontime=lasttime;
+    }
+  return s7_cdr(head);
+}
+
 //
 /// Midi Hooks
 //

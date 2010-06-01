@@ -101,6 +101,8 @@ bool cm_pathname_directory_p(char* path);
 int cm_pathname_to_key(char* path);
 s7_pointer cm_directory(char* path, bool recurse=true);
 
+s7_pointer cm_midifile_import(char* path, int track, s7_pointer midivalues);
+
 // sal support
 
 //char* sal_tokenize(char* str);

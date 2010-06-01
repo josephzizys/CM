@@ -1251,3 +1251,65 @@
                  (search (+ midpoint 1) stop))
                 (else midpoint))))))
 
+; (midifile-import "foo.mid" 1 "key")
+; (midifile-import "foo.mid" 1 '("key" "time"))
+; (midifile-import "foo.mid" 1 '("key" "time" "press"))
+; (midifile-import "foo.mid" 1 '(chan ctrl1 ctrl2))
+; (midifile-import "foo.mid" 1 '(ctrl2))
+; (midifile-import "foo.mid" 1 '(:rhythm :dur :vel))
+; (midifile-import "foo.mid" 1 '(prog "chan"))
+
+(define midi-values
+  ;; upper nibble is id, lower is opcodes allowed
+  ;; see Enumerations.h
+  `(("time"   ,(+ (ash 1 4) #xF)) ; all
+    ("delta"  ,(+ (ash 2 4) #xF)) ; all
+    ("rhythm" ,(+ (ash 3 4) #x9))
+    ("dur"    ,(+ (ash 4 4) #x9))
+    ("key"    ,(+ (ash 5 4) #x9))
+    ("amp"    ,(+ (ash 6 4) #x9))
+    ("vel"    ,(+ (ash 7 4) #x9))
+    ("chan"   ,(+ (ash 8 4) #xF)) ; all
+    ("touch"  ,(+ (ash 9 4) #xA))
+    ("ctrl1"  ,(+ (ash 10 4) #xB))
+    ("ctrl2"  ,(+ (ash 11 4) #xB))
+    ("prog"   ,(+ (ash 12 4) #xC))
+    ("press"  ,(+ (ash 13 4) #xD))
+    ("bend"   ,(+ (ash 14 4) #xE))))
+
+(define (midifile-import file track values)
+  (unless (file-exists? file)
+    (error "file does not exist: ~S" file))
+  (define (getname x)
+    (cond ((string? x) x)
+          ((keyword? x) (keyword->string x))
+          ((symbol? x) (symbol->string x))
+          (else (error "not a valid midi value: ~S" x))))
+  (define (getmidivalue x l)
+    (let ((e (or (assoc (getname x) l)
+                 (error "not a valid midi value: ~S" x))))
+      (second e)))
+  (unless (and (integer? track) (>= track 0))
+    (error "not a valid track number: ~S" track))
+  (cond ((not values)
+         (error "must specify at least one midi value to import."))
+        ((pair? values)
+         (let ((vals (map (lambda (x) (getmidivalue x midi-values)) values))
+               (test #f))
+           ;;(format #t "values: ~S" vals)
+           (do ((tail vals (cdr tail)))
+               ((null? tail) 
+                (set! values vals))
+             ;; dont test #xF value since it matches all messages
+             (if (not (= (logand (car tail) #xF) #xF))
+                 (if (not test)
+                     (set! test (car tail)) ; check against first specific value
+                     (if (not (= (logand test #xF) (logand (car tail) #xF)))
+                         (error "no midi message with values: ~S"
+                                values)))))))
+        (else
+         (set! values (list (getmidivalue values midi-values)))))
+  (ffi_midifile_import file track values))
+
+
+

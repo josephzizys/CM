@@ -89,6 +89,8 @@
     (ffi_directory s7_pointer "cm_directory" c-string bool)
     (ffi_pathname_to_key int "cm_pathname_to_key" c-string)
 
+    (ffi_midifile_import s7_pointer "cm_midifile_import" c-string int s7_pointer)
+
     (ffi_sal_allocate_tokens s7_pointer "sal_allocate_tokens"  )
     (ffi_sal_free_tokens s7_pointer "sal_free_tokens" s7_pointer)
     (ffi_sal_tokenize_file s7_pointer "sal_tokenize_file" s7_pointer s7_pointer s7_pointer)
