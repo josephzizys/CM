@@ -705,42 +705,55 @@ bool cm_set_current_directory(char *path)
 
 char* cm_pathname_name(char* path)
 {
-
-  File f=completeFile(String(path));
-  String s=f.getFileNameWithoutExtension();
-  return (char *)strdup(s.toUTF8());
+  String string=String(path);
+#ifdef WINDOWS
+  string=string.replaceCharacter(T('\\'),T('/'));
+#endif
+  // start of name is after the last '/' else 0
+  int start=string.lastIndexOfChar(T('/')) + 1;
+  // end of name is before the last '.' else length
+  int end=string.lastIndexOfChar(T('.'));
+  // name can start with dot (position 0)
+  if (end<=0) end=string.length();
+  if (start<end)
+    return (char *)strdup(string.substring(start,end).toUTF8());
+  else
+    return (char *)NULL;
 }
 
 char* cm_pathname_type(char* path)
 {
-  File f=completeFile(String(path));
-  String s=f.getFileExtension();
-  if (s.startsWithChar('.'))
-    s=s.substring(1);
-  return (char *)strdup(s.toUTF8());
+  String string=String(path);
+#ifdef WINDOWS
+  string=string.replaceCharacter('\\','/');
+#endif
+  // file type after the last '.' unless dot belongs to the name
+  int start=string.lastIndexOfChar(T('.'));
+  if ((start<=0) || string[start-1]==T('/'))
+    return (char *)NULL;
+  return (char *)strdup(string.substring(start+1).toUTF8());
 }
 
 char* cm_pathname_directory(char* path)
 {
-  String s=String(path);
+  String string=String(path);
 #ifdef WINDOWS
-  s=s.replaceCharacter('\\','/');
+  string=string.replaceCharacter(T('\\'),T('/'));
 #endif
-  int p=s.lastIndexOfChar('/');
-  if (p<0)
-    return "";
+  int end=string.lastIndexOfChar(T('/'));
+  if (end<0)
+    return (char *)NULL;
   else 
-    return (char *)strdup(s.substring(0,p+1).toUTF8());
+    return (char *)strdup(string.substring(0,end+1).toUTF8());
 }
 
 char* cm_full_pathname(char* path)
 {
-  File f=completeFile(String(path));
-  String s=f.getFullPathName();
+  String string=completeFile(String(path)).getFullPathName();
 #ifdef WINDOWS
-  s=s.replaceCharacter('\\','/');
+  string=string.replaceCharacter(T('\\'),T('/'));
 #endif
-  return (char *)strdup(s.toUTF8());
+  return (char *)strdup(string.toUTF8());
 }
 
 bool cm_pathname_exists_p(char* path)

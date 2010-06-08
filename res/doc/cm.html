@@ -2616,6 +2616,22 @@ Returns a current time stamp. Note that now values are not used by the scheduler
 </blockquote>
 <!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="shell">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">shell</span> (<var class="arg">command</var>)
+    </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Calls operating system's shell interpreter to execute user's <var>command</var>.
+</p>
+</blockquote>
 
 
 <!-- DEFINITION -->
@@ -2688,23 +2704,22 @@ Returns a list of absolute filenames matching wildcard <var>spec</var>. If <var>
 </blockquote>
 <!-- END DEFINITION -->
 
-
 <!-- DEFINITION -->
-<table class="entry" id="shell">
+<table class="entry" id="file-version">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">shell</span> (<var class="arg">command</var>)
+      <span class="funcname">file-version</span> (<var class="arg">filename</var>, <span class="meta">[</span><var class="opt">vers</var> <var class="optval">#t</var><span class="meta">]</span>)
     </td>
-    <!-- td class="label">SAL</td -->
+    <!-- td class="label">Function</td -->
   </tr>
-
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; string</td></tr>
 </table>
 <blockquote>
 <p>
-Calls operating system's shell interpreter to execute user's <var>command</var>.
+Returns a variant of <var>filename</var> with a version number appended to its name. If <var>vers</var> is <code>#t</code> then successive version numbers (starting with 1) are appended, if <var>vers</var> is a number then that number is used as the suffix, else if <var>vers</var> is false then no version number is appended to the name. Note that this function does not actually check to see if the versioned file exists or not: you are responsible for initializing <var>vers</var> to a version number that will not conflict with any existing version on disk.
 </p>
 </blockquote>
+<!-- END DEFINITION -->
 
 <h2 id="iteration">Iteration</h2>
 

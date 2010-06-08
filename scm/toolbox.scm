@@ -1028,6 +1028,34 @@
 (define (pathname->key path)
   (ffi_pathname_to_key path))
 
+;; file-version
+
+(define *versions* (make-equal-hash-table))
+
+; (file-version "~/Work/test.mid" )
+; (file-version "test.mid" 10)
+; (file-version "test.mid" )
+
+(define (file-version file . args)
+  (let ((ver (if (pair? args) (car args) #t)))
+    (if (not ver)
+        file
+        (let* ((nam (pathname-name file))
+               (ext (pathname-type file))
+               (key (string-append nam "." ext))
+               (num (hash-ref *versions* key)) ; num to use or #f
+               )
+          (cond ((and (integer? ver) (>= ver 0))
+                 (set! num ver) )
+                ((eq? ver #t)
+                 (if (not num) (set! num 1)))
+                (else
+                 (error "versioning value not #t, #f or integer: ~S" ver)))
+          ;; increment version number for file
+          (hash-set! *versions* key (+ num 1))
+          (make-pathname :name (string-append nam "-" (number->string num))
+                         :defaults file)))))
+
 (define *colors*
   '("black"
     "white"
