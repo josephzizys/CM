@@ -64,9 +64,11 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
     case TextIDs::Sal: syntax=SalSyntax::getInstance(); break;
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
+#ifdef WITHFOMUS
     case TextIDs::Fomus:
       if (fomus_exists) syntax=FomusSyntax::getInstance(); else syntax=TextSyntax::getInstance();
       break;
+#endif
     default: syntax=TextSyntax::getInstance(); break;
     }
   // create the code buffer and add it to the content component (the
@@ -806,7 +808,9 @@ void CodeEditorWindow::switchBufferSyntax(int newtype)
     case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
     case TextIDs::Sal: syntax=SalSyntax::getInstance(); break;
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
+#ifdef WITHFOMUS
     case TextIDs::Fomus: syntax=FomusSyntax::getInstance(); break;
+#endif
     default: syntax=TextSyntax::getInstance(); break;
     }
   // pass in any existing customizations, the buffer does NOT look at
