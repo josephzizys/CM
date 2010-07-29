@@ -86,10 +86,10 @@
 			    (continue-old-file #f)
 			    (statistics *clm-statistics*)
 			    (scaled-to #f)
+			    (scaled-by #f)
 			    (play *clm-play*)
 			    (clipped 'unset)
 			    (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
-			    (scaled-by #f)
 			    (ignore-output #f)
 			    (thread-output #f)
 			    (thread-reverb #f)
@@ -262,7 +262,7 @@
 		 (let ((scaling
 			(or scaled-by
 			    (let* ((mx-lst (mus-sound-maxamp output-1))
-				   (mx (cadr mx-lst)))
+				   (mx (if (not (null? mx-lst)) (cadr mx-lst) 1.0)))
 			      (do ((i 1 (+ i 2)))
 				  ((>= i (length mx-lst)) (/ scaled-to mx))
 				(set! mx (max mx (list-ref mx-lst i)))))))
@@ -321,7 +321,7 @@
      ;; with-sound but using tempnam for output (can be over-ridden by explicit :output)
      (dynamic-wind
 	 (lambda () 
-	   (set! *clm-file-name* (snd-tempnam)))
+	   (set! *clm-file-name* (tmpnam)))
 	 (lambda ()
 	   (with-sound-helper (lambda () ,@body) ,@args)) ; dynamic-wind returns this as its result
 	 (lambda ()
@@ -329,8 +329,6 @@
 
 
 ;;; -------- clm-load --------
-;;;
-;;; CM wants this to be a function so that it can use apply
 
 (define (clm-load file . args) 
   "(clm-load file . args) loads 'file' in the context of with-sound"
@@ -501,23 +499,18 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		 (et-pitch (+ base-pitch (* 12 octave))))
 	    (set! last-octave octave)
 	    (if pythagorean
-		(* main-pitch (expt 2 octave) (vector-ref ratios base-pitch))
+		(* main-pitch (expt 2 octave) (ratios base-pitch))
 		(* main-pitch (expt 2.0 (/ et-pitch 12)))))
 	  pitch))))
 
 
 (define (->sample beg)
   "(->sample time-in-seconds) -> time-in-samples"
-  (inexact->exact (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg))))
+  (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg)))
 
 
 
 ;;; -------- def-clm-struct --------
-
-(define (snd-error-1 .args)
-  (if (defined? 'snd-error)
-      (apply snd-error args)
-      (apply display args)))
 
 ;;;  :(def-clm-struct (osc :make-wrapper (lambda (gen) (set! (osc-freq gen) (hz->radians (osc-freq gen))) gen)) freq phase)
 ;;;  #<unspecified>
@@ -555,7 +548,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 			   fields))
 	 (field-types (map (lambda (n)
 			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
-				 (snd-error-1 (format #f ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n)))
+				 (error 'wrong-type-arg ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n))
 			     (if (and (list? n)
 				      (= (length n) 4)
 				      (eq? (list-ref n 2) :type))
@@ -719,10 +712,13 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; generics from Snd that are used in some instruments
-;;;   these replacements assume Snd types are not present
+;;; functions from Snd that are used in some instruments
+;;;   these replacements assume that the Snd functions are not present
 
-(define file-name mus-expand-filename)
+(define (file-name name) 
+  (if (string? name) 
+      (mus-expand-filename name) 
+      (mus-file-name name)))
 
 (define srate mus-sound-srate)
 
@@ -737,3 +733,11 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
   (if (string? obj)
       (mus-sound-frames obj)
       (length obj)))
+
+
+(define snd-print display)
+(define snd-warning display)
+(define snd-display (lambda args (apply format (append (list #t) (cdr args)))))
+(define (snd-error str) (error 'mus-error str))
+(define snd-tempnam tmpnam)
+
