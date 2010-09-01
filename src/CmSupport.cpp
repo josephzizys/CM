@@ -1247,56 +1247,69 @@ void mp_set_message_mask(int mask)
   MidiInPort::getInstance()->setOpcodeMask(mask);
 }
 
-s7_pointer getMidiValue(s7_scheme* sc, MidiMessageSequence::MidiEventHolder* hold, int midival, 
+
+s7_pointer getMidiValue(s7_scheme* sc, MidiMessageSequence::MidiEventHolder* hold, int midival, int opcode, 
                         double lasttime, double lastontime)
 {
   switch (midival)
     {
     case MidiValues::MidiValueTime:
       return s7_make_real(sc, hold->message.getTimeStamp());
-      break;
     case MidiValues::MidiValueDelta:
       return s7_make_real(sc, hold->message.getTimeStamp() - lasttime);
-      break;
+    case MidiValues::MidiValueOp:
+      return s7_make_integer(sc, opcode);
     case MidiValues::MidiValueRhythm:
       return s7_make_real(sc, hold->message.getTimeStamp() - lastontime);
-      break;
     case MidiValues::MidiValueDuration:
       if (hold->noteOffObject)
         return s7_make_real(sc, hold->noteOffObject->message.getTimeStamp() - hold->message.getTimeStamp());
       else // no dur if no paired off
         return SchemeThread::getInstance()->schemeFalse;
-      break;
     case MidiValues::MidiValueKeyNumber:
       return s7_make_integer(sc, hold->message.getNoteNumber());
-      break;
     case MidiValues::MidiValueAmplitude:
       return s7_make_real(sc, hold->message.getFloatVelocity());
-      break;
     case MidiValues::MidiValueVelocity:
       return s7_make_integer(sc, hold->message.getVelocity());
-      break;
     case MidiValues::MidiValueChannel:
       return s7_make_integer(sc, hold->message.getChannel()-1);
-      break;
     case MidiValues::MidiValueTouch:
       return s7_make_integer(sc, hold->message.getAfterTouchValue());
-      break;
     case MidiValues::MidiValueControlNumber:
       return s7_make_integer(sc, hold->message.getControllerNumber());
-      break;
     case MidiValues::MidiValueControlValue:
       return s7_make_integer(sc, hold->message.getControllerValue());
-      break;
     case MidiValues::MidiValueProgram:
       return s7_make_integer(sc, hold->message.getProgramChangeNumber());
-      break;
     case MidiValues::MidiValuePressure:
       return s7_make_integer(sc, hold->message.getChannelPressureValue());
-      break;
     case MidiValues::MidiValueBend:
       return s7_make_integer(sc, hold->message.getPitchWheelValue());
-      break;
+    case MidiValues::MidiValueSeqNum:
+      {
+        int num = -1;
+        const uint8* data=hold->message.getMetaEventData();
+        if (hold->message.getMetaEventLength()==2)
+          num=(int)((data[0]<<8)+data[1]);
+        return s7_make_integer(sc, hold->message.getPitchWheelValue());
+      }
+    case MidiValues::MidiValueText:
+      return s7_make_string(sc, hold->message.getTextFromTextMetaEvent().toUTF8());
+    case MidiValues::MidiValueChanPrefix:
+      return s7_make_integer(sc, hold->message.getMidiChannelMetaEventChannel());
+    case MidiValues::MidiValueTempo:
+      return s7_make_real(sc, hold->message.getTempoSecondsPerQuarterNote());
+    case MidiValues::MidiValueTimeSig:
+      {
+        int num, den;
+        hold->message.getTimeSignatureInfo(num, den);
+        return s7_cons(sc, s7_make_integer(sc, num),
+                       s7_cons(sc, s7_make_integer(sc, den),
+                               SchemeThread::getInstance()->schemeNil));
+      }
+    case MidiValues::MidiValueKeySig:
+      return s7_make_integer(sc, hold->message.getKeySignatureNumberOfSharpsOrFlats());
     default:
       return SchemeThread::getInstance()->schemeFalse;
     }
@@ -1304,6 +1317,7 @@ s7_pointer getMidiValue(s7_scheme* sc, MidiMessageSequence::MidiEventHolder* hol
 
 s7_pointer cm_midifile_import(char* path, int track, s7_pointer midivalues)
 {
+  s7_scheme* scheme=SchemeThread::getInstance()->scheme;
   String name (path);
   File file=completeFile(name);
   if (!file.existsAsFile())
@@ -1341,49 +1355,134 @@ s7_pointer cm_midifile_import(char* path, int track, s7_pointer midivalues)
           h->message.setTimeStamp(h->message.getTimeStamp()/smptetps);
         }
     }
+
+  // format of values list: 1=single value, 2=multiple values, 3=list
+  // of lists eg: ("op"), ("op" "key") (("op" "key") ("op" "bend"))
+  format=1;
+  if (s7_is_pair(s7_car(midivalues)))
+    format=3;
+  else if (s7_list_length(scheme, midivalues)>1)
+    format=2;
   // transfer midi values to array
   Array<int> vals;
-  for (s7_pointer p=midivalues; s7_is_pair(p); p=s7_cdr(p))
-    vals.add((int)s7_integer(s7_car(p)));
-
+  // if not format 3 then load the array just one time
+  if (format<3)
+    {
+      for (s7_pointer p=midivalues; s7_is_pair(p); p=s7_cdr(p))
+        vals.add((int)s7_integer(s7_car(p)));
+    }
+  // initialize return list for rplacd value appending
+  s7_pointer empty=SchemeThread::getInstance()->schemeNil;
+  s7_pointer head=s7_cons(scheme, SchemeThread::getInstance()->schemeFalse, empty);
+  s7_pointer tail=head;  // tail now: (#f)
   double lasttime=0.0;
   double lastontime=0.0;
-  s7_scheme* scheme=SchemeThread::getInstance()->scheme;
-  // initialize return list for rplacd value appending
-  s7_pointer head=s7_cons(scheme, SchemeThread::getInstance()->schemeFalse, 
-                          SchemeThread::getInstance()->schemeNil);
-  s7_pointer tail=head;
-  // tail now: (#f)
-  // map events and collect values
+  // map all events in track
   for (int i=0; i<seq->getNumEvents(); i++)  
     {
       MidiMessageSequence::MidiEventHolder* e=seq->getEventPointer(i);
-      if (e->message.getChannel()<1) continue; // not a channel message
-      int op=(e->message.getRawData()[0] & 0xf0)>>4;
-      s7_pointer p=NULL;
-      // all values must be applicable to the event
-      for (int j=0; j<vals.size() && op>0; j++)
-        if (!MidiValues::testOpcode(vals[j], op))
-          op=0;
-      // continue if noteOff or value not applicable
-      if (op<0x9) continue;
-      //std::cout << "event [" << i << "] op=" << op << " values are applicable\n";
-      if (vals.size()==1)
-        p=getMidiValue(scheme, e, vals[0], lasttime, lastontime);
-      else
+      int op=-1;
+      // only handle channel or meta messages. get the midi opcode of
+      // the event. for channel events opcode is in the upper nibble
+      // of the status byte
+      if (e->message.getChannel()>0)
+        op=(e->message.getRawData()[0] & 0xF0)>>4;
+      else if (e->message.isMetaEvent())
+        op=e->message.getMetaEventType();
+      else 
+        continue;
+
+      s7_pointer top=midivalues; // top only used by format 3
+      // if format 3 set pointer to start of midivals and load the
+      // vals array with the first sublist
+      if (format==3)
         {
-          // process in reverse order to cons values onto sublist
-          p=SchemeThread::getInstance()->schemeNil;
-          for (int j=vals.size(); --j>=0; )
-            p=s7_cons(scheme, getMidiValue(scheme, e, vals[j], lasttime, lastontime), p);
+          vals.clear();
+          // first values list is car of top
+          for (s7_pointer p=s7_car(top); s7_is_pair(p); p=s7_cdr(p))
+            vals.add((int)s7_integer(s7_car(p)));
+          top=s7_cdr(top); // increment top
         }
-      s7_set_cdr(tail, s7_cons(scheme, p, SchemeThread::getInstance()->schemeNil));
-      tail=s7_cdr(tail);
+      // process all the midivalues for the current message. if format
+      // is 1 or 2 then this loop happens only one time
+      while (true)
+        {
+          // check that all values are applicable to the current message.
+          bool ok=true;
+          for (int j=0; j<vals.size() && ok; j++) //((j<vals.size()) && (op > -1))
+            if (!MidiValues::isOpForValue(vals[j], op))
+              ok=false;
+          // if all the values match then process them and add to return list
+          if (ok)
+            {
+              //std::cout << "event [" << i << "] op=" << op << " values are applicable\n";
+              s7_pointer add=NULL;
+              if (format==1)
+                add=getMidiValue(scheme, e, vals[0], op, lasttime, lastontime);
+              else
+                {
+                  // process vals in reverse order to cons up adds
+                  add=empty;
+                  for (int j=vals.size(); --j>=0; )
+                    add=s7_cons(scheme, getMidiValue(scheme, e, vals[j], op, lasttime, lastontime), add);
+                }
+              // add the new value (or list of values) onto tail.
+              s7_set_cdr(tail, s7_cons(scheme, add, empty));
+              tail=s7_cdr(tail);
+            }
+          // if just single value list or no more lists then quit loop
+          // and move to next message
+          if (format<3 || top == empty)
+            break;
+          // else format is 3 and more lists to process, increment to next values list
+          vals.clear();
+          // next values is car of top
+          for (s7_pointer p=s7_car(top); s7_is_pair(p); p=s7_cdr(p))
+            vals.add((int)s7_integer(s7_car(p)));
+          top=s7_cdr(top);  // increment top 
+        }
+
       lasttime=e->message.getTimeStamp();
       if (op==0x9)
         lastontime=lasttime;
     }
   return s7_cdr(head);
+}
+
+s7_pointer cm_midifile_header(char* path, s7_pointer midivalues)
+{
+  s7_scheme* scheme=SchemeThread::getInstance()->scheme;
+  String name (path);
+  File file=completeFile(name);
+  if (!file.existsAsFile())
+    SchemeThread::getInstance()->signalSchemeError(T("File does not exist: ") + file.getFullPathName());
+  FileInputStream* input=file.createInputStream();
+  MidiFile midifile;
+  if (!midifile.readFrom(*input))
+    SchemeThread::getInstance()->signalSchemeError(T("Invalid midi file: ") + file.getFullPathName());    
+  int num=midifile.getNumTracks();
+  if (num<1) 
+    SchemeThread::getInstance()->signalSchemeError(T("Invalid midi file: ") + file.getFullPathName());
+  // add num tracks
+  s7_pointer head=s7_cons(scheme, s7_make_integer(scheme, num), s7_nil(scheme));
+  s7_pointer data=head;
+  // add time format (ticks/quarter or SMPTE)
+  num=midifile.getTimeFormat();
+  s7_set_cdr(data, s7_cons(scheme, s7_make_integer(scheme, num), s7_nil(scheme)));
+  data=s7_cdr(data);
+  // add tempo or #f
+  MidiMessageSequence seq;
+  midifile.convertTimestampTicksToSeconds();
+  midifile.findAllTempoEvents(seq);
+  if (seq.getNumEvents()>0)
+    s7_set_cdr(data, s7_cons(scheme, s7_make_real(scheme, seq.getEventPointer(0)->message.getTempoSecondsPerQuarterNote()), s7_nil(scheme)));
+  else
+    s7_set_cdr(data, s7_cons(scheme, s7_f(scheme), s7_nil(scheme)));
+  data=s7_cdr(data);
+  // add max time in file
+  s7_set_cdr(data, s7_cons(scheme, s7_make_real(scheme, midifile.getLastTimestamp()), s7_nil(scheme)));
+  data=s7_cdr(data);
+  return head;
 }
 
 //

@@ -3122,6 +3122,25 @@ Enables MIDI input only for the specified MIDI opcodes. Opcodes are integers bet
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<table id="midifile-header" class="entry">
+  <tr class="entry">
+    <td class="formals">
+    <span class="funcname">midifile-header</span> (<var class="arg">file</var>)
+    </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+
+<blockquote>
+<p>
+Returns a list of MIDI header information from the specified <var>file</var>. The format of this list is (<var>tracks</var> <var>format</var> <var>tempo</var> <var>timesig</var> <var>maxtime</var>) where <var>tracks</var> is the number of tracks in the  file, <var>format</var> is the time format of the file (if positive its the number of ticks per quarter else its SMPTE), <var>tempo</var> is the initial tempo or #f <!-- , <var>timesig</var> is an initial time signature (if any) --> , and <var>maxtime</var> the maximum time stamp found in any track.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
 <table id="midifile-import" class="entry">
   <tr class="entry"> <td class="formals">
     <span class="funcname">midifile-import</span> (<var class="arg">file</var>, <var class="arg">track</var>, <var class="arg">values</var>)
@@ -3132,55 +3151,89 @@ Enables MIDI input only for the specified MIDI opcodes. Opcodes are integers bet
 
 <blockquote>
 <p>
-Returns a list of MIDI <var>values</var> from the specified <var>track</var> (zero based) in <var>file</var>. Messages that do not contain the importing values are skipped. <var>Values</var> can be a string, symbol, keyword or list of the same; if a list of values is specified then lists of the corresponding data are returned in the same order. Possible <var>values</var> to import are:
+Returns a list of MIDI <var>values</var> from the specified <var>track</var> (zero based) in <var>file</var>. Only messages that match (contain) the specified values are processed, messages that do not match the values are skipped.<!--  otherwise they are skipped Messages that do not apply to the importing values are skipped.--> <var>Values</var> can be a single value, a single list of values or a list of lists of values. Each individual value can be a string, symbol, or keyword as defined below. If a single list of values is specified then lists of data are returned in the same order as the specified values. If a list of lists of values is specified then each of sublist is matched againt each message as described above.
 </p>
 <blockquote>
 <table>
   <tr>
-    <th class="lcol" style="padding-right: 2em;">Values</th> <th class="lcol" style="padding-right: 2em;">Applicable Messages</th> <th class="lcol">Description</th>
+    <th class="lcol" style="padding-right: 2em;">Value</th> <th class="lcol" style="padding-right: 2em;">Matching Messages</th> <th class="lcol">Description</th>
   </tr>
-  <tr>
-    <td><span class="string">"chan"</span></td> <td> all </td> <td>the channel of the message 0-15</td>
+  <tr style="vertical-align:top;">
+    <td><span class="string">"op"</span></td> <td> all </td> <td>the opcode of the message.
+      Channel message opcodes are: note = 9, aftertouch = 10, controller = 11,  program = 12, pressure = 13, pitchbend = 14.
+      Meta message opcodes are: seqnum = 0, text = 1, copyright = 2, trackname = 3, instname = 4, lyrics = 5, marker = 6, cue = 7, chanprefix = 32, tempo = 81, timesignature = 88, keysignature = 89.
+</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"time"</span></td> <td>all</td> <td>the start time of the message in seconds</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"delta"</span></td> <td>all</td> <td>the time increment from the previous message</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
+    <td><span class="string">"chan"</span></td> <td> channel messages </td> <td>the channel of the message 0-15</td>
+  </tr>
+
+  <tr style="vertical-align:top;">
     <td><span class="string">"rhythm"</span></td> <td> notes </td> <td>the time increment from the previous note</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"dur"</span></td> <td> notes </td> <td>the duration of the note</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"key"</span></td> <td> notes </td> <td>the key number of the note</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"amp"</span></td> <td> notes </td> <td>the amplitude of the note 0.0-1.0</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"vel"</span></td> <td> notes </td> <td>the key velocity the note 0-127</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"touch"</span></td> <td> after touches </td> <td>the after touch value 0-127</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"ctrl1"</span></td> <td> control changes </td> <td>the controller number 0-127</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"ctrl2"</span></td> <td> control changes </td> <td>the controller value 0-127</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"prog"</span></td> <td> program changes </td> <td>the program value 0-127</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"press"</span></td> <td> channel pressures </td> <td>the pressure value 0-16383</td>
   </tr>
-  <tr>
+  <tr style="vertical-align:top;">
     <td><span class="string">"bend"</span></td> <td> pitch bends </td> <td>the pitch bend value 0-16383</td>
   </tr>
+
+  <tr style="vertical-align:top;">
+    <td><span class="string">"seqnum"</span></td> <td> seqnum meta events </td> <td>the sequence number</td>
+  </tr>
+
+  <tr style="vertical-align:top;">
+    <td><span class="string">"text"</span></td> <td> text meta events (opcodes 1-7) </td> <td>the text string of the message</td>
+  </tr>
+
+  <tr style="vertical-align:top;">
+    <td><span class="string">"chanpre"</span></td> <td> channel meta events </td> <td>the channel prefix number</td>
+  </tr>
+
+  <tr style="vertical-align:top;">
+    <td><span class="string">"tempo"</span></td> <td> tempo meta events </td> <td>the tempo as quarters per second</td>
+  </tr>
+
+  <tr style="vertical-align:top;">
+    <td><span class="string">"timesig"</span></td> <td> time signatures </td> <td>a time signature list (<var>numerator denominator</var>)</td>
+  </tr>
+
+  <tr style="vertical-align:top;">
+    <td><span class="string">"keysig"</span></td> <td> key signatures </td> <td>a key signature -7 to 7</td>
+  </tr>
+
+
+
 </table>
 </blockquote>
 </blockquote>

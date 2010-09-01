@@ -1105,6 +1105,29 @@
       (map (lambda (e) (emit e i errf))
 	   (parse-unit-parsed unit)))))
 
+(define (check-for-redefinition bindings type)
+  (do ((tail bindings (cdr tail)))
+      ((null? tail) #f)
+    ;; each binding can be a variable name or a list (variable value)
+    (let ((sym (if (pair? (car tail)) (car (car tail)) (car tail))))
+      (warn-if-redefinition sym type)
+      )))
+
+(define (warn-if-redefinition sym typ)
+  (if (and (symbol? sym)
+           (defined? sym))
+      (let ((val (symbol->value sym))
+            (nam (symbol->string sym))
+            (str (if (eq? typ 'variable) "local variable"
+                     (if (eq? typ 'parameter) "function parameter"
+                         "function parameter or a local variable name")))
+            )
+        (if (procedure? val)
+            (print-output (string-append "Warning: the variable '" nam "' is already defined as a procedure. Using '" nam "' as a " str " may lead to unanticipated behavior or errors within the scope of the new definition.\n"))
+            (print-output (string-append "Warning: the variable '" nam "' is already defined. Using '" nam "' as a " str " may lead to unanticipated behavior or errors within the scope of the new definition.\n"))
+            )))
+  #f)
+
 ;;;
 ;;; assignment (set)
 ;;;
@@ -1196,8 +1219,10 @@
 	;;(print (list #:vars-> vars))
 	(if (not vars)
 	    `(begin ,@body)
-	    `(let* ,(emit vars info errf)
-	       ,@body)))))
+            (let ((bind (emit vars info errf)))
+              (check-for-redefinition bind 'variable)
+              `(let* ,bind
+                 ,@body))))))
   )
 
 ;; FIX: Should WHEN and UNLESS be Commands ??
@@ -1475,7 +1500,7 @@
     (if (fifth data)
 	(set! done (emit (fifth data) info errf))
 	(set! done #f))
-
+    (check-for-redefinition bind 'variable)
     (if (not run?)
 	;; LOOP expansions
 	(if (null? punt)
@@ -1992,23 +2017,11 @@
            (vars (third data))
            (body (emit (fourth data) info errf)))
       (if vars
-          (set! body `((let* , (emit vars info errf) ,@body))))
+          (let ((bind (emit vars info errf)))
+            (check-for-redefinition bind 'variable)
+            (set! body `((let* , bind ,@body)))))
       (emit-function name pars body)
       ;; use define if no args or all are required
-      #|(if (or (null? pars)
-              (symbol? (car pars)))
-          `(define ,(cons name pars) ,@body)
-          (let ((reqs (first pars))
-                (opts (second pars)))
-            ;; use define* if all are optkey
-            (if (null? reqs)
-                `(define* ,(cons name opts) ,@body)
-                ;; else (a mixture) use define and with-optkeys
-                (let ((restarg (gensym "restarg")))
-                  ;;`(define (,name ,@required . , restarg) (with-optkeys (,restarg ,@optkeys) ,@body))
-                  `(define (,name ,@reqs . , restarg)
-                     ,(append (list 'with-optkeys (cons restarg opts)) body))
-                  ))))|#
       )))
 
 (define (emit-function name formals body)
@@ -2016,9 +2029,14 @@
   ;; wrap the appropriate function around body given the formals
   (if (or (null? formals) (symbol? (car formals)))
       ;; use define if no args or all required args
-      `(define ,(cons name formals) ,@body)
+      (begin
+        (check-for-redefinition formals 'parameter)
+        `(define ,(cons name formals) ,@body)
+        )
       (let ((reqs (first formals))
             (opts (second formals)))
+        (check-for-redefinition reqs 'parameter)
+        (check-for-redefinition opts 'parameter)
         ;; use define* if all optkey args
         (if (null? reqs)
             `(define* ,(cons name opts) ,@body)
@@ -2119,6 +2137,7 @@
            (data (gensym "data")) ; data returned by open-output-file
            (flag (gensym "flag")) ; success flag
            )
+      (check-for-redefinition vars 'variable)
       `(let ((,data ,0)
              (,flag #f))
          (dynamic-wind

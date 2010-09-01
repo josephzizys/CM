@@ -1287,23 +1287,30 @@
 ; (midifile-import "foo.mid" 1 '(:rhythm :dur :vel))
 ; (midifile-import "foo.mid" 1 '(prog "chan"))
 
-(define midi-values
-  ;; upper nibble is id, lower is opcodes allowed
-  ;; see Enumerations.h
-  `(("time"   ,(+ (ash 1 4) #xF)) ; all
-    ("delta"  ,(+ (ash 2 4) #xF)) ; all
-    ("rhythm" ,(+ (ash 3 4) #x9))
-    ("dur"    ,(+ (ash 4 4) #x9))
-    ("key"    ,(+ (ash 5 4) #x9))
-    ("amp"    ,(+ (ash 6 4) #x9))
-    ("vel"    ,(+ (ash 7 4) #x9))
-    ("chan"   ,(+ (ash 8 4) #xF)) ; all
-    ("touch"  ,(+ (ash 9 4) #xA))
-    ("ctrl1"  ,(+ (ash 10 4) #xB))
-    ("ctrl2"  ,(+ (ash 11 4) #xB))
-    ("prog"   ,(+ (ash 12 4) #xC))
-    ("press"  ,(+ (ash 13 4) #xD))
-    ("bend"   ,(+ (ash 14 4) #xE))))
+(define midi-values  
+  ;; SEE:  Enumerations.h
+  '(("time"   1 ) 
+    ("delta"  2 )
+    ("op"     3 )
+    ("chan"   4 ) 
+    ("rhythm" 5 )
+    ("dur"    6 )
+    ("key"    7 )
+    ("amp"    8 )
+    ("vel"    9 )
+    ("touch"  10 )
+    ("ctrl1"  11 )
+    ("ctrl2"  12 )
+    ("prog"   13 )
+    ("press"  14 )
+    ("bend"   15 )
+    ("seqnum"     16)
+    ("text"       17)
+    ("chanpre"    18)
+    ("tempo"      19)
+    ("timesig"    20)
+    ("keysig"     21)
+    ))
 
 (define (midifile-import file track values)
   (unless (file-exists? file)
@@ -1312,32 +1319,26 @@
     (cond ((string? x) x)
           ((keyword? x) (keyword->string x))
           ((symbol? x) (symbol->string x))
-          (else (error "not a valid midi value: ~S" x))))
+          (else (error "not a midi value: ~S" x))))
   (define (getmidivalue x l)
     (let ((e (or (assoc (getname x) l)
-                 (error "not a valid midi value: ~S" x))))
+                 (error "not a midi value: ~S" x))))
       (second e)))
   (unless (and (integer? track) (>= track 0))
-    (error "not a valid track number: ~S" track))
-  (cond ((not values)
-         (error "must specify at least one midi value to import."))
-        ((pair? values)
-         (let ((vals (map (lambda (x) (getmidivalue x midi-values)) values))
-               (test #f))
-           ;;(format #t "values: ~S" vals)
-           (do ((tail vals (cdr tail)))
-               ((null? tail) 
-                (set! values vals))
-             ;; dont test #xF value since it matches all messages
-             (if (not (= (logand (car tail) #xF) #xF))
-                 (if (not test)
-                     (set! test (car tail)) ; check against first specific value
-                     (if (not (= (logand test #xF) (logand (car tail) #xF)))
-                         (error "no midi message with values: ~S"
-                                values)))))))
-        (else
-         (set! values (list (getmidivalue values midi-values)))))
-  (ffi_midifile_import file track values))
+    (error "not a track number: ~S" track))
+  (if (pair? values)
+      (if (pair? (car values))
+          (set! values (map (lambda (y) 
+                              (or (pair? y) (error "not a list of midi values: ~S" y))
+                              (map (lambda (x) (getmidivalue x midi-values)) y))
+                            values))
+          (set! values (map (lambda (x) (getmidivalue x midi-values)) values)))
+      (set! values (list (getmidivalue values midi-values))))
+  (ffi_midifile_import file track values)
+  )
 
+; (midifile-import "/Users/hkt/incline/zincline-1.mid" 0 "op")
 
+(define (midifile-header file)
+  (ffi_midifile_header file #f))
 

@@ -90,6 +90,7 @@
     (ffi_pathname_to_key int "cm_pathname_to_key" c-string)
 
     (ffi_midifile_import s7_pointer "cm_midifile_import" c-string int s7_pointer)
+    (ffi_midifile_header s7_pointer "cm_midifile_header" c-string s7_pointer)
 
     (ffi_sal_allocate_tokens s7_pointer "sal_allocate_tokens"  )
     (ffi_sal_free_tokens s7_pointer "sal_free_tokens" s7_pointer)

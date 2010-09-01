@@ -974,25 +974,62 @@ class AudioFormatIDs
 class MidiValues
 {
  public:
-  static const int SHIFT = 4;
   static const int Empty = 0;
-  static const int MidiValueTime = (1 << SHIFT) + 0xF;
-  static const int MidiValueDelta = (2 << SHIFT) + 0xF;
-  static const int MidiValueRhythm = (3 << SHIFT) + 0x9;
-  static const int MidiValueDuration = (4 << SHIFT) + 0x9;
-  static const int MidiValueKeyNumber = (5 << SHIFT) + 0x9;
-  static const int MidiValueAmplitude = (6 << SHIFT) + 0x9;
-  static const int MidiValueVelocity = (7 << SHIFT) + 0x9;
-  static const int MidiValueChannel = (8 << SHIFT) + 0xF;
-  static const int MidiValueTouch = (9 << SHIFT) + 0xA;
-  static const int MidiValueControlNumber = (10 << SHIFT) + 0xB;
-  static const int MidiValueControlValue = (11 << SHIFT) + 0xB;
-  static const int MidiValueProgram = (12 << SHIFT) + 0xC;
-  static const int MidiValuePressure = (13 << SHIFT) + 0xD;
-  static const int MidiValueBend = (14 << SHIFT) + 0xE;
-  static const bool testOpcode(int value, int opcode)
+  static const int MidiValueTime = 1;
+  static const int MidiValueDelta = 2;
+  static const int MidiValueOp = 3;
+  static const int MidiValueChannel = 4;
+  static const int MidiValueRhythm = 5;
+  static const int MidiValueDuration = 6;
+  static const int MidiValueKeyNumber = 7;
+  static const int MidiValueAmplitude = 8;
+  static const int MidiValueVelocity = 9;
+  static const int MidiValueTouch = 10;
+  static const int MidiValueControlNumber = 11;
+  static const int MidiValueControlValue = 12;
+  static const int MidiValueProgram = 13;
+  static const int MidiValuePressure = 14;
+  static const int MidiValueBend = 15;
+  // meta message values
+  static const int MidiValueSeqNum = 16;
+  static const int MidiValueText = 17;
+  static const int MidiValueChanPrefix = 18;
+  static const int MidiValueTempo = 19;
+  static const int MidiValueTimeSig = 20;
+  static const int MidiValueKeySig = 21;
+
+  static const bool isOpForValue(int value, int op)
   {
-    return (value & opcode)!=0;
+    // return true if the message's opcode is valid for the midivalue
+    // if 8<op<16 its a channel message (no offs) else its a meta message
+    switch (value)
+      {
+        // all messages
+      case MidiValueTime: 
+      case MidiValueDelta:
+      case MidiValueOp:            return true;
+        // channel events
+      case MidiValueChannel:       return ((op>0x08) && (op<0x0F)); // dont recognize offs
+      case MidiValueRhythm:
+      case MidiValueDuration:
+      case MidiValueKeyNumber:
+      case MidiValueAmplitude:
+      case MidiValueVelocity:      return (op==0x9);
+      case MidiValueTouch:         return (op==0xA);
+      case MidiValueControlNumber:
+      case MidiValueControlValue:  return (op==0xB);
+      case MidiValueProgram:       return (op==0xC);
+      case MidiValuePressure:      return (op==0xD);
+      case MidiValueBend:          return (op==0xE);
+        // meta events
+      case MidiValueSeqNum:        return (op==0x00);
+      case MidiValueText:          return ((op>0x00) && (op<0x08));
+      case MidiValueChanPrefix:    return (op==0x20);
+      case MidiValueTempo:         return (op==0x51);
+      case MidiValueTimeSig:       return (op==0x58);
+      case MidiValueKeySig:        return (op==0x59);
+      default:                     return false;
+      }      
   }
 };
 
