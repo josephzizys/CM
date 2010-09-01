@@ -3151,8 +3151,10 @@ Returns a list of MIDI header information from the specified <var>file</var>. Th
 
 <blockquote>
 <p>
-Returns a list of MIDI <var>values</var> from the specified <var>track</var> (zero based) in <var>file</var>. Only messages that match (contain) the specified values are processed, messages that do not match the values are skipped.<!--  otherwise they are skipped Messages that do not apply to the importing values are skipped.--> <var>Values</var> can be a single value, a single list of values or a list of lists of values. Each individual value can be a string, symbol, or keyword as defined below. If a single list of values is specified then lists of data are returned in the same order as the specified values. If a list of lists of values is specified then each of sublist is matched againt each message as described above.
+Returns a list of MIDI <var>values</var> from the specified <var>track</var> (zero based) in <var>file</var>. Messages that match (contain) the specified values are processed, messages that do not match do not appear in the returned list. <var>Values</var> can be a single value, a single list of values or a list of lists of values. Each individual value can be a string, symbol, or keyword as defined below. To return more that one value from messages specify a single list of values. In this case lists of data are returned, where each data list is a match for the specfied values. If a list of lists of values is specified then any message that matches any of those value lists are collected as described above.
 </p>
+
+
 <blockquote>
 <table>
   <tr>
@@ -3232,10 +3234,21 @@ Returns a list of MIDI <var>values</var> from the specified <var>track</var> (ze
     <td><span class="string">"keysig"</span></td> <td> key signatures </td> <td>a key signature -7 to 7</td>
   </tr>
 
-
-
 </table>
 </blockquote>
+<h4>Example</h4>
+<pre>
+<span class="comment">;; find out what kind of messages are in track 0</span>
+midifile-import("zincline-1.mid", 0, "op")
+
+<span class="comment">;; import the start times, key numbers and durations of all notes in track 1</span>
+midifile-import("zincline-1.mid", 1, {"time" "key" "dur"})
+
+<span class="comment">;; import all tempo changes and program changes from track 0</span>
+midifile-import("zincline-1.mid", 0, {{"op" "tempo"} {"op" "prog" "chan"}})
+</pre>
+
+
 </blockquote>
 <!-- END DEFINITION -->
 

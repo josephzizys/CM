@@ -83,7 +83,7 @@ void cm_print_markov_table(s7_pointer table, s7_pointer labels, int field, int r
   for (s7_pointer p=labels; s7_is_pair(p); p=s7_cdr(p))
     {
       port << sp;
-      String s=String((char*)s7_object_to_string(sc, s7_car(p)));
+      String s=String((char*)s7_object_to_string(sc, s7_car(p), true));
       int n=s.length();
       // write column pad
       for (int i=0, m=jmax(field-n, 0); i<m; i++) port << sp; // col separator
