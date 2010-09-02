@@ -117,6 +117,12 @@ s7_pointer sal_token_position(s7_pointer ptr);
 s7_pointer sal_load(char* str);
 s7_pointer sal_eval(String str, int typ);
 
+// mouse
+
+double cm_mouse_x(double minval=0.0, double maxval=1.0, double warp=1.0);
+double cm_mouse_y(double minval=0.0, double maxval=1.0, double warp=1.0);
+s7_pointer cm_mouse_button(s7_pointer upval, s7_pointer downval);
+
 // midi ports
 
 char* cm_port_info();

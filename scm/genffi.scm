@@ -100,6 +100,10 @@
     (ffi_sal_token_string s7_pointer "sal_token_string" s7_pointer)
     (ffi_sal_token_position s7_pointer "sal_token_position" s7_pointer)
 
+    (ffi_mouse_x double "cm_mouse_x" double double double)
+    (ffi_mouse_y double "cm_mouse_y" double double double)
+    (ffi_mouse_button s7_pointer "cm_mouse_button" s7_pointer s7_pointer)
+
     (ffi_port_info c-string "cm_port_info" )
 
     (ffi_mp_open_output bool "mp_open_output" int )

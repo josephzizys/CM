@@ -1070,6 +1070,29 @@ s7_pointer sal_token_position(s7_pointer ptr)
   return s7_make_integer(SchemeThread::getInstance()->scheme, tok->getData1());
 }
 
+// mouse
+
+double cm_mouse_x(double minval, double maxval, double base)
+{
+  Rectangle<int> monitor=Desktop::getInstance().getMainMonitorArea(false);  	
+  Point<int> mouse=Desktop::getInstance().getMousePosition();
+  return cm_rescale(mouse.getX(), 0, monitor.getWidth(), minval, maxval, base);
+}
+
+double cm_mouse_y(double minval, double maxval, double base)
+{
+  Rectangle<int> monitor=Desktop::getInstance().getMainMonitorArea(false);  	
+  Point<int> mouse=Desktop::getInstance().getMousePosition();
+  return cm_rescale(mouse.getY(), 0, monitor.getHeight(), minval, maxval, base);
+}
+
+s7_pointer cm_mouse_button(s7_pointer upval, s7_pointer downval)
+{
+  if (Desktop::getInstance().getMainMouseSource().isDragging())
+    return downval;
+  return upval;
+}
+
 /*
  * port information
  */

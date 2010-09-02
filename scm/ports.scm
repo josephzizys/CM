@@ -5,6 +5,18 @@
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
 ;;; **********************************************************************
 
+(define* (mouse-x (minval 0.0) (maxval 1.0) (warp 1.0))
+  (ffi_mouse_x minval maxval warp)
+  )
+
+(define* (mouse-y (minval 0.0) (maxval 1.0) (warp 1.0))
+  (ffi_mouse_y minval maxval warp)
+  )
+
+(define* (mouse-button (up #f) (down #t))
+  (ffi_mouse_button up down)
+  )
+
 (define (ports )
   (let ((str (ffi_port_info)))
     ;; return port info as lisp list

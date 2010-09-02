@@ -903,6 +903,59 @@ s7_pointer ffi_sal_token_position (s7_scheme *s7, s7_pointer args)
   return (s7, p0);
 }
 
+s7_pointer ffi_mouse_x (s7_scheme *s7, s7_pointer args)
+{
+  double f0, f1, f2, f3;
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mouse_x", 1, s7_car(args), "a double"));
+  f1=s7_number_to_real(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mouse_x", 2, s7_car(args), "a double"));
+  f2=s7_number_to_real(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mouse_x", 3, s7_car(args), "a double"));
+  f3=s7_number_to_real(s7_car(args));
+  args=s7_cdr(args);
+  f0=cm_mouse_x(f1, f2, f3);
+  return s7_make_real(s7, f0);
+}
+
+s7_pointer ffi_mouse_y (s7_scheme *s7, s7_pointer args)
+{
+  double f0, f1, f2, f3;
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mouse_y", 1, s7_car(args), "a double"));
+  f1=s7_number_to_real(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mouse_y", 2, s7_car(args), "a double"));
+  f2=s7_number_to_real(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mouse_y", 3, s7_car(args), "a double"));
+  f3=s7_number_to_real(s7_car(args));
+  args=s7_cdr(args);
+  f0=cm_mouse_y(f1, f2, f3);
+  return s7_make_real(s7, f0);
+}
+
+s7_pointer ffi_mouse_button (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1, p2;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mouse_button", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mouse_button", 2, s7_car(args), "a s7_pointer"));
+  p2=s7_car(args);
+  args=s7_cdr(args);
+  p0=cm_mouse_button(p1, p2);
+  return (s7, p0);
+}
+
 s7_pointer ffi_port_info (s7_scheme *s7, s7_pointer args)
 {
   char* s0;
@@ -3097,6 +3150,9 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_sal_token_type", ffi_sal_token_type, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_token_string", ffi_sal_token_string, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_token_position", ffi_sal_token_position, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_mouse_x", ffi_mouse_x, 3, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_mouse_y", ffi_mouse_y, 3, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_mouse_button", ffi_mouse_button, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_port_info", ffi_port_info, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_open_output", ffi_mp_open_output, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_open_input", ffi_mp_open_input, 1, 0, false, "ffi function");

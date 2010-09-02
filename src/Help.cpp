@@ -441,7 +441,12 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("make-spectrum"), T("cm.html#make-spectrum"));
   cm.set(T("make-weighting"), T("cm.html#make-weighting"));
   cm.set(T("markov-analyze"), T("cm.html#markov-analyze"));
+  cm.set(T("midifile-header"), T("cm.html#midifile-header"));
+  cm.set(T("midifile-import"), T("cm.html#midifile-import"));
   cm.set(T("minus"), T("cm.html#minus"));
+  cm.set(T("mouse-button"), T("cm.html#mouse-button"));
+  cm.set(T("mouse-x"), T("cm.html#mouse-x"));
+  cm.set(T("mouse-y"), T("cm.html#mouse-y"));
   cm.set(T("mm:bend"), T("cm.html#midi_opcodes"));
   cm.set(T("mm:ctrl"), T("cm.html#midi_opcodes"));
   cm.set(T("mm:prog"), T("cm.html#midi_opcodes"));

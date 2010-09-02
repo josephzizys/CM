@@ -2597,8 +2597,6 @@ Encodes <var>x</var> and <var>y</var> values -+2768 as a single point (integer) 
 </blockquote>
 <!-- END DEFINITION -->
 
-
-
 <!-- DEFINITION -->
 <table class="entry" id="now">
   <tr class="entry">
@@ -2615,6 +2613,58 @@ Returns a current time stamp. Note that now values are not used by the scheduler
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="mouse-button">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">mouse-button</span>
+      (<var class="optkey">upval</var> <var class="optval">= #f</var>, <var class="optkey">downval</var> <var class="optval">= #t</var>)
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; object</td></tr>
+</table>
+<blockquote>
+<p>
+Returns <var>downval</var> if the mouse button is currently depressed, otherwise returns <var>upval</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="mouse-x">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">mouse-x</span>
+      (<var class="optkey">minval</var> <var class="optval">= 0.0</var>, <var class="optkey">maxval</var> <var class="optval">= 1.0</var>, <var class="optkey">warp</var> <var class="optval">= 1.0</var>)
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the screen mouse x position scaled <var>minval</var> to <var>maxval</var>, where <var>minval</var> is the value returned when the mouse is full-left on the screen and <var>maxval</var> is the value at full-right. If <var>warp</var> is 1 the interpolation is linear, otherwise values greater than 1 produce increasing exponential spread towards the right and values less than 1 produce decreasing spread.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="mouse-y">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">mouse-y</span>
+      (<var class="optkey">minval</var> <var class="optval">= 0.0</var>, <var class="optkey">maxval</var> <var class="optval">= 1.0</var>, <var class="optkey">warp</var> <var class="optval">= 1.0</var>)
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the screen mouse y position scaled <var>minval</var> to <var>maxval</var>, where <var>minval</var> is the value returned when the mouse at the top of the screen and <var>maxval</var> is the value at the bottom. If <var>warp</var> is 1 the interpolation is linear, otherwise values greater than 1 produce increasing exponential spread towards the bottom and values less than 1 produce decreasing spread.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
 
 <!-- DEFINITION -->
 <table class="entry" id="shell">
