@@ -497,6 +497,11 @@ bool MidiOutPort::isRecordMode(int mode)
   return (recordmode==mode);
 }
 
+bool MidiOutPort::isRecordingAvailable()
+{
+  return (recordmode==CaptureModes::Off) && (captureSequence.getNumEvents()>0);
+}
+
 bool MidiOutPort::isSequenceEmpty()
 {
   return (captureSequence.getNumEvents()==0);
@@ -1228,24 +1233,19 @@ void MidiOutPort::saveSequence(bool ask)
     return;
   sequenceFile.bends=(getTuning()>1) ? true : false;
 
-  if (ask || (sequenceFile.file==File::nonexistent))
+  if (ask )//|| (sequenceFile.file==File::nonexistent)
     {
-      String title;
-  /*** 
-      MidiFileInfoComponent* comp=new MidiFileInfoComponent(&sequenceFile);
-      title=(ask) ? T("Save As") : T("Save");
-      bool flag = DialogWindow::showModalDialog( title, comp, NULL,
-						 Colour(0xffe5e5e5),
-						 true, false, false);
-      delete comp;
-      if (!flag) return;
-  ***/
+      FileChooser choose ("Save Recording", File::getCurrentWorkingDirectory(), "*.mid");
+      if (choose.browseForFileToSave(false))
+        setOutputFile(choose.getResult().getFullPathName());
+      else
+        return;
     }
-
+  
   captureSequence.updateMatchedPairs();
   if (sequenceFile.file.existsAsFile())
     sequenceFile.file.deleteFile();
-
+  
   FileOutputStream outputStream(sequenceFile.file);
   MidiFile* midifile = new MidiFile();
 
@@ -1712,8 +1712,7 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
 
   bool dometa=Flags::test(opmask, MidiFlags::MetaMask);
 
-  std::cout << opmask << " "<< MidiFlags::MetaMask << "dometas=" << dometa << "\n";
-
+  //std::cout << opmask << " "<< MidiFlags::MetaMask << "dometas=" << dometa << "\n";
 
   int count[7]={0,0,0,0,0,0,0};
   String prefix, indent, spacer, ending;
@@ -1721,6 +1720,9 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
   String outstr=String::empty;
   bool sending=false;
   int index;
+
+  std::cout << "saldata=" << ExportIDs::SalData << ", format=" << format <<
+    ", textid=" << ExportIDs::getTextID(format) << "\n";
 
   switch (format) 
     {
@@ -1764,13 +1766,14 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
   if (!sending)
     if (format==ExportIDs::SalData)
       {
-	outstrs.add(T("define variable ") + name + T("-notes = \n  {\n"));
-	outstrs.add(T("define variable ") + name + T("-progs = \n  {\n"));
-	outstrs.add(T("define variable ") + name + T("-bends = \n  {\n"));
-	outstrs.add(T("define variable ") + name + T("-ctrls = \n  {\n"));
-	outstrs.add(T("define variable ") + name + T("-touch = \n  {\n"));
-	outstrs.add(T("define variable ") + name + T("-press = \n  {\n"));
-	outstrs.add(T("define variable ") + name + T("-metas = \n  {\n"));
+        std::cout << "HERE\n";
+	outstrs.add(T("variable ") + name + T("-notes = \n  {\n"));
+	outstrs.add(T("variable ") + name + T("-progs = \n  {\n"));
+	outstrs.add(T("variable ") + name + T("-bends = \n  {\n"));
+	outstrs.add(T("variable ") + name + T("-ctrls = \n  {\n"));
+	outstrs.add(T("variable ") + name + T("-touch = \n  {\n"));
+	outstrs.add(T("variable ") + name + T("-press = \n  {\n"));
+	outstrs.add(T("variable ") + name + T("-metas = \n  {\n"));
       }
     else
       {
@@ -2684,7 +2687,7 @@ class MidiFileImportComponent : public Component,
 {
 public:
   
-  MidiFileImportComponent (File path, MidiFile* file);
+  MidiFileImportComponent (File path, MidiFile* file, MidiMessageSequence* seq);
   ~MidiFileImportComponent();
   void doImport();
   //  void paint (Graphics& g);
@@ -2712,6 +2715,7 @@ public:
   ToggleButton* salbutton;
   ComboBox* dataformatmenu;
 private:
+  MidiMessageSequence* midiseq;
   MidiFile* midifile;
   File pathname;
   GroupComponent* messagegroup;
@@ -2749,7 +2753,7 @@ public:
   }
 };
 
-MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
+MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi, MidiMessageSequence* seq)
     : messagegroup (0),
       midifilegroup (0),
       tracklabel (0),
@@ -2776,11 +2780,12 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
       salbutton (0),
       exportbutton (0),
       midifile (0),
+      midiseq (0),
       pathname (File::nonexistent)
 {
   pathname=path;
   midifile=midi;
-  
+  midiseq=seq;
   addAndMakeVisible (midifilegroup =
 		     new GroupComponent (T("midifilegroup"),
 					 T("Import")));
@@ -2798,17 +2803,20 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
   trackmenu->setJustificationType (Justification::centredLeft);
   trackmenu->setTextWhenNothingSelected (String::empty);
   trackmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
-  for (int i=0; i<midifile->getNumTracks(); i++)
-    trackmenu->addItem(String(i), i+1); // juce: Id can't be 0
-  trackmenu->addListener (this);
-  // set the selected track to the first data track. in Level 0 files
-  // this is track 0 and in Level 1 files its track 1. then we have to
-  // add 1 to the actual track number to avoid a 0 id value.
-  if (midifile->getNumTracks()==1) // is level 0 file
-    trackmenu->setSelectedId(0 + 1);  
+  if (midifile)
+    for (int i=0; i<midifile->getNumTracks(); i++)
+      trackmenu->addItem(String(i), i+1); // juce: Id can't be 0
   else
-    trackmenu->setSelectedId(1 + 1);
-
+    trackmenu->addItem(T("0"), 1);   // only one track if sequence    
+  trackmenu->addListener (this);
+  // select the first data track. in Level 0 files this is track 0 and
+  // in Level 1 files its track 1 but we always have to add 1 to the
+  // actual track number to avoid a 0 id value.
+  if (midifile && midifile->getNumTracks()>1)
+    trackmenu->setSelectedId(2);  
+  else
+    trackmenu->setSelectedId(1);
+  
   addAndMakeVisible(channellabel = new Label(String::empty, T("Channel:")));
   channellabel->setFont (Font (15.0000f, Font::plain));
   channellabel->setJustificationType (Justification::centredLeft);
@@ -2949,6 +2957,7 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
   dataformatmenu->setJustificationType (Justification::centredLeft);
   dataformatmenu->addItem (T("Midi values"), ExportIDs::Data);
   dataformatmenu->addItem (T("Send messages"), ExportIDs::Send);
+  dataformatmenu->setItemEnabled(ExportIDs::Send, false); // disable for now
   dataformatmenu->setSelectedId(ExportIDs::Data);
   dataformatmenu->addListener (this);
 
@@ -3054,6 +3063,7 @@ void MidiFileImportComponent::doImport()
   double endtime=tobuffer->getText().getDoubleValue();
   int chanmask=channelmenu->getSelectedId();
   int typemask=0;
+  String name;
   if (notesbutton->getToggleState())
     typemask += MidiFlags::OnMask;
   if (aftertouchbutton->getToggleState())
@@ -3071,7 +3081,7 @@ void MidiFileImportComponent::doImport()
 
   int format=dataformatmenu->getSelectedId();
   if (salbutton->getToggleState())
-    format=ExportIDs::toExportID(TextIDs::Sal, format);
+    format=ExportIDs::toExportID(TextIDs::Sal2, format);
   else
     format=ExportIDs::toExportID(TextIDs::Lisp, format);
 
@@ -3092,11 +3102,18 @@ void MidiFileImportComponent::doImport()
 	    << " where=" << where 
 	    << " format=" << format 
 	    << "\n";
-  MidiMessageSequence* seq=(MidiMessageSequence*)midifile->getTrack(track);
-  String name=pathname.getFileNameWithoutExtension();
-  name << T("-track") << track;
+  if (midifile)
+    {
+      midiseq=(MidiMessageSequence*)midifile->getTrack(track);
+      name=pathname.getFileNameWithoutExtension();
+      name << T("-track") << track;
+    }
+  else
+    {
+      name=T("recording");
+    }
   MidiInPort::getInstance()->
-    exportMidiMessageSequence(seq, name, start, endtime,
+    exportMidiMessageSequence(midiseq, name, start, endtime,
 			      chanmask, typemask, where, format);
 }
 
@@ -3118,11 +3135,16 @@ void MidiInPort::openImportMidifileDialog()
       delete midi;
       return;
     }
-  MidiFileImportComponent* c=new MidiFileImportComponent(file,midi);
+  MidiFileImportComponent* c=new MidiFileImportComponent(file,midi,0);
   String t=T("Import ");
   t << file.getFileName();
   new MidifileImportWindow(t,c);
 }
 
+void MidiOutPort::openImportRecordingDialog()
+{
+  MidiFileImportComponent* c=new MidiFileImportComponent(File::nonexistent,0, &captureSequence);
+  new MidifileImportWindow(T("Import Recording"),c);
+}
 
 #endif

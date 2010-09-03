@@ -58,21 +58,30 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   PopupMenu tunings;
   PopupMenu chfilt;
   PopupMenu opfilt;
+  PopupMenu recout;
 
   // Midi Out
   StringArray outdevs = MidiOutput::getDevices();
-  int size = jlimit(0,CommandMenus::NumMidiOutOpen-1,
-		    outdevs.size());
+  int size = jlimit(0,CommandMenus::NumMidiOutOpen-1, outdevs.size());
   if (size>0)
     for (int i=0; i<size; i++)
       outmenu.addCommandItem(comm, CommandIDs::MidiOutOpen + i);
   else
-    outmenu.addItem(CommandIDs::MidiOutOpen, 
-		    T("<no devices>"), false);
+    outmenu.addItem(CommandIDs::MidiOutOpen, T("<no devices>"), false);
   outmenu.addSeparator();
   outmenu.addCommandItem(comm, CommandIDs::MidiOutTest);
   outmenu.addCommandItem(comm, CommandIDs::MidiOutHush);
   outmenu.addSeparator();
+
+  recout.addCommandItem(comm, CommandIDs::MidiOutRecording);
+  recout.addCommandItem(comm, CommandIDs::MidiOutRecordingDelete);
+  recout.addSeparator();
+  recout.addCommandItem(comm, CommandIDs::MidiOutRecordingSave);
+  recout.addCommandItem(comm, CommandIDs::MidiOutRecordingPlay);
+  recout.addCommandItem(comm, CommandIDs::MidiOutRecordingImport);
+  outmenu.addSubMenu(T("Recording"), recout);
+  outmenu.addSeparator();
+
   for (int i=1; i<=NumMidiOutTuning; i++) // tunings 1 based!
     tunings.addCommandItem(comm, CommandIDs::MidiOutTuning + i);
   outmenu.addSubMenu(T("Tuning"), tunings);

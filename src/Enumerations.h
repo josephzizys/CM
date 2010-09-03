@@ -417,8 +417,8 @@ class ExportIDs
   static const int ToEditor = 3;
   static const int ToClipboard= 4;
 
-  static const ExportID SalData = (TextIDs::Sal << SHIFT) + Data;
-  static const ExportID SalSend = (TextIDs::Sal << SHIFT) + Send;
+  static const ExportID SalData = (TextIDs::Sal2 << SHIFT) + Data;
+  static const ExportID SalSend = (TextIDs::Sal2 << SHIFT) + Send;
   static const ExportID LispData = (TextIDs::Lisp << SHIFT) + Data;
   static const ExportID LispSend = (TextIDs::Lisp << SHIFT) + Send;
   static const ExportID CsoundScore = (TextIDs::Csound << SHIFT) + Score;
@@ -723,6 +723,12 @@ class CommandIDs
   static const CommandID MidiOutPitchBend = COMID(MidiOut, 7);
   static const CommandID MidiOutInstruments = COMID(MidiOut, 8);
   static const CommandID MidiOutFileSettings = COMID(MidiOut, 9);
+
+  static const CommandID MidiOutRecording = COMID(MidiOut, 10);
+  static const CommandID MidiOutRecordingDelete = COMID(MidiOut, 11);
+  static const CommandID MidiOutRecordingPlay = COMID(MidiOut, 12);
+  static const CommandID MidiOutRecordingSave = COMID(MidiOut, 13);
+  static const CommandID MidiOutRecordingImport = COMID(MidiOut, 14);
 
   // MidiIn Port
   static const CommandID MidiInOpen = COMID(MidiIn, 1);

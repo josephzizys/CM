@@ -141,6 +141,11 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::MidiOutPitchBend,
     CommandIDs::MidiOutInstruments,
     CommandIDs::MidiOutFileSettings,
+    CommandIDs::MidiOutRecording,
+    CommandIDs::MidiOutRecordingDelete,
+    CommandIDs::MidiOutRecordingPlay,
+    CommandIDs::MidiOutRecordingSave,
+    CommandIDs::MidiOutRecordingImport,
 
     // Midi In Port
     CommandIDs::MidiInOpen + 0,
@@ -533,6 +538,39 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
     case CommandIDs::MidiOutFileSettings:
       info.shortName=T("Midifile Settings...");
       break;
+    case CommandIDs::MidiOutRecording:
+      if (MidiOutPort::getInstance()->isRecordMode(CaptureModes::RecordMidiOut) )
+        info.shortName=T("Stop Recording");
+      else if (MidiOutPort::getInstance()->isSequenceData() )
+        info.shortName=T("Overdub Recording");
+      else 
+        info.shortName=T("Start Recording");
+      break;
+    case CommandIDs::MidiOutRecordingDelete:
+      info.shortName=T("Delete");
+      info.setActive(MidiOutPort::getInstance()->isRecordingAvailable());
+      break;
+    case CommandIDs::MidiOutRecordingPlay:
+      info.shortName=T("Play");
+      info.setActive(MidiOutPort::getInstance()->isRecordingAvailable());
+      break;
+    case CommandIDs::MidiOutRecordingSave:
+      info.shortName=T("Save...");
+      info.setActive(MidiOutPort::getInstance()->isRecordingAvailable());
+      break;
+    case CommandIDs::MidiOutRecordingImport:
+      info.shortName=T("Import...");
+      info.setActive(MidiOutPort::getInstance()->isRecordingAvailable());
+      break;
+      //    case CommandIDs::MidiOutRecordingSaveAs:
+      //      info.shortName=T("Save As...");
+      //      info.setActive(MidiOutPort::getInstance()->isRecordingAvailable());
+      //      break;
+      //    case CommandIDs::MidiOutRecordingConfigure:
+      //      info.shortName=T("Configure...");
+      //      info.setActive(MidiOutPort::getInstance()->isRecordingAvailable());
+      //      break;
+
       //
       // Midi Input
       //
@@ -909,6 +947,26 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::MidiOutFileSettings:
       MidiOutPort::getInstance()->openFileSettingsDialog();
       break;
+    case CommandIDs::MidiOutRecording:
+      // toggle output recording On or Off
+      if (MidiOutPort::getInstance()->isRecordMode(CaptureModes::RecordMidiOut) )
+        MidiOutPort::getInstance()->setRecordMode(CaptureModes::Off);
+      else
+        MidiOutPort::getInstance()->setRecordMode(CaptureModes::RecordMidiOut);
+      break;
+    case CommandIDs::MidiOutRecordingDelete:
+      MidiOutPort::getInstance()->clearSequence();
+      break;
+    case CommandIDs::MidiOutRecordingPlay:
+      MidiOutPort::getInstance()->playSequence();
+      break;
+    case CommandIDs::MidiOutRecordingSave:
+      MidiOutPort::getInstance()->saveSequence(true);
+      break;
+    case CommandIDs::MidiOutRecordingImport:
+      MidiOutPort::getInstance()->openImportRecordingDialog();
+      break;
+
      //
      // Midi In Port
      //

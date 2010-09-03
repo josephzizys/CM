@@ -263,6 +263,8 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   int getRecordMode();
   void setRecordMode(int mode);
   bool isRecordMode(int mode);
+  bool isRecordingAvailable();
+  void openImportRecordingDialog();
   /** the capture sequence. time stamps are seconds **/
   MidiMessageSequence captureSequence;
   MidiFileInfo sequenceFile;
