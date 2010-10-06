@@ -44,6 +44,7 @@
     (ffi_keynum_to_pc      int "cm_keynum_to_pc" double)
     (ffi_hertz_to_keynum   double "cm_hertz_to_keynum"  double)
     (ffi_ranseed           void "cm_ranseed" integer64)
+    (ffi_ran64             integer64 "cm_ran64" )
     (ffi_ranint            int "cm_ranint" int)
     (ffi_ranfloat          double "cm_ranfloat" double)
     (ffi_ranint2           int "cm_ranint2" int int)

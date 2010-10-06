@@ -329,6 +329,9 @@
 	  (ffi_ranfloat num))
       (ffi_ranfloat num)))
 
+(define (ran64 )
+  (ffi_ran64))
+
 (define (between a b)
   (if (and (fixnum? a) (fixnum? b))
       (ffi_ranint2 a b)

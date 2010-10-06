@@ -397,6 +397,11 @@ double cm_ranfloat2(double f1, double f2)
   return (double) (f1 - (ranstate.nextDouble() * (f1-f2)));
 }
 
+int64 cm_ran64()
+{
+  return ranstate.nextInt64();
+}
+
 int cm_ranint(int i)
 {
   if (i > 0 )

@@ -52,6 +52,7 @@ int cm_keynum_to_pc (double kn);
 double cm_hertz_to_keynum (double hz);
 
 void cm_ranseed(int64 s);
+int64 cm_ran64();
 int cm_ranint(int i);
 double cm_ranfloat(double f);
 int cm_ranint2(int i1, int i2);

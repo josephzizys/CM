@@ -349,6 +349,13 @@ s7_pointer ffi_ranseed (s7_scheme *s7, s7_pointer args)
   return s7_UNSPECIFIED(s7);
 }
 
+s7_pointer ffi_ran64 (s7_scheme *s7, s7_pointer args)
+{
+  int64 il0;
+  il0=cm_ran64();
+  return s7_make_integer(s7, il0);
+}
+
 s7_pointer ffi_ranint (s7_scheme *s7, s7_pointer args)
 {
   int i0, i1;
@@ -3100,6 +3107,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_keynum_to_pc", ffi_keynum_to_pc, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_hertz_to_keynum", ffi_hertz_to_keynum, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_ranseed", ffi_ranseed, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_ran64", ffi_ran64, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_ranint", ffi_ranint, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_ranfloat", ffi_ranfloat, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_ranint2", ffi_ranint2, 2, 0, false, "ffi function");
