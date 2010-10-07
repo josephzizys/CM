@@ -169,6 +169,7 @@ void fms_save(const char* name);
 int fms_isfiletype(const char* ext);
 void fms_new(const char* name);
 void fms_select(const char* name);
+void fms_merge(const char* name, long num, long den, double flt);
 void fms_free();
 void fms_clear();
 void fms_ival(int par, int act, long val);

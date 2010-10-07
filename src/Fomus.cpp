@@ -21,7 +21,6 @@
 #include <vector>
 #include <sstream>
 #include <limits>
-//#include <memory>
 #include <stack>
 #include <cctype>
 
@@ -34,7 +33,6 @@
 
 #define FOMUS_TYPESONLY
 #include <fomus/infoapi.h>
-#include <fomus/infoextapi.h>
 
 // juce defines JUCE_LINUX, JUCE_MAC or JUCE_WIN32 already
 #if defined(JUCE_LINUX) || defined(JUCE_MAC)
@@ -111,7 +109,7 @@ inline void spitout(const char* str)
   Console::getInstance()->printOutput(String(";; ") + str);
 }
 
-int* fapi_fomus_err;
+fomus_err_type fapi_fomus_err;
 fomus_version_type fapi_fomus_version;
 fomus_init_type fapi_fomus_init;
 fomus_new_type fapi_fomus_new;
@@ -135,16 +133,17 @@ fomus_get_sval_type fapi_fomus_get_sval;
 info_list_exts_type fapi_info_list_exts;
 info_infoapi_version_type fapi_info_infoapi_version;
 fomus_api_version_type fapi_fomus_api_version;
+fomus_merge_type fapi_fomus_merge;
 #ifdef GRACE
 info_list_modules_type fapi_info_list_modules;
 info_list_settings_type fapi_info_list_settings;
 info_list_marks_type fapi_info_list_marks;
-infoext_getlastentry_type fapi_infoext_getlastentry;
-infoext_list_percinsts_type fapi_infoext_list_percinsts;
-infoext_list_insts_type fapi_infoext_list_insts;
-infoext_list_parts_type fapi_infoext_list_parts;
-infoext_list_metaparts_type fapi_infoext_list_metaparts;
-infoext_list_measdefs_type fapi_infoext_list_measdefs;
+info_getlastentry_type fapi_info_getlastentry;
+info_list_percinsts_type fapi_info_list_percinsts;
+info_list_insts_type fapi_info_list_insts;
+info_list_parts_type fapi_info_list_parts;
+info_list_metaparts_type fapi_info_list_metaparts;
+info_list_measdefs_type fapi_info_list_measdefs;
 settingloc_to_str_type fapi_settingloc_to_str;
 module_id_type fapi_module_id;
 modtype_to_str_type fapi_modtype_to_str;
@@ -203,7 +202,7 @@ void initfomus() {
 	Console::getInstance()->printError((char*)">>> Error: Fomus: FOMUS library is too old--upgrade FOMUS to a newer version that is compatible\n");
 	return;	
       }
-      fapi_fomus_err = (int*)fdlsym(ha, "fomus_err");
+      fapi_fomus_err = (fomus_err_type)fdlsym(ha, "fomus_err");
       fapi_fomus_version = (fomus_version_type)fdlsym(ha, "fomus_version");
       fapi_fomus_init = (fomus_init_type)fdlsym(ha, "fomus_init");
       fapi_fomus_new = (fomus_new_type)fdlsym(ha, "fomus_new");
@@ -225,20 +224,21 @@ void initfomus() {
       fapi_fomus_get_fval = (fomus_get_fval_type)fdlsym(ha, "fomus_get_fval");
       fapi_fomus_get_sval = (fomus_get_sval_type)fdlsym(ha, "fomus_get_sval");
       fapi_info_list_exts = (info_list_exts_type)fdlsym(ha, "info_list_exts");
+      fapi_fomus_merge = (fomus_merge_type)fdlsym(ha, "fomus_merge");
 #ifdef GRACE
       fapi_info_list_modules = (info_list_modules_type)fdlsym(ha, "info_list_modules");
       fapi_info_list_settings = (info_list_settings_type)fdlsym(ha, "info_list_settings");
       fapi_info_list_marks = (info_list_marks_type)fdlsym(ha, "info_list_marks");
-      fapi_infoext_getlastentry = (infoext_getlastentry_type)fdlsym(ha, "infoext_getlastentry");
-      fapi_infoext_list_percinsts = (infoext_list_percinsts_type)fdlsym(ha, "infoext_list_percinsts");
-      fapi_infoext_list_insts = (infoext_list_insts_type)fdlsym(ha, "infoext_list_insts");
-      fapi_infoext_list_parts = (infoext_list_parts_type)fdlsym(ha, "infoext_list_parts");
-      fapi_infoext_list_metaparts = (infoext_list_metaparts_type)fdlsym(ha, "infoext_list_metaparts");
-      fapi_infoext_list_measdefs = (infoext_list_measdefs_type)fdlsym(ha, "infoext_list_measdefs");
-      fapi_settingloc_to_str = (settingloc_to_str_type)fdlsym(ha, "settingloc_to_str");
+      fapi_info_getlastentry = (info_getlastentry_type)fdlsym(ha, "info_getlastentry");
+      fapi_info_list_percinsts = (info_list_percinsts_type)fdlsym(ha, "info_get_percinsts");
+      fapi_info_list_insts = (info_list_insts_type)fdlsym(ha, "info_get_insts");
+      fapi_info_list_parts = (info_list_parts_type)fdlsym(ha, "info_get_parts");
+      fapi_info_list_metaparts = (info_list_metaparts_type)fdlsym(ha, "info_get_metaparts");
+      fapi_info_list_measdefs = (info_list_measdefs_type)fdlsym(ha, "info_get_measdefs");
+      fapi_settingloc_to_str = (settingloc_to_str_type)fdlsym(ha, "info_settingloc_to_str");
       fapi_module_id = (module_id_type)fdlsym(ha, "module_id");
-      fapi_modtype_to_str = (modtype_to_str_type)fdlsym(ha, "modtype_to_str");
-#endif      
+      fapi_modtype_to_str = (modtype_to_str_type)fdlsym(ha, "info_modtype_to_str");
+#endif
     } catch (const dlerr& e) {e;
       Console::getInstance()->printError((char*)">>> Error: Fomus: error loading libfomus\n");      
       return;
@@ -287,6 +287,24 @@ void Fomus::selectScore(const String& nam, const bool fromscm)
     }
   }
   newScore(nam, fromscm); // selectScore is always from Scheme
+}
+
+void Fomus::mergeScore(const String& nam, fomus_int num, fomus_int den, fomus_float flt)
+{
+  File fn(completeFile(nam));
+  for (int i = 0; i < scores.size(); ++i) {
+    String fn2(fapi_fomus_get_sval(scores.getUnchecked(i)->getfom(), "filename"));
+    if (!fn2.isEmpty() && completeFile(fn2) == fn) { // find an exact match
+      switch (den) {
+      case -1: fval(fomus_par_events, fomus_act_set, flt); break;
+      case 0: ival(fomus_par_events, fomus_act_set, num); break;
+      default: if (den > 0) rval(fomus_par_events, fomus_act_set, num, den); break;
+      }
+      fapi_fomus_merge(scores.getUnchecked(current)->getfom(), scores.getUnchecked(i)->getfom());
+      return;
+    }
+  }
+  Console::getInstance()->printError((char*)">>> Error: Fomus: merge source doesn't exist\n");        
 }
 
 void Fomus::deleteScore()
@@ -357,59 +375,49 @@ void Fomus::runScore(const bool fromscm)
   fapi_fomus_run(fapi_fomus_copy(getfomusdata()));
 }
 
-struct scoped_timeshift {
-  bool issh;
-  Fomus& score;
-  scoped_timeshift(Fomus& score);
-  ~scoped_timeshift();
-};
-
-scoped_timeshift::scoped_timeshift(Fomus& score):issh(SchemeThread::getInstance()->isScoreMode()), score(score) {
-  if (issh) {
-    fapi_fomus_fval(score.getfomusdata(), fomus_par_region_time, fomus_act_inc, SchemeThread::getInstance()->scoretime);
-    fapi_fomus_ival(score.getfomusdata(), fomus_par_region, fomus_act_start, 0);
+bool Fomus::proctime(int act) {
+  if (act == fomus_act_n) {
+    if (SchemeThread::getInstance()->isScoreMode()) {
+      fapi_fomus_fval(getfomusdata(), fomus_par_time, fomus_act_set, SchemeThread::getInstance()->scoretime);
+      if (fapi_fomus_err()) fomuserr = true;
+    } else {
+      fomuserr = true;
+      Console::getInstance()->printError((char*)">>> Error: Fomus: need a time argument\n");
+    }
+    return true;
   }
-}
-
-scoped_timeshift::~scoped_timeshift() {
-  if (issh) {
-    fapi_fomus_ival(score.getfomusdata(), fomus_par_region, fomus_act_end, 0);
-  }
+  return false;
 }
 
 void Fomus::ival(int par, int act, fomus_int val)
 {
-  scoped_timeshift xxx(*this);
   fapi_fomus_ival(getfomusdata(), par, act, val);
-  if (*fapi_fomus_err) fomuserr = true;
+  if (fapi_fomus_err()) fomuserr = true;
 }
 
 void Fomus::rval(int par, int act, fomus_int num, fomus_int den)
 {
-  scoped_timeshift xxx(*this);
   fapi_fomus_rval(getfomusdata(), par, act, num, den);
-  if (*fapi_fomus_err) fomuserr = true;
+  if (fapi_fomus_err()) fomuserr = true;
 }
 
 void Fomus::fval(int par, int act, double val)
 {
-  scoped_timeshift xxx(*this);
   fapi_fomus_fval(getfomusdata(), par, act, val);
-  if (*fapi_fomus_err) fomuserr = true;
+  if (fapi_fomus_err()) fomuserr = true;
 }
 
 void Fomus::sval(int par, int act, const String& val) 
 {
-  scoped_timeshift xxx(*this);
   fapi_fomus_sval(getfomusdata(), par, act, (char*)val.toUTF8());
-  if (*fapi_fomus_err) fomuserr = true;
+  if (fapi_fomus_err()) fomuserr = true;
 }
 
 void Fomus::act(int par, int act) 
 {
-  scoped_timeshift xxx(*this);
+  if (proctime(act)) return;
   fapi_fomus_act(getfomusdata(), par, act);
-  if (*fapi_fomus_err) fomuserr = true;
+  if (fapi_fomus_err()) fomuserr = true;
 }
 
 // SAVE ME!
@@ -509,7 +517,7 @@ public:
 private:
   bool valid_aux() {
     fapi_fomus_parse(fom, (id + " = " + (chstr.isEmpty() ? String("\"\"") : chstr)).toUTF8());
-    return !*fapi_fomus_err;
+    return !fapi_fomus_err();
   }
   String what() const {return T("setting");}
   //void post_valid();
@@ -523,50 +531,50 @@ inline String rempar(const char* str0) {
 }
 class fomus_other:public fomusinfo {
 public:
-  fomus_other(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomusinfo(c, fom, nam, rempar(obj.valstr)) {}
+  fomus_other(int c, FOMUS fom, const info_objinfo& obj, const char* nam):fomusinfo(c, fom, nam, rempar(obj.valstr)) {}
 private:
   bool valid_aux();
   virtual String what0() const = 0;
 };
 bool fomus_other::valid_aux() {
   fapi_fomus_parse(fom, (what0() + String(" ") + (chstr.isEmpty() ? T("<>") : (chstr[0] != '(' && chstr[0] != '<' ? (T("<") + chstr + T(">")) : chstr))).toUTF8());
-  if (*fapi_fomus_err) return false;
-  struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
+  if (fapi_fomus_err()) return false;
+  struct info_objinfo x(fapi_info_getlastentry(fom));
   id = fapi_module_id(x.obj);
   return true;
 }
 
 class fomus_part:public fomus_other {
 public:
-  fomus_part(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  fomus_part(int c, FOMUS fom, const info_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
   String what() const {return T("part");}
   String what0() const {return T("part");}
   void remove() const {fapi_fomus_sval(fom, fomus_par_part, fomus_act_remove, id.toUTF8());}
 };
 class fomus_metapart:public fomus_other {
 public:
-  fomus_metapart(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  fomus_metapart(int c, FOMUS fom, const info_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
   String what() const {return T("metapart");}
   String what0() const {return T("metapart");}
   void remove() const {fapi_fomus_sval(fom, fomus_par_metapart, fomus_act_remove, id.toUTF8());}
 };
 class fomus_measdef:public fomus_other {
 public:
-  fomus_measdef(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  fomus_measdef(int c, FOMUS fom, const info_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
   String what() const {return T("measure definition");}  
   String what0() const {return T("measdef");}
   void remove() const {fapi_fomus_sval(fom, fomus_par_measdef, fomus_act_remove, id.toUTF8());}
 };
 class fomus_inst:public fomus_other {
 public:
-  fomus_inst(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  fomus_inst(int c, FOMUS fom, const info_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
   String what() const {return T("instrument");}  
   String what0() const {return T("inst");}
   void remove() const {fapi_fomus_sval(fom, fomus_par_inst, fomus_act_remove, id.toUTF8());}
 };
 class fomus_percinst:public fomus_other {
 public:
-  fomus_percinst(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  fomus_percinst(int c, FOMUS fom, const info_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
   String what() const {return T("percussion instrument");}  
   String what0() const {return T("percinst");}
   void remove() const {fapi_fomus_sval(fom, fomus_par_percinst, fomus_act_remove, id.toUTF8());}
@@ -648,13 +656,13 @@ public:
   fomusinfocont_other(FOMUS fom):fomusinfocont(fom, 0) {}
 private:
   void reset_aux();
-  virtual infoext_objinfo_list getem() const = 0;
-  virtual fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) = 0;
+  virtual info_objinfo_list getem() const = 0;
+  virtual fomusinfo* getnew(int c, FOMUS fom, const info_objinfo& obj, const char* nam) = 0;
 };
 void fomusinfocont_other::reset_aux() {
-  infoext_objinfo_list li(getem());
+  info_objinfo_list li(getem());
   int c = 0;
-  for (infoext_objinfo *i(li.objs), *ie(li.objs + li.n); i < ie; ++i) {
+  for (info_objinfo *i(li.objs), *ie(li.objs + li.n); i < ie; ++i) {
     const char* nam = fapi_module_id(i->obj);
     if (nam[0]) stuff.push_back(getnew(c++, fom, *i, nam));
   }
@@ -664,8 +672,8 @@ class fomusinfocont_parts:public fomusinfocont_other {
 public:
   fomusinfocont_parts(FOMUS fom):fomusinfocont_other(fom) {}
 private:
-  infoext_objinfo_list getem() const {return fapi_infoext_list_parts(fom);}
-  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_part(c, fom, obj, nam);}
+  info_objinfo_list getem() const {return fapi_info_list_parts(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const info_objinfo& obj, const char* nam) {return new fomus_part(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_parts::createnew(const String& txt) 
@@ -679,13 +687,13 @@ fomusinfo* fomusinfocont_parts::createnew(const String& txt)
     str << txt;
 
   fapi_fomus_parse(fom, str.toUTF8());
-  if (*fapi_fomus_err) {
+  if (fapi_fomus_err()) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in part"));
     return 0;
   } else {
-    struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
+    struct info_objinfo x(fapi_info_getlastentry(fom));
     fomus_part* y;
     stuff.push_back(y = new fomus_part((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
@@ -696,8 +704,8 @@ class fomusinfocont_metaparts:public fomusinfocont_other {
 public:
   fomusinfocont_metaparts(FOMUS fom):fomusinfocont_other(fom) {}
 private:
-  infoext_objinfo_list getem() const {return fapi_infoext_list_metaparts(fom);}
-  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_metapart(c, fom, obj, nam);}
+  info_objinfo_list getem() const {return fapi_info_list_metaparts(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const info_objinfo& obj, const char* nam) {return new fomus_metapart(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_metaparts::createnew(const String& txt) 
@@ -710,13 +718,13 @@ fomusinfo* fomusinfocont_metaparts::createnew(const String& txt)
   else 
     str << txt;
   fapi_fomus_parse(fom, str.toUTF8());
-  if (*fapi_fomus_err) {
+  if (fapi_fomus_err()) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in metapart"));
     return 0;
   } else {
-    struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
+    struct info_objinfo x(fapi_info_getlastentry(fom));
     fomus_metapart* y;
     stuff.push_back(y = new fomus_metapart((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
@@ -727,8 +735,8 @@ class fomusinfocont_measdefs:public fomusinfocont_other {
 public:
   fomusinfocont_measdefs(FOMUS fom):fomusinfocont_other(fom) {}
 private:
-  infoext_objinfo_list getem() const {return fapi_infoext_list_measdefs(fom);}
-  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_measdef(c, fom, obj, nam);}
+  info_objinfo_list getem() const {return fapi_info_list_measdefs(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const info_objinfo& obj, const char* nam) {return new fomus_measdef(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_measdefs::createnew(const String& txt) 
@@ -741,13 +749,13 @@ fomusinfo* fomusinfocont_measdefs::createnew(const String& txt)
   else 
     str << txt;
   fapi_fomus_parse(fom, str.toUTF8());
-  if (*fapi_fomus_err) {
+  if (fapi_fomus_err()) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in measure definition"));
     return 0;
   } else {
-    struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
+    struct info_objinfo x(fapi_info_getlastentry(fom));
     fomus_measdef *y;
     stuff.push_back(y = new fomus_measdef((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
@@ -758,8 +766,8 @@ class fomusinfocont_insts:public fomusinfocont_other {
 public:
   fomusinfocont_insts(FOMUS fom):fomusinfocont_other(fom) {}
 private:
-  infoext_objinfo_list getem() const {return fapi_infoext_list_insts(fom);}
-  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_inst(c, fom, obj, nam);}
+  info_objinfo_list getem() const {return fapi_info_list_insts(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const info_objinfo& obj, const char* nam) {return new fomus_inst(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_insts::createnew(const String& txt) 
@@ -772,13 +780,13 @@ fomusinfo* fomusinfocont_insts::createnew(const String& txt)
   else
     str << txt;
   fapi_fomus_parse(fom, str.toUTF8());
-  if (*fapi_fomus_err) {
+  if (fapi_fomus_err()) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in instrument"));
     return 0;
   } else {
-    struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
+    struct info_objinfo x(fapi_info_getlastentry(fom));
     fomus_inst *y;
     stuff.push_back(y = new fomus_inst((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
@@ -789,8 +797,8 @@ class fomusinfocont_percinsts:public fomusinfocont_other {
 public:
   fomusinfocont_percinsts(FOMUS fom):fomusinfocont_other(fom) {}
 private:
-  infoext_objinfo_list getem() const {return fapi_infoext_list_percinsts(fom);}
-  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_percinst(c, fom, obj, nam);}
+  info_objinfo_list getem() const {return fapi_info_list_percinsts(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const info_objinfo& obj, const char* nam) {return new fomus_percinst(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_percinsts::createnew(const String& txt) 
@@ -803,13 +811,13 @@ fomusinfo* fomusinfocont_percinsts::createnew(const String& txt)
   else
     str << txt;
   fapi_fomus_parse(fom, str.toUTF8());
-  if (*fapi_fomus_err) {
+  if (fapi_fomus_err()) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in percussion instrument"));
     return 0;
   } else {
-    struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
+    struct info_objinfo x(fapi_info_getlastentry(fom));
     fomus_percinst *y;
     stuff.push_back(y = new fomus_percinst((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
@@ -2205,7 +2213,7 @@ void FomusSyntax::eval(CodeDocument& document, const CodeDocument::Position star
 {
   FOMUS f = fapi_fomus_new();
   fapi_fomus_parse(f, document.getTextBetween(start, end).toUTF8());
-  if (*fapi_fomus_err) {
+  if (fapi_fomus_err()) {
     fapi_fomus_free(f);
     return;
   }

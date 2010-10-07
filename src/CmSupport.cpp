@@ -1637,6 +1637,11 @@ void fms_select(const char* name)
   Fomus::getInstance()->selectScore(name, true);
 }
 
+void fms_merge(const char* name, long num, long den, double flt) {
+  if (!check_fomus_exists()) return;
+  Fomus::getInstance()->mergeScore(name, num, den, flt);  
+}
+
 void fms_free()
 {
   if (!check_fomus_exists()) return;
@@ -1684,6 +1689,7 @@ void fms_open_score(bool x){}
 void fms_close_score(){}
 void fms_new(const char* name){}
 void fms_select(const char* name) {}
+void fms_merge(const char* name, long num, long den, double flt) {}
 void fms_free(){}
 void fms_clear(){}
 void fms_load(char* filename){}

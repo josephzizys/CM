@@ -3335,7 +3335,7 @@ Any CLM <a href="http://ccrma.stanford.edu/software/snd/snd/sndscm.html#withsoun
 
 <h3 id="fomus">Fomus</h3>
 
-<p><a href="http://fomus.sourceforge.net">Fomus</a> generates musical scores for Lilipond, Sibelius and Finale
+<p><a href="http://fomus.sourceforge.net">Fomus</a> generates musical scores for LilyPond, Sibelius and Finale
 from symbolic score information input by the user interactively or by running musical processes. Use the <span class="menuitem">Audio&gt;Fomus&gt;</span> menu to configure your
 Fomus environment and manage its score output. For more information see the examples in <span class="menuitem">Help&gt;Examples&gt;Fomus Examples</span> and the tutorial in <span class="menuitem">Help&gt;Tutorials&gt;Fomus</span>. To send data to Fomus use the send messages listed below or call the underlying message functions directly. For example, the following
  calls are equivalent:</p>
@@ -3359,7 +3359,7 @@ fms:note(0, 1, 60)
     <var class="optkey">part</var>,
     <var class="optkey">voice</var> <var class="optval">= 1</var>,
     <var class="optkey">dyn</var> <var class="optval">= 0</var>,
-    <var class="optkey">grtime</var>,
+    <var class="optkey">grace</var>,
     <var class="optkey">marks</var> <var class="optval">= {}</var>,
     <var class="optkey">sets</var> <var class="optval">= {}</var>)
   </td>
@@ -3384,7 +3384,7 @@ and <var>sets</var> are lists of <a href="#marks">marks</a> and <a href="#settin
     <var class="arg">dur</var>,
     <var class="optkey">part</var>,
     <var class="optkey">voice</var> <var class="optval">= 1</var>,
-    <var class="optkey">grtime</var>,
+    <var class="optkey">grace</var>,
     <var class="optkey">marks</var> <var class="optval">= {}</var>,
     <var class="optkey">sets</var> <var class="optval">= {}</var>)
   </td>
@@ -3404,10 +3404,10 @@ Send a rest event to the currently selected score at <var>time</var>.
   <tr class="entry"> <td class="formals">
     <span class="funcname">send</span> (<span class="string">"fms:mark"</span>,
     <var class="optkey">time</var> <var class="optval">= 0</var>,
-    <var class="arg">dur</var>,
+    <var class="arg">dur</var> <var class="optval">= 0</var>,
     <var class="optkey">part</var> ,
     <var class="optkey">voice</var> <var class="optval">= 1</var>,
-    <var class="optkey">grtime</var> ,
+    <var class="optkey">grace</var> ,
     <var class="optkey">marks</var> <var class="optval">= {}</var>,
     <var class="optkey">sets</var> <var class="optval">= {}</var>)
   </td>
@@ -3427,7 +3427,7 @@ Send a mark event to the currently selected score at <var>time</var>.
   <tr class="entry"> <td class="formals">
     <span class="funcname">send</span> (<span class="string">"fms:meas"</span>,
     <var class="optkey">time</var> <var class="optval">= 0</var>,
-    <var class="arg">dur</var>,
+    <var class="arg">dur</var> <var class="optval">= 0</var>,
     <var class="optkey">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
@@ -3520,7 +3520,9 @@ Create a new metapart to use in the currently selected score.
 <table id="fms:setting" class="entry">
   <tr class="entry"> <td class="formals">
     <span class="funcname">send</span> (<span class="string">"fms:setting"</span>,
-    <span class="meta">{</span><var class="arg">setting value</var><span class="meta">}+</span>)
+    <var class="arg">set</var>,
+    <var class="arg">value</var>,
+    <var class="arg">append</var> <var class="optval">= #f</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3624,9 +3626,29 @@ can be edited and/or reloaded with the <a href="#fms:load-score">load-score</a> 
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="fms:run-score" class="entry">
+<table id="fms:merge-score" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:run-score"</span>)
+    <span class="funcname">send</span> (<span class="string">"fms:merge-score"</span>,
+    <var class="arg">fromfile</var>,
+    <var class="arg">time</var> <var class="optval">= 0</var>)
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Merge the contents of the score identified by <var>fromfile</var> into the current score.
+Contents include note events, measures and possibly parts if they don't already exist.
+The optional <var>time</var> argument shifts the events in time by the specified amount.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:run" class="entry">
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">send</span> (<span class="string">"fms:run"</span>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>

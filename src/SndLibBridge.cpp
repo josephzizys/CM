@@ -1317,16 +1317,29 @@ s7_pointer ffi_fms_save (s7_scheme *s7, s7_pointer args)
   return s7_UNSPECIFIED(s7);
 }
 
-s7_pointer ffi_fms_isfiletype (s7_scheme *s7, s7_pointer args)
+s7_pointer ffi_fms_merge (s7_scheme *s7, s7_pointer args)
 {
-  int i0;
+  double f0;
+  long l0, l1;
   char* s0;
   if (!s7_is_string(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_fms_isfiletype", 1, s7_car(args), "a c-string"));
+    return(s7_wrong_type_arg_error(s7, "ffi_fms_merge", 1, s7_car(args), "a c-string"));
   s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
-  i0=fms_isfiletype(s0);
-  return s7_make_integer(s7, i0);
+  if (!s7_is_integer(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_fms_merge", 2, s7_car(args), "a long"));
+  l0=(long)s7_integer(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_integer(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_fms_merge", 3, s7_car(args), "a long"));
+  l1=(long)s7_integer(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_fms_merge", 4, s7_car(args), "a double"));
+  f0=s7_number_to_real(s7_car(args));
+  args=s7_cdr(args);
+  fms_merge(s0, l0, l1, f0);
+  return s7_UNSPECIFIED(s7);
 }
 
 s7_pointer ffi_fms_ival (s7_scheme *s7, s7_pointer args)
@@ -3193,7 +3206,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_fms_load", ffi_fms_load, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_run", ffi_fms_run, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_save", ffi_fms_save, 1, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_fms_isfiletype", ffi_fms_isfiletype, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_fms_merge", ffi_fms_merge, 4, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_ival", ffi_fms_ival, 3, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_rval", ffi_fms_rval, 4, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_fval", ffi_fms_fval, 3, 0, false, "ffi function");

@@ -143,7 +143,8 @@
     (ffi_fms_load void "fms_load" c-string)
     (ffi_fms_run void "fms_run" )
     (ffi_fms_save void "fms_save" c-string)
-    (ffi_fms_isfiletype int "fms_isfiletype" c-string)
+    ;; (ffi_fms_isfiletype int "fms_isfiletype" c-string)
+    (ffi_fms_merge void "fms_merge" c-string long long double)
     
     (ffi_fms_ival void "fms_ival" int int long)
     (ffi_fms_rval void "fms_rval" int int long long)
