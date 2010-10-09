@@ -304,7 +304,7 @@ void Fomus::mergeScore(const String& nam, fomus_int num, fomus_int den, fomus_fl
       return;
     }
   }
-  Console::getInstance()->printError((char*)">>> Error: Fomus: merge source doesn't exist\n");        
+  Console::getInstance()->printError((char*)">>> Error: Fomus: can't find score to merge from\n");
 }
 
 void Fomus::deleteScore()

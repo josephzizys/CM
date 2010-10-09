@@ -398,12 +398,12 @@
 
 (define (fms:merge-score fromfile . time)
   (unless (string? fromfile) (error "expected a string for filename argument"))
-  (unless (or (null? time) (real? shift)) (error "expected a number for time argument"))
+  (unless (or (null? time) (real? (car time))) (error "expected a number for time argument"))
   (cond
    ((null? time) (ffi_fms_merge fromfile 0 0 0))
-   ((integer? time) (ffi_fms_merge fromfile time 0 0))
-   ((rational? time) (ffi_fms_merge fromfile (numerator time) (denominator time) 0))
-   (else (ffi_fms_merge fromfile 0 -1 time)))
+   ((integer? (car time)) (ffi_fms_merge fromfile (car time) 0 0))
+   ((rational? (car time)) (ffi_fms_merge fromfile (numerator (car time)) (denominator (car time)) 0))
+   (else (ffi_fms_merge fromfile 0 -1 (car time))))
   #t)
 
 (define (fms:open-score filename . args)
