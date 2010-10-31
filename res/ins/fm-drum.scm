@@ -51,9 +51,8 @@
 						    (oscil cascade 
 							   (+ (* gls casrat)
 							      (* (env devf) (rand rn)))))))))))))))))
-
 #|
 (with-sound ()
-  (fm-drum 0 1.5 55 .3 5 #f)
-  (fm-drum 2 1.5 66 .3 4 #t))
+	    (fm-drum 0 1.5 55 .3 5 #f)
+	    (fm-drum 2 1.5 66 .3 4 #t))
 |#

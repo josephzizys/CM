@@ -1,7 +1,6 @@
 ;;; -------- PQWVOX
 ;;; translation of CLM pqwvox.ins (itself translated from MUS10 of MLB's waveshaping voice instrument (using phase quadrature waveshaping))
 
-
 (definstrument (pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)
   "(pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes) produces 
 vocal sounds using phase quadrature waveshaping"
@@ -59,14 +58,14 @@ vocal sounds using phase quadrature waveshaping"
       (let* ((amp (list-ref formant-amps i))
 	     (fshape (list-ref formant-shapes i))
 	     (shape (normalize-partials fshape)))
-	(vector-set! sin-evens i (make-oscil 0))
-	(vector-set! sin-odds i (make-oscil 0))
-	(vector-set! cos-evens i (make-oscil 0 :initial-phase (/ pi 2.0)))
-	(vector-set! cos-odds i (make-oscil 0 :initial-phase (/ pi 2.0)))
-	(vector-set! amps i amp)
-	(vector-set! cos-coeffs i (partials->polynomial shape mus-chebyshev-first-kind))
-	(vector-set! sin-coeffs i (partials->polynomial shape mus-chebyshev-second-kind))
-	(vector-set! frmfs i (make-env (vox-fun phonemes i '()) :duration dur))))
+	(set! (sin-evens i) (make-oscil 0))
+	(set! (sin-odds i) (make-oscil 0))
+	(set! (cos-evens i) (make-oscil 0 :initial-phase (/ pi 2.0)))
+	(set! (cos-odds i) (make-oscil 0 :initial-phase (/ pi 2.0)))
+	(set! (amps i) amp)
+	(set! (cos-coeffs i) (partials->polynomial shape mus-chebyshev-first-kind))
+	(set! (sin-coeffs i) (partials->polynomial shape mus-chebyshev-second-kind))
+	(set! (frmfs i) (make-env (vox-fun phonemes i '()) :duration dur))))
     (ws-interrupt?)
     (run
      (do ((i start (+ i 1)))
@@ -82,7 +81,7 @@ vocal sounds using phase quadrature waveshaping"
 	      (sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k fs))
-	   (let* ((frm (env (vector-ref frmfs k)))
+	   (let* ((frm (env (frmfs k)))
 		  (frm0 (/ frm frq))
 		  (frm-int (floor frm0)))
 	     (if (even? frm-int)
@@ -96,15 +95,14 @@ vocal sounds using phase quadrature waveshaping"
 		   (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
 		   (set! even-amp (- frm0 frm-int))
 		   (set! odd-amp (- 1.0 even-amp))))
-	     (let* ((fax (polynomial (vector-ref cos-coeffs k) carcos))
-		    (yfax (* carsin (polynomial (vector-ref sin-coeffs k) carcos))))
-	       (set! sum (+ sum (* (vector-ref amps k)
-				   (+ (* even-amp (- (* yfax (oscil (vector-ref sin-evens k) even-freq))
-						     (* fax (oscil (vector-ref cos-evens k) even-freq))))
-				      (* odd-amp (- (* yfax (oscil (vector-ref sin-odds k) odd-freq))
-						    (* fax (oscil (vector-ref cos-odds k) odd-freq)))))))))))
+	     (let* ((fax (polynomial (cos-coeffs k) carcos))
+		    (yfax (* carsin (polynomial (sin-coeffs k) carcos))))
+	       (set! sum (+ sum (* (amps k)
+				   (+ (* even-amp (- (* yfax (oscil (sin-evens k) even-freq))
+						     (* fax (oscil (cos-evens k) even-freq))))
+				      (* odd-amp (- (* yfax (oscil (sin-odds k) odd-freq))
+						    (* fax (oscil (cos-odds k) odd-freq)))))))))))
 	 (outa i (* (env ampf) sum)))))))
-
 
 ;;; (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
 ;;; (a test to see if the cancellation is working -- sounds like a mosquito)
@@ -113,4 +111,3 @@ vocal sounds using phase quadrature waveshaping"
 ;;; (pqw-vox 0 2 100 314 .1 '(0 0 50 1 100 0) '(0 0 100 1) .1 '(0 UH 100 ER) '(.8 .15 .05) '((1 1 2 .5) (1 1 2 .5 3 .2 4 .1) (1 1 3 .1 4 .5)))
 ;;; (pqw-vox 0 2 200 314 .1 '(0 0 50 1 100 0) '(0 0 100 1) .01 '(0 UH 100 ER) '(.8 .15 .05) '((1 1 2 .5) (1 1 4 .1) (1 1 2 .1 4 .05)))
 ;;; (pqw-vox 0 2 100 414 .2 '(0 0 50 1 100 0) '(0 0 100 1) .01 '(0 OW 50 E 100 ER) '(.8 .15 .05) '((1 1 2 .5 3 .1 4 .01) (1 1 4 .1) (1 1 2 .1 4 .05)))
-

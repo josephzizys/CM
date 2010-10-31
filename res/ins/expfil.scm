@@ -1,4 +1,4 @@
-(def-clm-struct grn 
+(defgenerator grn 
   (rampval 0.0 :type float) 
   (rampinc 0.0 :type float)
   (loc 0 :type int) 
@@ -96,3 +96,6 @@
 		     (set! (grn-trigger grn2) 0)
 		     (set! out2 (+ out2 hop))))))
 	 (outa i val))))))
+
+;;; (with-sound () (expfil 0 2 .2 .01 .1 "oboe.snd" "fyow.snd"))
+

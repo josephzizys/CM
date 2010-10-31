@@ -43,4 +43,3 @@
 					  (* (env indxfun3) (oscil mod3))))))))))
 
 ;;; (with-sound () (gong 0 3 261.61 .6))
-

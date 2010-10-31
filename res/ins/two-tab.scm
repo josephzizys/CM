@@ -36,8 +36,3 @@
 			  (+ (* intrp (table-lookup s-1 vib))
 			     (* (- 1.0 intrp) 
 				(table-lookup s-2 vib))))))))))
-
-
-
-
-

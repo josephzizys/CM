@@ -1,3 +1,4 @@
+
 ;;; -------- pluck
 ;;;
 ;;; The Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
@@ -55,17 +56,15 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
       
     (do ((i 0 (+ i 1)))
 	((= i dlen))
-      (vct-set! tab i (- 1.0 (random 2.0))))
+      (set! (tab i) (- 1.0 (random 2.0))))
     (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
-       (let ((val (vct-ref tab ctr)))	;current output value
-	 (vct-set! tab ctr (* (- 1.0 c) 
-			      (one-zero feedb 
-					(one-zero allp val))))
+       (let ((val (tab ctr)))	;current output value
+	 (set! (tab ctr) (* (- 1.0 c) 
+			    (one-zero feedb 
+				      (one-zero allp val))))
 	 (set! ctr (+ ctr 1))
 	 (if (>= ctr dlen) (set! ctr 0))
 	 (outa i (* amp val)))))))
-
-

@@ -410,7 +410,7 @@
 	(*db-drop-per-second* -10.0))
 
     (define (get-piano-partials freq)
-      (let ((pitch (round (* 12 (/ (log (/ freq 32.703)) (log 2))))))
+      (let ((pitch (round (* 12 (log (/ freq 32.703) 2)))))
 	(list-ref piano-spectra pitch)))
 
     (define (make-piano-ampfun dur)
@@ -457,8 +457,8 @@
       (do ((i 0 (+ i 2))
 	   (j 0 (+ 1 j)))
 	  ((= i (length partials)))
-	(vct-set! alist j (vct-ref partials (+ i 1)))
-	(vector-set! oscils j (make-oscil (* (vct-ref partials i) frequency))))
+	(set! (alist j) (partials (+ i 1)))
+	(set! (oscils j) (make-oscil (* (partials i) frequency))))
       (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
@@ -467,12 +467,10 @@
        (let ((sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k siz))
-	   (set! sum (+ sum (* (vct-ref alist k)
-			       (oscil (vector-ref oscils k))))))
+	   (set! sum (+ sum (* (alist k)
+			       (oscil (oscils k))))))
 	 (locsig locs i (* sum
 			   (if (> sktr env1samples) 
 			       (env ampenv2) 
 			       (env ampenv1))))))))))
-
-
 

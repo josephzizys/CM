@@ -22,4 +22,3 @@
 		  (+ 1.0 (* .007 (oscil ampmod)))
 		  (+ (* g0 (oscil osc0 (* g1 (oscil osc1))))
 		     (* (env resenv) g2 (oscil osc2 (* g3 (env indenv) (oscil osc3)))))))))))
-

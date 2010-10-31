@@ -1,6 +1,6 @@
 ;;; taken from Perry Cook's stkv1.tar.Z (Synthesis Toolkit), but I was
 ;;; in a bit of a hurry and may not have made slavishly accurate translations.
-;;; Please let me (bil@ccrma.stanford.edu) know of any serious (non-envelope) errors.
+;;; Please let me know of any errors.
 
 (definstrument (tubebell beg dur freq amp (base 32.0))
   ;; from Perry Cook's TubeBell.cpp
@@ -24,5 +24,3 @@
        (outa i (* (+ (* .007 (oscil ampmod)) .993)
 		  (+ (* g0 (env ampenv1) (oscil osc0 (* g1 (oscil osc1))))
 		     (* g2 (env ampenv2) (oscil osc2 (* g3 (oscil osc3)))))))))))
-
-

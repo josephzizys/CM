@@ -40,7 +40,7 @@
 		   (let ((vect (make-vector in-chans #f)))
 		     (do ((i 0 (+ i 1)))
 			 ((= i in-chans))
-		       (vector-set! vect i (make-readin in-file i inloc :direction (if reversed -1 1))))
+		       (set! (vect i) (make-readin in-file i inloc :direction (if reversed -1 1))))
 		     vect)))
 	 (envs #f)
 	 (srcenv (if (list? srate)
@@ -66,9 +66,9 @@
 				    (if (not envs)
 					(set! envs (make-vector (* in-chans out-chans) #f)))
 				    (if (env? outn)
-					(vector-set! envs (+ off outp) outn)
-					(vector-set! envs (+ off outp) (make-env outn :duration dur))))
-				  (snd-warning (format #f "unknown element in matrix: ~A" outn)))))))))
+					(set! (envs (+ off outp)) outn)
+					(set! (envs (+ off outp)) (make-env outn :duration dur))))
+				  (format #t "unknown element in matrix: ~A" outn))))))))
 	      (do ((inp 0 (+ 1 inp))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)
@@ -85,10 +85,10 @@
 							      (off 0 (+ off out-chans)))
 							     ((= i in-chans))
 							   (let ((vo (make-vector out-chans #f)))
-							     (vector-set! v i vo)
+							     (set! (v i) vo)
 							     (do ((j 0 (+ j 1)))
 								 ((= j out-chans))
-							       (vector-set! vo j (vector-ref envs (+ off j))))))
+							       (set! (vo j) (envs (+ off j))))))
 							 v)
 						       envs))
 	  (if rev-mx
@@ -97,7 +97,7 @@
 	;; -------- with src
 	;; unroll the loops if 1 chan input
 	(if (= in-chans 1)
-	    (let ((sr (make-src :input (vector-ref file 0) :srate (if (number? srate) (abs srate) 0.0)))
+	    (let ((sr (make-src :input (file 0) :srate (if (number? srate) (abs srate) 0.0)))
 		  (outframe (make-frame out-chans)))
 	      (if envs
 		  (run 
@@ -106,8 +106,8 @@
 		       ((= i nd))
 		     (do ((outp 0 (+ 1 outp)))
 			 ((= outp out-chans))
-		       (if (env? (vector-ref envs outp))
-			   (mixer-set! mx 0 outp (env (vector-ref envs outp)))))
+		       (if (env? (envs outp))
+			   (mixer-set! mx 0 outp (env (envs outp)))))
 		     (let ((inframe (src sr (if srcenv (env srcenv) 0.0))))
 		       (frame->file *output* i (sample->frame mx inframe outframe))
 		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))
@@ -126,7 +126,7 @@
 		   (srcs (make-vector in-chans #f)))
 	      (do ((inp 0 (+ 1 inp)))
 		  ((= inp in-chans))
-		(vector-set! srcs inp (make-src :input (vector-ref file inp) :srate (if (number? srate) (abs srate) 0.0))))
+		(set! (srcs inp) (make-src :input (file inp) :srate (if (number? srate) (abs srate) 0.0))))
 	      
 	      (if envs 
 		  (run
@@ -138,12 +138,12 @@
 			 ((= inp in-chans))
 		       (do ((outp 0 (+ 1 outp)))
 			   ((= outp out-chans))
-			 (if (env? (vector-ref envs (+ off outp)))
-			     (mixer-set! mx inp outp (env (vector-ref envs (+ off outp)))))))
+			 (if (env? (envs (+ off outp)))
+			     (mixer-set! mx inp outp (env (envs (+ off outp)))))))
 		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
 		       (do ((inp 0 (+ 1 inp)))
 			   ((= inp in-chans))
-			 (frame-set! inframe inp (src (vector-ref srcs inp) sr-val)))
+			 (frame-set! inframe inp (src (srcs inp) sr-val)))
 		       (frame->file *output* i (frame->frame inframe mx outframe))
 		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))
 		  
@@ -154,7 +154,7 @@
 		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
 		       (do ((inp 0 (+ 1 inp)))
 			   ((= inp in-chans))
-			 (frame-set! inframe inp (src (vector-ref srcs inp) sr-val)))
+			 (frame-set! inframe inp (src (srcs inp) sr-val)))
 		       (frame->file *output* i (frame->frame inframe mx outframe))
 		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))))))
 

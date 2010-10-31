@@ -974,14 +974,14 @@ void SalSyntax::init()
 
   addSynTok( T("begin"), SalIDs::SalBegin, 1, 0); // 1 = #b01 = indent
   addSynTok( T("chdir"), SalIDs::SalChdir);
-  addSynTok( T("define"), SalIDs::SalDefine, 0, 3);
+  addSynTok( T("define"), SalIDs::SalDefine, 1, 3);
   addSynTok( T("else"), SalIDs::SalElse, 3, 0);  // 3 = #b11 = undent/indent
   addSynTok( T("end"), SalIDs::SalEnd, 2, 0);      // 2 = #10 = undent
   addSynTok( T("exec"), SalIDs::SalExec);
   addSynTok( T("fomusfile"), SalIDs::SalFomusFile, 1, 2);
   addSynTok( T("if"), SalIDs::SalIf);
   addSynTok( T("load"), SalIDs::SalLoad);
-  addSynTok( T("loop"), SalIDs::SalLoop);
+  addSynTok( T("loop"), SalIDs::SalLoop, 1, 0);
   addSynTok( T("plot"), SalIDs::SalPlot);
   addSynTok( T("print"), SalIDs::SalPrint);
   addSynTok( T("return"), SalIDs::SalReturn);
@@ -1196,6 +1196,7 @@ int SalSyntax::readNextToken(CodeDocument::Iterator &source)
 int SalSyntax::getIndentation(CodeDocument& document, int line)
 // THIS METHOD IS SAL2 BUT WORKS OK FOR SAL SO DEFINED HERE
 {
+  bool trace=true;
   int orig=line;
   CodeDocument::Position pos (&document, line, 0);
   Array<int> subtypes;
@@ -1255,19 +1256,19 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
       if (substarts.size()>0) // use last subexpr indentation
         {
           col=lastIndented(document, substarts, false);
-          //std::cout << "UNLEVEL indent (last expr), column=" << col << "\n";
+          if (trace) std::cout << "UNLEVEL indent (last expr), column=" << col << "\n"; 
           return col;
         }
       else
         {
           col=pos.movedBy(1).getIndexInLine();
-          //std::cout << "UNLEVEL indent (no exprs), column=" << col << "\n";
+          if (trace) std::cout << "UNLEVEL indent (no exprs), column=" << col << "\n";
           return col;
         }
     }
   else if (subtypes.size()==0) // no expressions encountered (only white space)
     {
-      //std::cout << "EMPTY indent, column=0\n" ;
+      if (trace) std::cout << "EMPTY indent, column=0\n" ;
       return 0;
     }  
 
@@ -1277,12 +1278,18 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
   if (!SalIDs::isSalType(subtypes[0]))     // stopped on a non-sal expression
     {
       col=lastIndented(document,substarts, false);
-      //std::cout << "SEXPR indent, column=" << col << "\n";
+      if (trace) std::cout << "SEXPR indent, column=" << col << "\n";
     }
   else // types[0] is sal entity, hopefully a command
     {
       if (cmdtoken)  // we stopped on a command
         {
+          if (trace){std::cout << "CMDTOKEN: " << cmdtoken->getName() << "\n";
+            std::cout << "  subtypes:";
+            for (int q=0;q<subtypes.size();q++) std::cout << " " << String::toHexString(subtypes[q]);
+            std::cout << "\n";
+          }
+
           int cmdline=pos.getLineNumber(); // num of line with cmd
           // last is INDEX of last indented or command we stopped on
           int last=lastIndented(document, substarts, true);
@@ -1300,22 +1307,22 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
                   CodeDocument::Position p (&document, substarts[last]);
                   col=p.getIndexInLine()+4+1;
                 }
-              //std::cout << "COMMA indent, column=" << col << "\n";
+              if (trace) std::cout << "COMMA indent, column=" << col << "\n";
             }
           // ELSE (the very last line does NOT end with comma) if
           // line-1 is >= cmdline and DOES end with comma then we are
           // done with comma indenting so intent to body or pos
           else if ((cmdline<=line-1) && isCommaTerminatedLine(document, line-1))
             {
-              if (cmdtoken->getData1()>0)
+              if (cmdtoken->getData1()>0  && (!subtypes.contains(SalIDs::SalEnd)))
                 {
                   col=pos.getIndexInLine()+2;
-                  //std::cout << "BODY indent (after comma stop), column=" << col << "\n";
+                  if (trace) std::cout << "*BODY indent (after comma stop), column=" << col << "\n";
                 }
               else
                 {
                   col=pos.getIndexInLine();
-                  //std::cout << "RESET indent (after comma stop), column=" << col << "\n";
+                  if (trace) std::cout << "RESET indent (after comma stop), column=" << col << "\n";
                 }
             }
           // ELSE if the last indented is 'else' then body indent
@@ -1324,23 +1331,31 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
             {
               CodeDocument::Position p (&document, substarts[last]);
               col=p.getIndexInLine()+2;
-              //std::cout << "ELSE indent, column=" << col << "\n";
+              if (trace) std::cout << "ELSE indent, column=" << col << "\n";
             }          
-          // else if the command is a body indent, indent to the last
+          // else if the command is a body indent WITHOUT a closing end, indent to the last
           // expression or to 2 past the first (command) expr
-          else if (cmdtoken->getData1()>0)
+          else if (cmdtoken->getData1()>0 && (!subtypes.contains(SalIDs::SalEnd)))
             {
-              if (last==0) // the command, no subexprs on own line
+              if (last==0) // the command, no subexprs on their own lines
                 {
-                  col=pos.getIndexInLine()+2;
-                  //std::cout << "BODY indent, column=" << col << "\n";
+                  if (subtypes.size()>1 && subtypes[1]==SalIDs::SalVariable)
+                    {
+                      col=pos.getIndexInLine();
+                      if (trace) std::cout << "NOT BODY indent, column=" << col << "\n";
+                    }
+                  else
+                    {
+                    col=pos.getIndexInLine()+2;
+                    if (trace) std::cout << "BODY indent, column=" << col << "\n";
+                    }
                 }
               // else indent to the last expression
               else
                 {
                   CodeDocument::Position p (&document, substarts[last]);
                   col=p.getIndexInLine();
-                  //std::cout << "LAST indent (body), column=" << col << "\n";
+                  if (trace) std::cout << "LAST indent (body), column=" << col << "\n";
                 }
             }
           // else indent to the last expression
@@ -1348,13 +1363,13 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
             {
               CodeDocument::Position p (&document, substarts[last]);
               col=p.getIndexInLine();
-              //std::cout << "LAST indent, column=" << col << "\n";
+              if (trace) std::cout << "LAST indent, column=" << col << "\n";
             }
         }
       else
         {
           col=lastIndented(document, substarts, false);
-          //std::cout << "non-standard sal indent, column=" << col << "\n";
+          if (trace) std::cout << "non-standard sal indent, column=" << col << "\n";
         }
     }
 
@@ -1365,11 +1380,16 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
   CodeDocument::Position eol (&document, orig, INT_MAX); 
   while (bol!=eol && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t'))) 
     bol.moveBy(1);
-  //std::cout << "line is "<< bol.getLineText() << "\n";
+  if (trace) std::cout << "line is "<< bol.getLineText() << "\n";
   if (lookingAt(bol, T("end"), true, true) || lookingAt(bol, T("else"), true, true))
     {
       col-=2;
-      //std::cout << "cursor is looking at end or else\n";
+      if (trace) std::cout << "cursor is looking at end or else\n";
+    }
+  else if (getTextType()==TextIDs::Sal && lookingAt(bol, T("define"), true, true) )
+    {
+      // looking at define in sal1 keep column wherever it is
+      col=bol.getIndexInLine(); 
     }
   return jmax(col,0);
 }

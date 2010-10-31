@@ -111,7 +111,8 @@ class Console :
 
   TextEditor* buffer;  // ONLY USED IN GRACE
   ApplicationCommandManager* manager;
-
+  bool isEvaling;
+  
   void display(String str, Colour color);
   void printPrompt(bool trigger=true);
   void setPrompt(String str);
@@ -130,14 +131,12 @@ class Console :
   void postAsyncMessage(int typ, String msg, bool trigger);
   void postAsyncMessage(int typ, int msg,  bool trigger);
   void handleAsyncUpdate() ;
-
   String supportedfiletypes;
   String getSupportedFileTypes();
   bool isSupportedFileType(String path);
   bool isSupportedFileType(File file);
-
+  void setEvaling(bool evaling);
 #ifdef GRACE
-
   void initThemes();
   int numThemes();
   void setTheme(String name);
@@ -148,8 +147,8 @@ class Console :
   void setFont(Font font);
   int getFontSize();
   void setFontSize(int size);
-  void resized() {buffer->setSize(getWidth(),getHeight());}
-  void paint (Graphics& g) {g.fillAll (Colours::transparentBlack); }
+  void resized(); //{buffer->setSize(getWidth(),getHeight());}
+  void paint (Graphics& g);// {g.fillAll (Colours::transparentBlack); }
   // these are implemented in Command.cpp
   ApplicationCommandTarget* getNextCommandTarget();
   void getAllCommands(Array<CommandID>& commands);

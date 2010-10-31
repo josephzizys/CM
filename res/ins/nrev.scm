@@ -1,5 +1,11 @@
 ;;; NREV (the most popular Samson box reverb)
 
+(provide 'snd-nrev.scm)
+
+(if (and (not (provided? 'snd-ws.scm)) 
+	 (not (provided? 'sndlib-ws.scm)))
+    (load "ws.scm"))
+
 
 (definstrument (nrev (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
@@ -26,7 +32,7 @@
 	(if (even? val) (set! val (+ 1 val)))
 	(list-set! dly-len i (next-prime val))))
 
-    (let* ((len (+ (mus-srate) (length *reverb*)))
+    (let* ((len (+ (mus-srate) (frames *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (list-ref dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (list-ref dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (list-ref dly-len 2)))
@@ -64,6 +70,5 @@
 	   (if chan2 (outb i (all-pass allpass6 outrev)))
 	   (if chan4 (outc i (all-pass allpass7 outrev)))
 	   (if chan4 (outd i (all-pass allpass8 outrev)))))))))
-
 
 

@@ -90,12 +90,13 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 	      (lambda (e)
 		(let* ((diff (car e))
 		       (len (length e))
-		       (lastx (list-ref e (- len 2))))
+		       (lastx (list-ref e (- len 2)))
+		       (newe (copy e))) ; it is dangerous (and unclean...) to use list-set! on the original list
 		  (do ((i 0 (+ i 2)))
-		      ((>= i len) e)
-		    (let ((x (/ (- (list-ref e i) diff) lastx)))
+		      ((>= i len) newe)
+		    (let ((x (/ (- (list-ref newe i) diff) lastx)))
 		      (set! xs (cons x xs))
-		      (list-set! e i x))))))
+		      (list-set! newe i x))))))
 	     (remove-duplicates
 	      (lambda (lst)
 		(letrec ((rem-dup
@@ -364,7 +365,7 @@ repetition to be in reverse."
 
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
-(def-clm-struct penv (envs #f :type clm-vector) (total-envs 0 :type int) (current-env 0 :type int) (current-pass 0 :type int))
+(defgenerator penv (envs #f :type clm-vector) (total-envs 0 :type int) (current-env 0 :type int) (current-pass 0 :type int))
 
 (define (power-env pe)
   (let* ((val (env (vector-ref (penv-envs pe) (penv-current-env pe)))))
@@ -455,11 +456,11 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 (define* (envelope-exp e (power 1.0) (xgrid 100))
   "(envelope-exp e (power 1.0) (xgrid 100)) approximates an exponential curve connecting the breakpoints"
   (let* ((mn (min-envelope e))
-	 (largest-diff (exact->inexact (- (max-envelope e) mn)))
+	 (largest-diff (* 1.0 (- (max-envelope e) mn)))
 	 (x-min (car e))
 	 (len (length e))
 	 (x-max (list-ref e (- len 2)))
-	 (x-incr (exact->inexact (/ (- x-max x-min) xgrid)))
+	 (x-incr (* 1.0 (/ (- x-max x-min) xgrid)))
 	 (new-e '()))
     (do ((x x-min (+ x x-incr)))
 	((>= x x-max))
@@ -485,7 +486,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	 (incrsamps (round (* incr fsr)))
 	 (start (round (* beg fsr)))
 	 (reader (make-sampler start file))
-	 (end (if dur (min (inexact->exact (+ start (round (* fsr dur))))
+	 (end (if dur (min (* 1.0 (+ start (round (* fsr dur))))
 			   (mus-sound-frames file))
 		  (mus-sound-frames file)))
 	 (rms (make-moving-average incrsamps))) ; this could use make-moving-rms from dsp.scm
@@ -497,7 +498,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	    ((= j incrsamps))
 	  (let ((val (reader)))
 	    (set! rms-val (moving-average rms (* val val)))))
-	(set! e (cons (exact->inexact (/ i fsr)) e))
+	(set! e (cons (* 1.0 (/ i fsr)) e))
 	(set! rms-val (sqrt rms-val))
 	(if db 
 	    (if (< rms-val .00001)

@@ -4,8 +4,8 @@
 	 (turntable (list->vct turnaroundlist))
 	 (turn-i 1)
 	 (turns (length turnaroundlist))
-	 (cur-sample (seconds->samples (vct-ref turntable 0)))
-         (turn-sample (seconds->samples (vct-ref turntable turn-i)))
+	 (cur-sample (seconds->samples (turntable 0)))
+         (turn-sample (seconds->samples (turntable turn-i)))
 	 (turning 0)
 	 (last-val 0.0)
 	 (last-val2 0.0)
@@ -34,13 +34,10 @@
 		   (set! turn-i (+ 1 turn-i))
 		   (if (< turn-i turns)
 		       (begin
-			 (set! turn-sample (seconds->samples (vct-ref turntable turn-i)))
+			 (set! turn-sample (seconds->samples (turntable turn-i)))
 			 (set! forwards (not forwards))
 			 (set! (mus-increment rd) (- (mus-increment rd)))))
 		   (set! turning 0))))
 	 (set! last-val2 last-val)
 	 (set! last-val val)
 	 (outa i val))))))
-
-;;; (with-sound () (scratch 0.0 "now.snd" 1.5 '(0.0 .5 .25 1.0)))
-

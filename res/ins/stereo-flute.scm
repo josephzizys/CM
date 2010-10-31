@@ -1,5 +1,4 @@
 ;;; -------- STEREO-FLUTE
-
 (definstrument (stereo-flute start dur freq flow 
 			    
 			     (flow-envelope '(0  1 100 1))
@@ -76,8 +75,3 @@ is a physical model of a flute:
        (set! previous-dc-blocked-a dc-blocked-a)
        (set! previous-tap-sig tap-sig)
        (set! previous-dc-blocked-b dc-blocked-b)))))
-
-
-
-
-

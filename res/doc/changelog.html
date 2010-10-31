@@ -18,14 +18,17 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
   <h2>CM 3.7.0 (development trunk)</h2>
   <ul>
+    <li class="change">Enhancement: Console window now displays a silver frame while Lisp is waiting for input. The frame disappears when input is executed to indicate that Lisp is busy and unavailable for input during this time.</li>
+    <li class="change">Enhancement: updated to S7 Scheme 1.72 (23-Oct-10) and latest CLM runtime and instruments.</li>
+    <li class="change">Enhancement: updated to latest Fomus framework (0.1.12-alpha-rc6 )</li>
     <li class="change">Enhancement: new <span class="menuitem">Midi Out&gt;Recording</span> menu lets you record, save, import and play back anything sent out the port.</li>
-    <li class="change">New functions: <a href="cm.html#mouse-button">mouse-x</a>  <a href="cm.html#mouse-y">mouse-y</a> <a href="cm.html#mouse-button">mouse-button</a> behave like their SuperCollider counterparts.</li>
+    <li class="change">New functions: <a href="cm.html#mouse-button">mouse-x</a>  <a href="cm.html#mouse-y">mouse-y</a> <a href="cm.html#mouse-button">mouse-button</a> return the current mouse coordinates.</li>
     <li class="change">Enhancement: new function <a href="cm.html#midifile-import">midifile-import</a></li>
     <li class="change">Enhancement: new function <a href="cm.html#midifile-header">midifile-header</a></li>
     <li class="change">Enhancement: new function <a href="cm.html#file-version">file-version</a></li>
     <li class="change">Bug fix: fixed bug in pathname-directory and pathname-name that returned bogus pathname components.</li>
+    <li class="change">Bug fix: fixed CodeEditor bugs in SAL1 and SAL2 indentation.</li>
   </ul>
-
 
   <h2>CM 3.6.0</h2>
   <ul>
@@ -345,7 +348,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Fri Sep  3 17:37:50 CDT 2010 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sun Oct 31 11:07:45 CDT 2010 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

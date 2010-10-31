@@ -72,15 +72,15 @@ nil doesnt print anything, which will speed up a bit the process.
 	    (fval (list-ref freq-list k)))
 	(if (list? gval)
 	  (begin
-	    (vector-set! env-size k (make-env gval
-					      :scaler filt-gain-scale
-					      :duration durata :base filt-gain-base))
-	    (vector-set! frm-size k (make-formant fval a1)))
+	    (set! (env-size k) (make-env gval
+					 :scaler filt-gain-scale
+					 :duration durata :base filt-gain-base))
+	    (set! (frm-size k) (make-formant fval a1)))
 	  (begin
-	    (vector-set! frm-size k (make-formant fval a1))
-	    (vct-set! gains k (if (< (+ offset-gain gval) 0) 
-				  0
-				  (+ offset-gain gval)))))))
+	    (set! (frm-size k) (make-formant fval a1))
+	    (set! (gains k) (if (< (+ offset-gain gval) 0) 
+				0
+				(+ offset-gain gval)))))))
     (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
@@ -90,15 +90,13 @@ nil doesnt print anything, which will speed up a bit the process.
 	     (set! samp (+ 1 samp))
 	     (if (= samp (mus-srate))
 		 (begin
-		   (snd-print (format #f "~% ~F" (/ i (mus-srate))))
 		   (set! samp 0)))))
        (let ((outval 0.0)
 	     (inval (readin RdA)))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k half-list))
 	   (if if-list-in-gain
-	       (vct-set! gains k (* (env (vector-ref env-size k)) (- 1.0 a1))))
-	   (set! outval (+ outval (* (vct-ref gains k)
-				     (formant (vector-ref frm-size k) inval)))))
+	       (set! (gains k) (* (env (env-size k)) (- 1.0 a1))))
+	   (set! outval (+ outval (* (gains k)
+				     (formant (frm-size k) inval)))))
 	 (outa i (* (env ampenv) outval)))))))
-

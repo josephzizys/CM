@@ -6,6 +6,9 @@
 
 ;; revised slightly to accommodate the run macro, Bill 13-Jun-06
 
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+
 (definstrument 
   (stochastic start dur
 	      (amp .9) (bits 16) (xmin 1) (xmax 20) (xwig 0) (xstep 1) (ywig 0) (xfb 0)
@@ -33,7 +36,7 @@
 	 (b (expt 2 (- bits 1))); because we use signed ints - see (- b) below
 	 ;;make vct to hold x,y breakpoints
 	 (xy-array (make-vct (* (length init-array) 2)))
-	 (xy-array-l (inexact->exact (length xy-array)))
+	 (xy-array-l (floor (length xy-array)))
 	 )
     ;;fill xy-array with values from init-array
     (do ((iy 0 (+ iy 2));;index for reading values from init-array (a 2-dimensional list)
@@ -48,13 +51,13 @@
 			  ))))
     (ws-interrupt?) ;;does this really belong here?
     (run
-     (do ((i beg (1+ i)))
+     (do ((i beg (+ 1 i)))
 	 ((= i end))
        (if (= dx dt);;when current sample is a breakpoint
 	   (begin
-	     (set! dx (inexact->exact (vct-ref xy-array (modulo m xy-array-l))))
+	     (set! dx (floor (vct-ref xy-array (modulo m xy-array-l))))
 	     (set! y (vct-ref xy-array (+ (modulo m xy-array-l) 1)))
-	     (set! prev-dx (inexact->exact (vct-ref xy-array (modulo (- m 2) xy-array-l))))
+	     (set! prev-dx (floor (vct-ref xy-array (modulo (- m 2) xy-array-l))))
 	     (set! dy (- y oldy))
 	     (set! oldy y)
 	     ;;straight uniform distribution for y
@@ -85,7 +88,7 @@
        (set! dt (+ 1 dt))
        (set! j (+ j (/ dy dx)));linear interpolation
        (set! output (/ j b));normalization -1 to 1
-       (outa i (* amp output (env d-click))))))
+       (outa i (* amp output (env d-click)))))))
   
 ;(with-sound (:statistics #t)(stochastic 0 10 :xwig .25 :ywig 10.0))
   

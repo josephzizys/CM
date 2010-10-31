@@ -14,6 +14,8 @@
 ;;; The "noise" instrument (useful for Oceanic Music):
 
 (provide 'snd-noise.scm)
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define *locsig-type* mus-interp-sinusoidal)
 
@@ -135,7 +137,7 @@
 			(degree (random 90.0))
 			(distance 1.0)
 			(reverb-amount 0.005))
-  (let* ((dur (/ len (inexact->exact (srate))))
+  (let* ((dur (/ len (floor (srate))))
 	 (amp-attack (attack-point dur ampat ampdc))
 	 (amp-decay (- 100.0 (attack-point dur ampdc ampat)))
 	 (freq-attack (attack-point dur freqat freqdc))

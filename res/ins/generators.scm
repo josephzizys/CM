@@ -11,265 +11,6 @@
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 
 ;;; --------------------------------------------------------------------------------
-;;;
-;;; defgenerator
-
-(define (find-if pred l)
-  (cond ((null? l) #f)
-	((pred (car l)) (car l))
-	(else (find-if pred (cdr l)))))
-
-
-
-(defmacro defgenerator (struct-name . fields)
-
-  ;; an extension of def-clm-struct
-
-  ;; this adds the built-in methods mus-name, mus-reset, mus-run, and mus-describe (if they don't already exist), and
-  ;;   mus-frequency if a "frequency" field exists (treated as radians)
-  ;;   mus-phase if a "phase" or "angle" field exists
-  ;;   mus-scaler if "r" or "amplitude",
-  ;;   mus-order if "n" or "order"
-  ;;   mus-offset if "ratio" (mimics nrxy*)
-
-  (let* ((name (if (list? struct-name) (car struct-name) struct-name))
-
-	 (wrapper (or (and (list? struct-name)
-			   (or (and (> (length struct-name) 2)
-				    (equal? (list-ref struct-name 1) :make-wrapper)
-				    (list-ref struct-name 2))
-			       (and (= (length struct-name) 5)
-				    (equal? (list-ref struct-name 3) :make-wrapper)
-				    (list-ref struct-name 4))))
-		      (lambda (gen) gen)))
-
-	 (sname (if (string? name) name (symbol->string name)))
-
-	 (field-names (map (lambda (n)
-			     (symbol->string (if (list? n) (car n) n)))
-			   fields))
-
-	 (field-types (map (lambda (n)
-			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
-				 (snd-error (format #f ":type indication for defgenerator (~A) field (~A) should be after the default value" name n)))
-			     (if (and (list? n)
-				      (= (length n) 4)
-				      (eq? (list-ref n 2) :type))
-				 (list-ref n 3)
-				 (if (and (list? n)
-					  (= (length n) 2))
-				     (if (number? (cadr n))
-					 (if (exact? (cadr n))
-					     'int
-					     'float)
-					 (if (string? (cadr n))
-					     'string
-					     (if (char? (cadr n))
-						 'char
-						 (if (or (equal? (cadr n) #t)
-							 (equal? (cadr n) #f))
-						     'boolean
-						     'float))))
-				     'float)))
-			   fields))
-
-	 (original-methods (or (and (list? struct-name)
-				    (or (and (> (length struct-name) 2)
-					     (equal? (list-ref struct-name 1) :methods)
-					     (list-ref struct-name 2))
-					(and (= (length struct-name) 5)
-					     (equal? (list-ref struct-name 3) :methods)
-					     (list-ref struct-name 4))))
-			       (list)))
-
-	 (method-exists? (lambda (method)
-			   (and (not (null? original-methods))
-				(find-if (lambda (g)
-					   (and (list? g)
-						(list? (cadr g))
-						(eq? (car (cadr g)) method)))
-					 (cdr original-methods)))))
-
-	 (phase-field-name (and (not (method-exists? 'mus-phase))
-				(let ((fld (find-if (lambda (name) 
-						      (or (string=? name "phase") 
-							  (string=? name "angle")))
-						    field-names)))
-				  (and fld (string-append "-" fld)))))
-
-	 (frequency-field-name (and (not (method-exists? 'mus-frequency))
-				    (find-if (lambda (name) 
-					       (string=? name "frequency"))
-					     field-names)
-				    "-frequency"))
-
-	 (offset-field-name (and (not (method-exists? 'mus-offset))
-				 (find-if (lambda (name) 
-					    (string=? name "ratio"))
-					  field-names)
-				 "-ratio"))
-
-	 (scaler-field-name (and (not (method-exists? 'mus-scaler))
-				 (let ((fld (find-if (lambda (name) 
-						       (or (string=? name "r")
-							   (string=? name "amplitude")))
-						     field-names)))
-				   (and fld (string-append "-" fld)))))
-
-	 (order-field-name (and (not (method-exists? 'mus-order))
-				(let ((fld (find-if (lambda (name) 
-						      (or (string=? name "n") 
-							  (string=? name "order")))
-						    field-names)))
-				  (and fld (string-append "-" fld)))))
-
-	 ;; using append to splice out unwanted entries
-	 (methods `(append ,original-methods
-			   
-			   (if ,phase-field-name
-			       (list 
-				(list 'mus-phase
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or phase-field-name "oops"))) g))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or phase-field-name "oops"))) g) val))))
-			       (list))
-			   
-			   (if ,frequency-field-name
-			       (list 
-				(list 'mus-frequency
-				      (lambda (g)
-					(radians->hz (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g)))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g) (hz->radians val))
-					val)))
-			       (list))
-			   
-			   (if ,offset-field-name
-			       (list 
-				(list 'mus-offset
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or offset-field-name "oops"))) g))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or offset-field-name "oops"))) g) val)
-					val)))
-			       (list))
-			   
-			   (if ,order-field-name
-			       (list  ; not settable -- maybe use mus-length?
-				(list 'mus-order
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or order-field-name "oops"))) g))))
-			       (list))
-			   
-			   (if ,scaler-field-name
-			       (list 
-				(list 'mus-scaler
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or scaler-field-name "oops"))) g))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or scaler-field-name "oops"))) g) val))))
-			       (list))
-			   
-			   (if ,(not (method-exists? 'mus-describe))
-			       (list 
-				(list 'mus-describe
-				      (lambda (g)
-					(let ((desc (mus-name g))
-					      (first-time #t))
-					  (for-each
-					   (lambda (field)
-					     (set! desc (string-append desc 
-								       (format #f "~A~A: ~A"
-									       (if first-time " " ", ")
-									       field
-									       (if (string=? field "frequency")
-										   (radians->hz ((symbol->value (string->symbol (string-append ,sname "-" field))) g))
-										   ((symbol->value (string->symbol (string-append ,sname "-" field))) g)))))
-					     (set! first-time #f))
-					   (list ,@field-names))
-					  desc))))
-			       (list))
-			   
-			   (if ,(not (method-exists? 'mus-run))
-			       (list
-				(list 'mus-run
-				      (lambda (g arg1 arg2)
-					(,(string->symbol sname) g arg1)))) ; this assumes the run-time function takes two args
-			       (list))
-			   
-			   (if ,(not (method-exists? 'mus-reset))
-			       (list 
-				(list 'mus-reset
-				      (lambda (g)
-					(for-each
-					 (lambda (name type orig)
-					   (if (or (not (string=? type "clm"))
-						   (not ((symbol->value (string->symbol (string-append ,sname "-" name))) g)))
-					       (set! ((string->symbol (string-append ,sname "-" name)) g) orig)
-					       (mus-reset ((symbol->value (string->symbol (string-append ,sname "-" name))) g))))
-					 (list ,@field-names)
-					 (list ,@(map symbol->string field-types))
-					 (list ,@(map (lambda (n)
-							(if (and (list? n)
-								 (>= (length n) 2))
-							    (cadr n)
-							    0.0))
-						      fields))))))
-			       (list))
-			   
-			   (if ,(not (method-exists? 'mus-name))
-			       (list 
-				(list 'mus-name
-				      (lambda (g) 
-					,sname)
-				      (lambda (g new-name)
-					(set-car! (cdr (assoc 'mus-name (list-ref g (- (length g) 1))))
-						  (lambda (g) 
-						    new-name))))) ; depend on closures?
-			       (list)))))
-    
-    `(begin
-       (define ,(string->symbol (string-append sname "?"))
-	 (lambda (obj)
-	   (and (list? obj)
-		(eq? (car obj) ',(string->symbol sname)))))
-
-       (define ,(string->symbol (string-append sname "-methods"))
-	 (lambda ()
-	   ,methods))
-
-       (define* (,(string->symbol (string-append "make-" sname))
-		 ,@(map (lambda (n)
-			  (if (and (list? n)
-				   (>= (length n) 2))
-			      (list (car n) (cadr n))
-			      (list n 0.0)))
-			fields))
-	 (,wrapper (if (list? ,methods)
-		       (list ',(string->symbol sname)
-			     ,@(map string->symbol field-names)
-			     ,methods)
-		       (list ',(string->symbol sname)
-			     ,@(map string->symbol field-names)))))
-
-       ,@(map (let ((ctr 1))
-		(lambda (n type)
-		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
-				(make-procedure-with-setter
-				 (lambda (arg)
-				   "clm struct field accessor"
-				   (list-ref arg ,ctr))
-				 (lambda (arg val)
-				   (list-set! arg ,ctr val))))))
-		    (add-clm-field sname (string-append sname "-" n) ctr type)
-		    (set! ctr (+ 1 ctr))
-		    val)))
-	      field-names field-types))))
-
-
-
-;;; --------------------------------------------------------------------------------
 
 ;;; nssb (see nxycos) -- wouldn't a more consistent name be nxycos? but it already exists -- perhaps delete nssb?
 
@@ -332,7 +73,7 @@
 	   (den (sin a2)))
       (if (= den 0.0)
 	  0.0
-	  (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+	  (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
 
   (define (nodds x n) 
     (let* ((den (sin x))
@@ -938,7 +679,7 @@
 	   (den (sin a2)))
       (if (= den 0.0)
 	  0.0
-	  (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+	  (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
 
   (define (find-mid-max n lo hi)
     (let ((mid (/ (+ lo hi) 2)))
@@ -970,7 +711,7 @@
 			 ((= i 20000))
 		       (outa i (nsin5 gen)))))))
 	   (snd (find-sound res)))
-      (snd-display ";~D: ~A" i (maxamp snd 0))
+      (format #t ";~D: ~A" i (maxamp snd 0))
       (set! norms (cons (maxamp snd 0) norms))))
   (reverse norms))
 
@@ -1274,7 +1015,7 @@
 	((= i 20))
       (oboish (/ (random 32) 8) 
 		(/ (+ 3 (random 8)) 8)
-		(* 16.351 16 (vector-ref rats (vector-ref mode (random 12))))
+		(* 16.351 16 (rats (mode (random 12))))
 		(+ .25 (random .25))
 		(let* ((pt1 (random 1.0))
 		       (pt2 (+ pt1 (random 1.0)))
@@ -1623,7 +1364,7 @@
     (set! (npos3cos-angle gen) (+ x fm (npos3cos-frequency gen)))
 
     (if (< (abs den) nearly-zero)
-	(exact->inexact n)
+	(* 1.0 n)
 
 	(/ (- 2 (cos (* n x)) (cos (* (+ n 1) x)))
 	   den))))
@@ -3245,7 +2986,7 @@
 			 (do ((i 0 (+ i 1)))
 			     ((= i 10000))
 			   (outa i (krksin gen)))))))))
-    (snd-display ";~A: ~A" (* 0.1 i) mx)))
+    (format #t ";~A: ~A" (* 0.1 i) mx)))
 
 ;;; relation between 1/(1-x)^2 and peak amp:
 (with-sound (:clipped #f)
@@ -3566,7 +3307,7 @@
 				   ((= i 1000))
 				 (outa i (asymmetric-fm gen index)))))))))
 	(if (> (abs (- peak 1.0)) .1)
-	    (snd-display ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
+	    (format #t ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
     (list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
  (list 1.0 3.0 10.0))
 |#
@@ -3605,7 +3346,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (bess-frequency g) (hz->radians (bess-frequency g)))
 			       (if (>= (bess-n g) (length bessel-peaks)) 
-				   (set! (bess-norm g) (/ 0.67 (expt (bess-n g) (exact->inexact 1/3))))
+				   (set! (bess-norm g) (/ 0.67 (expt (bess-n g) 1/3)))
 				   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
 				   (set! (bess-norm g) (vct-ref bessel-peaks (bess-n g))))
 			       g))
@@ -3646,7 +3387,7 @@
       (let ((val (bes-jn i k)))
 	(if (> (abs val) mx)
 	    (set! mx (abs val)))))
-    (snd-display ";~A" (+ mx .001))))
+    (format #t ";~A" (+ mx .001))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen1 (make-bess 400.0 :n 1))
@@ -3843,7 +3584,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (let ((base (* (bes-jn 4 5.0) (bes-jn 4 5.0)))) ; max (fft norms -> 1.0)
   (do ((i 1 (+ i 1)))
       ((= i 11))
-    (snd-display ";~A: ~A ~A" i (* (bes-jn i 5.0) (bes-jn i 5.0)) (/ (* (bes-jn i 5.0) (bes-jn i 5.0)) base))))
+    (format #t ";~A: ~A ~A" i (* (bes-jn i 5.0) (bes-jn i 5.0)) (/ (* (bes-jn i 5.0) (bes-jn i 5.0)) base))))
 ;1: 0.107308091385168 0.701072497819036
 ;2: 0.00216831005396058 0.0141661502497507
 ;3: 0.133101826831083 0.86958987897572
@@ -4160,7 +3901,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10000))
 		    (outa i (j0j1cos gen)))))))))
-    (snd-display ";~A: ~A" i pk)))
+    (format #t ";~A: ~A" i pk)))
 ;0: 0.0
 ;1: 0.555559098720551
 ;2: 0.938335597515106
@@ -4741,20 +4482,20 @@ index 10 (so 10/2 is the bes-jn arg):
 	     (index1 (hz->radians (* fm-index frq (/ 5.0 (log frq)))))
 	     (index2 (hz->radians (* fm-index frq 3.0 (/ (- 8.5 (log frq)) (+ 3.0 (* frq .001))))))
 	     (index3 (hz->radians (* fm-index frq (/ 4.0 (sqrt frq))))))
-	(vector-set! carriers i (make-oscil frq))
-	(vector-set! fmoscs i (make-polyshape :frequency frq
-					      :coeffs (partials->polynomial 
-						       (list 1 index1
-							     3 index2
-							     4 index3))))))
+	(set! (carriers i) (make-oscil frq))
+	(set! (fmoscs i) (make-polyshape :frequency frq
+					 :coeffs (partials->polynomial 
+						  (list 1 index1
+							3 index2
+							4 index3))))))
 
-    (vector-set! ampfs 0 (make-env (or amp-env '(0 0 1 1 2 1 3 0)) :scaler amp :duration dur))
-    (vector-set! ampfs 1 (make-env (list 0 0  .04 1  .075 0 dur 0) :scaler (* amp .0125) :duration dur))
-    (vector-set! ampfs 2 (make-env (list 0 0  .02 1  .05 0 dur 0) :scaler (* amp .025) :duration dur))
+    (set! (ampfs 0) (make-env (or amp-env '(0 0 1 1 2 1 3 0)) :scaler amp :duration dur))
+    (set! (ampfs 1) (make-env (list 0 0  .04 1  .075 0 dur 0) :scaler (* amp .0125) :duration dur))
+    (set! (ampfs 2) (make-env (list 0 0  .02 1  .05 0 dur 0) :scaler (* amp .025) :duration dur))
 
     ;; also good:
-    ;(vector-set! ampfs 1 (make-env (list 0 0  .02 1  .05 0  (- dur .1) 0  (- dur .05) 1 dur 0) :scaler (* amp .025) :duration dur))
-    ;(vector-set! ampfs 2 (make-env (list 0 0  .01 1 .025 0  (- dur .15) 0 (- dur .1) 1 dur 0) :scaler (* amp .05) :duration dur))
+    ;(set! (ampfs 1) (make-env (list 0 0  .02 1  .05 0  (- dur .1) 0  (- dur .05) 1 dur 0) :scaler (* amp .025) :duration dur))
+    ;(set! (ampfs 2) (make-env (list 0 0  .01 1 .025 0  (- dur .15) 0 (- dur .1) 1 dur 0) :scaler (* amp .05) :duration dur))
 
     (run
      (do ((i start (+ i 1)))
@@ -4765,10 +4506,10 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (do ((k 0 (+ 1 k))
 	      (n 1 (* n 2)))
 	     ((= k 3))
-	   (set! sum (+ sum (* (env (vector-ref ampfs k))
-			       (oscil (vector-ref carriers k)
+	   (set! sum (+ sum (* (env (ampfs k))
+			       (oscil (carriers k)
 				      (+ (* n vib)
-					 (polyshape (vector-ref fmoscs k) 1.0 (* n vib))))))))
+					 (polyshape (fmoscs k) 1.0 (* n vib))))))))
 	 (outa i sum))))))
 
 #|
@@ -5121,7 +4862,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (val1 (oscil gen1 0.0 pm))
 	   (val2 (run-with-fm-and-pm gen2 0.0 pm)))
       (if (fneq val1 val2)
-	  (snd-display ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
+	  (format #t ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
 |#
 
 
@@ -5242,8 +4983,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (pink-noise-rands g) (make-vector n))
 				 (do ((i 0 (+ i 1)))
 				     ((= i n))
-				   (vector-set! (pink-noise-rands g) i (make-rand :frequency (/ (mus-srate) (expt 2 i))))
-				   (set! (mus-phase (vector-ref (pink-noise-rands g) i)) (random pi))))
+				   (set! ((pink-noise-rands g) i) (make-rand :frequency (/ (mus-srate) (expt 2 i))))
+				   (set! (mus-phase ((pink-noise-rands g) i)) (random pi))))
 			       g))
   (n 1) (rands #f :type clm-vector))
 
@@ -5257,7 +4998,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	(n (pink-noise-n gen)))
     (do ((i 0 (+ i 1)))
         ((= i n))
-      (set! val (+ val (rand (vector-ref rands i)))))
+      (set! val (+ val (rand (rands i)))))
     (/ val (* 2.5 (sqrt n))))) ; this normalization is not quite right
 
 
@@ -5735,9 +5476,9 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (j 0 (+ j 1)))
 	((or (= j amps-len)
 	     (= i data-len)))
-      (let* ((hn (inexact->exact (vct-ref original-data i)))
-	     (amp (env (vector-ref amps j)))
-	     (phase (env (vector-ref phases j))))
+      (let* ((hn (floor (vct-ref original-data i)))
+	     (amp (env (amps j)))
+	     (phase (env (phases j))))
 	(vct-set! tn hn (* amp (sin phase)))
 	(vct-set! un hn (* amp (cos phase)))))
     (polyoid gen fm)))
@@ -5893,7 +5634,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    (case choice
 		      ((all)   (vct-set! amps j i))
 		      ((odd)   (vct-set! amps j (- (* 2 i) 1)))
-		      ((prime) (vct-set! amps j (vector-ref some-primes (- i 1)))) ; defined below up to 1024th or so -- probably should use low-primes.scm
+		      ((prime) (vct-set! amps j (some-primes (- i 1)))) ; defined below up to 1024th or so -- probably should use low-primes.scm
 		      ((even)  (vct-set! amps j (max 1 (* 2 (- i 1))))))
 		    
 		    (vct-set! amps (+ j 1) (/ 1.0 n))
@@ -5915,7 +5656,7 @@ index 10 (so 10/2 is the bes-jn arg):
 						    ((or (= i len)
 							 result)
 						     result)
-						  (set! result (func (vector-ref vect i))))))))
+						  (set! result (func (vect i))))))))
 
 			(if (not (defined? 'noid-min-peak-phases))
 			    (load "peak-phases.scm"))
@@ -5924,17 +5665,17 @@ index 10 (so 10/2 is the bes-jn arg):
 					(lambda (val)
 					  (and val
 					       (vector? val)
-					       (= (vector-ref val 0) n)
-					       (let* ((a-val (vector-ref val 1))
+					       (= (val 0) n)
+					       (let* ((a-val (val 1))
 						      (a-len (length val))
-						      (a-data (list a-val (vector-ref val 2))))
+						      (a-data (list a-val (val 2))))
 						 (do ((k 2 (+ 1 k)))
 						     ((= k a-len))
-						   (if (and (number? (vector-ref val k))
-							    (< (vector-ref val k) a-val))
+						   (if (and (number? (val k))
+							    (< (val k) a-val))
 						       (begin
-							 (set! a-val (vector-ref val k))
-							 (set! a-data (list a-val (vector-ref val (+ k 1)))))))
+							 (set! a-val (val k))
+							 (set! a-data (list a-val (val (+ k 1)))))))
 						 a-data)))
 					(case choice
 					  ((all) noid-min-peak-phases)
@@ -5948,7 +5689,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				     (j 0 (+ j 3)))
 				    ((> i n))
 				  (vct-set! amps (+ j 1) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
-				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (- i 1))))))))))
+				  (vct-set! amps (+ j 2) (* pi (rats (- i 1))))))))))
 			      
 		  amps)))
 
@@ -6129,7 +5870,7 @@ index 10 (so 10/2 is the bes-jn arg):
 						    ((or (= i len)
 							 result)
 						     result)
-						  (set! result (func (vector-ref vect i))))))))
+						  (set! result (func (vect i))))))))
 
 			(if (not (defined? 'roid-min-peak-phases))
 			    (load "peak-phases.scm"))
@@ -6138,17 +5879,17 @@ index 10 (so 10/2 is the bes-jn arg):
 					(lambda (val)
 					  (and val
 					       (vector? val)
-					       (= (vector-ref val 0) n)
-					       (let* ((a-val (vector-ref val 1))
+					       (= (val 0) n)
+					       (let* ((a-val (val 1))
 						      (a-len (length val))
-						      (a-data (list a-val (vector-ref val 2))))
+						      (a-data (list a-val (val 2))))
 						 (do ((k 2 (+ 1 k)))
 						     ((= k a-len))
-						   (if (and (number? (vector-ref val k))
-							    (< (vector-ref val k) a-val))
+						   (if (and (number? (val k))
+							    (< (val k) a-val))
 						       (begin
-							 (set! a-val (vector-ref val k))
-							 (set! a-data (list a-val (vector-ref val (+ k 1)))))))
+							 (set! a-val (val k))
+							 (set! a-data (list a-val (val (+ k 1)))))))
 						 a-data)))
 					roid-min-peak-phases)))
 			  (if min-dat
@@ -6160,7 +5901,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				    ((> i n))
 				  (vct-set! amps (+ j 1) rn)
 				  (set! rn (* rn r))
-				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (- i 1))))))))))
+				  (vct-set! amps (+ j 2) (* pi (rats (- i 1))))))))))
 			      
 		  amps)))
 
@@ -6326,12 +6067,14 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
   (data #f :type vct) (dataloc 0 :type int))
 
 (define (moving-spectrum gen)
+  (declare (gen moving-spectrum))
+
   (let* ((n (moving-spectrum-n gen))
 	 (n2 (/ n 2))
-	 (amps (moving-spectrum-amps gen))
+	 (amps (moving-spectrum-amps gen))                           ; un-normalized
 	 (phases (moving-spectrum-phases gen))
 	 (amp-incs (moving-spectrum-amp-incs gen))
-	 (freqs (moving-spectrum-freqs gen))
+	 (freqs (moving-spectrum-freqs gen))                         ; in radians
 	 (new-freq-incs (moving-spectrum-new-freq-incs gen))
 	 (hop (moving-spectrum-hop gen))
 	 (outctr (moving-spectrum-outctr gen)))
@@ -6402,20 +6145,19 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
   (let ((pv (make-phase-vocoder (make-readin "oboe.snd") ))
 	(sv (make-moving-spectrum (make-readin "oboe.snd"))))
-    (do ((k 0 (+ 1 k)))
-	((= k 20))
-      (do ((i 0 (+ i 1))) 
-	  ((= i 2000)) 
-	(phase-vocoder pv) 
-	(moving-spectrum sv))
-      (do ((i 0 (+ i 1)))
-	  ((= i 256))
+    (run
+     (do ((k 0 (+ 1 k)))
+	 ((= k 20))
+       (do ((i 0 (+ i 1))) 
+	   ((= i 2000)) 
+	 (phase-vocoder pv) 
+	 (moving-spectrum sv))
+       (do ((i 0 (+ i 1)))
+	   ((= i 256))
 	(if (fneq (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i))
-	    (snd-display ";~D amps: ~A ~A" i (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i)))
-;	(if (> (abs (- (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i))) .075)
-;	    (snd-display ";~D phases: ~A ~A" i (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i)))
+	    (format #t ";~D amps: ~A ~A" i (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i)))
 	(if (fneq (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i))
-	    (snd-display ";~D freqs: ~A ~A" i (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i)))))))
+	    (format #t ";~D freqs: ~A ~A" i (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i))))))))
 
 #|
 (with-sound (:channels 2)
@@ -6432,6 +6174,12 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 ; :(channel-distance 0 0 0 1)
 ; 7.902601100022e-9
 |#
+
+
+;;; TODO: moving spectrum returns freqs in radians, and does not try to find the interpolated peak,
+;;;         so we need another version that returns current freq/amp pairs that can be used directly in oscil
+;;;         cutoff, peaks, freqs, amps -- moving-peaks?
+;;;       This is the main portion of the "pins" instrument (also find-pitch in examp.scm)
 
 
 
@@ -6628,7 +6376,7 @@ taking input from the readin generator 'reader'.  The output data is available v
       (set! last-pitch pitch)
       (set! pitch (moving-pitch scn))
       (if (not (= last-pitch pitch))
-	  (format #t "~A: ~A~%" (exact->inexact (/ i cur-srate)) pitch))))
+	  (format #t "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
   (set! (mus-srate) old-srate))
 |#
 

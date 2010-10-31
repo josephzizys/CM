@@ -39,12 +39,12 @@
 	(if (zero? ampdc) (set! ampdc 75))
 	(if (zero? indxat) (set! indxat 25))
 	(if (zero? indxdc) (set! indxdc 75))
-	(vector-set! indfs i (make-env (stretch-envelope indxfun 25 indxat 75 indxdc) :duration dur
+	(set! (indfs i) (make-env (stretch-envelope indxfun 25 indxat 75 indxdc) :duration dur
 				       :scaler (- dev1 dev0) :offset dev0))
-	(vector-set! ampfs i (make-env (stretch-envelope ampf 25 ampat 75 ampdc) :duration dur
+	(set! (ampfs i) (make-env (stretch-envelope ampf 25 ampat 75 ampdc) :duration dur
 				       :scaler (* rsamp amp (/ rfamp totalamp))))
-	(vector-set! c-rats i harm)
-	(vector-set! carriers i (make-oscil cfq))))
+	(set! (c-rats i) harm)
+	(set! (carriers i) (make-oscil cfq))))
     (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
@@ -55,12 +55,8 @@
 	 (do ((k 0 (+ 1 k)))
 	     ((= k numformants))
 	   (set! outsum (+ outsum
-			   (* (env (vector-ref ampfs k))
-			      (oscil (vector-ref carriers k) 
-				     (+ (* vib (vector-ref c-rats k))
-					(* (env (vector-ref indfs k)) modsig)))))))
+			   (* (env (ampfs k))
+			      (oscil (carriers k) 
+				     (+ (* vib (c-rats k))
+					(* (env (indfs k)) modsig)))))))
 	 (locsig loc i outsum))))))
-
-
-
-

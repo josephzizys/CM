@@ -180,7 +180,7 @@ class TextIDs
       case Lisp:
 	return T("Lisp");
       case Sal:
-	return T("Sal");
+	return T("Sal1");
       case Sal2:
 	return T("Sal2");
       case Fomus:
@@ -670,6 +670,7 @@ class CommandIDs
   static const CommandID ConsolePrintWarning  = COMID(Console, 130);
   static const CommandID ConsolePrintError    = COMID(Console, 131);
   static const CommandID ConsolePrintPrompt   = COMID(Console, 132);
+  static const CommandID ConsoleIsEvaling     = COMID(Console, 133);
 
   static const CommandID EditorNew = COMID(Editor, 1);
   static const CommandID EditorOpen = COMID(Editor, 2);

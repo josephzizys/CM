@@ -28,5 +28,3 @@
 		  (comb comb4 allpass-sum)))
 	 (outa i (delay outdel1 comb-sum))
 	 (outb i (delay outdel2 comb-sum)))))))
-
-

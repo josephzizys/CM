@@ -8,7 +8,7 @@
 	 (grain (mus-data grains)))
     (do ((i 0 (+ i 1)))
 	((= i grain-size))
-      (vct-set! grain i (* (env grain-env) (oscil carrier))))
+      (set! (grain i) (* (env grain-env) (oscil carrier))))
     (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))

@@ -11,7 +11,3 @@
        (outa i (all-pass d0 (* amp (pulse-train s)) (env zenv)))))))
 
 ;;(with-sound () (za 0 1 100 .1 20 100 .95 .95) (za 1.5 1 100 .1 100 20 .95 .95))
-
-
-
-

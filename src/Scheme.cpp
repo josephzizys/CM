@@ -82,7 +82,10 @@ XEvalNode::~XEvalNode()
 
 bool XEvalNode::applyNode(SchemeThread* schemethread, double curtime) 
 {
+  Console* console=Console::getInstance();
   s7_scheme* sc=schemethread->scheme;
+  //  console->setEvaling(true);
+  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 1, true);
   s7_pointer val=s7_eval_c_string(sc, (char *)expr.toUTF8());
   if (val != schemethread->schemeError)
     {
@@ -90,8 +93,10 @@ bool XEvalNode::applyNode(SchemeThread* schemethread, double curtime)
 #ifdef GRACE
       str << T("\n");
 #endif
-      Console::getInstance()->printValues(str);
+      console->printValues(str);
     }
+  //  console->setEvaling(false);
+  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 0, true);
   return false; 
 }
 
@@ -113,6 +118,7 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
 {
   s7_scheme* sc=st->scheme;
   s7_pointer data=st->schemeNil;
+  Console* console=Console::getInstance();
   // cons up token list using reverse order of array
   for (int i=toks.size()-1; i>=0; i--)
     {
@@ -133,6 +139,7 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
   int prot = s7_gc_protect(sc, data);
   s7_pointer retn;
   st->isSalEval(true);
+  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 1, true);
   if (vers==TextIDs::Sal)
     {
       // sal only side effects so we never process return values
@@ -149,11 +156,12 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
           for (int i=0; i<str.length(); i++)
             if (str[i]==T('(')) str[i]=T('{');
             else if (str[i]==T(')')) str[i]=T('}');
-          Console::getInstance()->printValues(str);
+          console->printValues(str);
         }
     }
   s7_gc_unprotect_at(sc, prot);
   st->isSalEval(false);
+  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 0, true);
   return false;
 }
 

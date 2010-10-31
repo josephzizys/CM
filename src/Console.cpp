@@ -28,11 +28,13 @@ Console::Console() :
   prompt (String::empty),
   theme (NULL),
   buffer (NULL),
-  manager (NULL)
+  manager (NULL),
+  isEvaling (false)
 {
   // GUI initialization code is done by window
-  supportedfiletypes=String(T(".scm.lisp.sal.ins.clm.fms.xml.mid"));
+  supportedfiletypes=String(T(".scm.lisp.sal1.sal2.sal.ins.clm.fms.xml.mid"));
 #ifdef GRACE
+
   initThemes();
 #endif
 }
@@ -167,6 +169,16 @@ void Console::printError(char* s, bool t)
 #endif
 }
 
+// notify console we are under eval
+
+void Console::setEvaling(bool evaling)
+{
+  isEvaling=evaling;
+#ifdef GRACE
+  repaint();
+#endif
+}
+
 //
 // printPrompt: call this method to print the REPL prompt
 //
@@ -232,6 +244,10 @@ void Console::handleAsyncUpdate()
 	case CommandIDs::ConsolePrintOutput :
 	  display(messages[i]->text, getConsoleColor(ConsoleTheme::outputColor));
 	  break;
+	case CommandIDs::ConsoleIsEvaling :
+          //std::cout << "evalling!, dat=" << dat << "\n";
+          setEvaling(dat);
+          break;
 	case CommandIDs::ConsolePrintValues :
 	  display(messages[i]->text, getConsoleColor(ConsoleTheme::valuesColor));
 	  break;
@@ -508,6 +524,20 @@ void Console::filesDropped(const StringArray &files, int x, int y)
     }
 }
 
+void Console::paint(Graphics& g)
+{
+  if (isEvaling)
+    g.fillAll (Colours::black); //Colours::firebrick Colours::royalblue
+  else
+    g.fillAll (Colours::transparentBlack);
+}
+
+void Console::resized()
+{
+  buffer->setTopLeftPosition(4,3);
+  buffer->setSize(getWidth()-8,getHeight()-7);
+}
+
 /*=======================================================================*
                                  Console Window
  *=======================================================================*/
@@ -520,39 +550,29 @@ ConsoleWindow::ConsoleWindow ()
   Preferences* prefs=Preferences::getInstance();
   setMenuBar(this);
   Console* cons=Console::getInstance();
-  setContentComponent(cons);
-  //  cons->manager=new ApplicationCommandManager();
-  //  cons->addKeyListener(cons->manager->getKeyMappings());
-  //  cons->addKeyListener(CommandManager::getInstance()->getKeyMappings());
-  //  cons->manager->registerAllCommandsForTarget(cons);
-  //  setApplicationCommandManagerToWatch(cons->manager);
 
   cons->buffer=new TextEditor(String::empty) ;
   cons->buffer->setMultiLine(true);
   cons->buffer->setScrollToShowCursor(true);
   cons->buffer->setReadOnly(true);
   cons->buffer->setCaretVisible(false);
-
   cons->buffer->setFont(Font(Font::getDefaultMonospacedFontName(),
 			     (float)Preferences::getInstance()->getIntProp(T("ConsoleFontSize"), 16),
 			     Font::plain));
-  //std::cout << Font::getDefaultMonospacedFontName().toUTF8() << "\n";
-
   cons->buffer->setVisible(true);
-  // in Grace the Console is a component, add the buffer to it
+  // add buffer to Console component
   cons->addChildComponent(cons->buffer);
-  // add the theme after buffer exists
-  // bg, input, output, error, warning, values, hilite, texthilite, cursor
-  cons->setTheme(Preferences::getInstance()->getStringProp(T("ConsoleTheme"),
-                                                           T("Clarity and Beauty")));
+  // set the theme after buffer exists
+  cons->setTheme(Preferences::getInstance()->getStringProp(T("ConsoleTheme"), T("Clarity and Beauty")));
   cons->manager=new ApplicationCommandManager();
   cons->addKeyListener(cons->manager->getKeyMappings());
   cons->addKeyListener(CommandManager::getInstance()->getKeyMappings());
   cons->manager->registerAllCommandsForTarget(cons);
   setApplicationCommandManagerToWatch(cons->manager);
-
   cons->setWantsKeyboardFocus(true);  
   cons->setVisible(true);
+  cons->setSize(450,350);
+  setContentComponent(cons, false, true);
   setResizable(true, true); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);

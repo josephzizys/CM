@@ -21,5 +21,3 @@
 			(* g1 (oscil osc1))
 			(* g2 (oscil osc2))))
 		  (* (env ampenv2) g3 (oscil osc3))))))))
-
-
