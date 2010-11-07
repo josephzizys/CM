@@ -21,7 +21,7 @@ namespace SchemeSources
     const int           osc_scmSize = 5176;
 
     extern const char*  patterns_scm;
-    const int           patterns_scmSize = 36959;
+    const int           patterns_scmSize = 36965;
 
     extern const char*  plot_scm;
     const int           plot_scmSize = 12502;

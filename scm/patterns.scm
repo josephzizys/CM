@@ -933,8 +933,8 @@
                           (p2 (list-index (lambda (z) (equal? (car y) z))
 					  l)))
                       (cond ((< p1 p2) #t) 
-                            ((= p1 p2) 
-                             (before? (cdr x) (cdr y) l)) 
+                            ; bug!
+                            ;((= p1 p2) (before? (cdr x) (cdr y) l)) 
                             (else #f))))))
 	     (liststring 
 	      (lambda (l)
