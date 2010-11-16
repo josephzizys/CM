@@ -229,8 +229,8 @@ bool CLProcessThread::sendMessage (const MemoryBlock& message,
 					 MessageType messageType)
 {
   juce::uint32 messageHeader[2];
-  messageHeader [0] = swapIfBigEndian ((juce::uint32) messageType);
-  messageHeader [1] = swapIfBigEndian ((juce::uint32) message.getSize());
+  messageHeader [0] = ByteOrder::swapIfBigEndian ((juce::uint32) messageType);
+  messageHeader [1] = ByteOrder::swapIfBigEndian ((juce::uint32) message.getSize());
 
   MemoryBlock messageData (sizeof (messageHeader) + message.getSize());
   messageData.copyFrom(messageHeader, 0, sizeof (messageHeader));
@@ -325,7 +325,7 @@ bool CLProcessThread::readNextMessageInt()
   
   if (bytes == sizeof (messageHeader) )
     {
-      const int bytesInMessage = (int) swapIfBigEndian (messageHeader[1]);
+      const int bytesInMessage = (int) ByteOrder::swapIfBigEndian (messageHeader[1]);
       
       if (bytesInMessage > 0 && bytesInMessage < maximumMessageSize)
         {
@@ -356,7 +356,7 @@ bool CLProcessThread::readNextMessageInt()
 	  
 	  if (bytesRead >= 0)
 	    deliverDataInt(messageData,
-			   (MessageType)swapIfBigEndian(messageHeader[0]));
+			   (MessageType)ByteOrder::swapIfBigEndian(messageHeader[0]));
         }
     }
   else if (bytes < 0)
@@ -657,35 +657,35 @@ void CommonLisp::sendLispSexpr(String sexpr, int msg)
 void CommonLisp::messageReceived (const MemoryBlock &message)
 {
   int len=message.getSize();
-  String text=String((const char *)message, len);
+  String text=String((const char *)message.getData(), len);
   Console::getInstance()->printValues(text);
 }
 
 void CommonLisp::postMessage (const MemoryBlock &message)
 {
   int len=message.getSize();
-  String text=String((const char *)message, len);
+  String text=String((const char *)message.getData(), len);
   Console::getInstance()->printOutput(text);
 }
 
 void CommonLisp::postWarning (const MemoryBlock &message)
 {
   int len=message.getSize();
-  String text=String((const char *)message, len);
+  String text=String((const char *)message.getData(), len);
   Console::getInstance()->printWarning(text);
 }
 
 void CommonLisp::postError (const MemoryBlock &message)
 {
   int len=message.getSize();
-  String text=String((const char *)message, len);
+  String text=String((const char *)message.getData(), len);
   Console::getInstance()->printError(text);
 }
 
 void CommonLisp::postValues (const MemoryBlock &message)
 {
   int len=message.getSize();
-  String text=String((const char *)message, len);
+  String text=String((const char *)message.getData(), len);
   printf("Recv: '%s'\n", text.toUTF8());
   Console::getInstance()->printValues(text);
 }

@@ -448,7 +448,7 @@
       (ffi_rangauss 1 0)
       (if (null? (cdr args))
 	  (ffi_rangauss (car args) 0)
-	  (ffi_rangauss (car args) (cdr args)))))
+	  (ffi_rangauss (car args) (cadr args)))))
 
 (define rancauchy ffi_rancauchy)
 

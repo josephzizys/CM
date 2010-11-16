@@ -8,7 +8,7 @@ addoption("sndlib", "Location of SNDLIB source directory or install prefix")
 addoption("liblo", "Optional LIBLO directory or install prefix")
 addoption("fomus", "Optional FOMUS install prefix")
 addoption("svnversion", "Optional SVN version number")
---addoption("gracecl", "Optional build gracecl application")
+addoption("gracecl", "Optional build gracecl application")
 --addoption("juce", "Optional JUCE directory or install prefix")
 
 if options["juce"] then
