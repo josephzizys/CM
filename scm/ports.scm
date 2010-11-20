@@ -423,7 +423,7 @@
 ;; see Csound.h
 
 (define cs:i_statement 1)
-(define cs:e_statement 2)
+(define cs:f_statement 2)
 
 (define (cs:send type args)
   ;; args can 1 or more values, or one list.
@@ -476,7 +476,7 @@
 (define (cs:f . args)
   (cs:send 'f args))
 
-(define (cs:ev args)
+(define (cs:event args)
   (cond ((pair? args)
 	 (let ((type (car args)))
 	   (if (or (eqv? type 'i)
