@@ -462,9 +462,7 @@
 				       (number->string (car tail)))))
 	    ((string? (car tail))
              (let ((str (car tail)))
-               (if (eqv? type 'f)
-                   (set! str (string-append "\"" str "\""))
-                   )
+               (set! str (string-append "\"" str "\""))
                (set! data (string-append data delm str))))
 	    ((symbol? (car tail))
 	     (set! data (string-append data delm
