@@ -1504,7 +1504,21 @@ bool SalSyntax::tokenize(CodeDocument& document, const CodeDocument::Position st
         tokens.add(new Syntax::SynTok(T(","), SalIDs::SalComma, loc));
       else if (scan==ScanIDs::SCAN_STRING)
         {
-          tokens.add(new Syntax::SynTok(document.getTextBetween(pos,far).unquoted(), SalIDs::SalString, loc));
+          String txt=document.getTextBetween(pos,far).unquoted();
+          // if we have escaped chars remove first level of escape
+          if (txt.containsChar(T('\\')))
+            {
+              bool esc=false;
+              String unq=String::empty;
+              //std::cout << "txt='" << txt.toUTF8() << "'\n";
+              for (int e=0;e<txt.length();e++)
+                if (txt[e]==T('\\'))
+                  if (!esc) esc=true; else {unq << txt[e]; esc=false;}
+                else {unq << txt[e]; esc=false;}
+              txt=unq;
+              //std::cout << "txt='" << txt.toUTF8() << "'\n";
+            }
+          tokens.add(new Syntax::SynTok(txt, SalIDs::SalString, loc));
         }
       else if (scan==ScanIDs::SCAN_TOKEN)
         {

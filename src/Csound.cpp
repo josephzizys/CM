@@ -164,14 +164,17 @@ void Csound::runApplication()
 {
   if (canRunApplication())
     {
+      File app=getApplication();
+      String orc=getOrcFile().getFullPathName().quoted();
+      String sco=getScoreFile().getFullPathName().quoted();
       String args=getApplicationArgs();
       String msg=String::empty;
-      args << T(" ") << getOrcFile().getFullPathName()
-	   << T(" ") << getScoreFile().getFullPathName();
-      msg << T("Starting '") << getApplication().getFullPathName()
-	  << T(" ") << args << T("'\n");
+      args << T(" ") << orc
+	   << T(" ") << sco;
+      msg << T("Starting ") << app.getFullPathName()
+	  << T(" ") << args << T("\n");
       Console::getInstance()->printOutput(msg);
-      getApplication().startAsProcess(args);
+      app.startAsProcess(args);
     }
   else
     Console::getInstance()->
