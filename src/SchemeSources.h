@@ -15,7 +15,7 @@ namespace SchemeSources
     const int           genffi_scmSize = 22120;
 
     extern const char*  loop_scm;
-    const int           loop_scmSize = 38024;
+    const int           loop_scmSize = 37992;
 
     extern const char*  osc_scm;
     const int           osc_scmSize = 5176;

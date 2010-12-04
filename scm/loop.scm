@@ -972,9 +972,9 @@
                   #f)))))
     `(let (,@ (loop-bindings parsed))
        ,@(loop-initially parsed)
-       (call-with-current-continuation 
+       (call-with-exit 
         (lambda (return)     ; <- (return) returns from this lambda
-          (call-with-current-continuation
+          (call-with-exit
            (lambda (go)  ; <- (go #t) returns from this lambda
              ;; a named let provides the actual looping mechanism.
              ;; the various tests and actions may exit via the

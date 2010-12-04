@@ -16,13 +16,14 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <h1>Changelog</h1>
 
-  <h2>CM 3.7.1 (svn trunk)</h2>
+  <h2>CM 3.7.1</h2>
   <ul>
+    <li class="change">Enhancement: upgraded to latest Fomus framework (version 0.1.12).</li>
+    <li class="change">Bug fix: fixed several csound bugs: "cs:i" and "cs:f" now quotify string arguments, renamed cs:data to cs:event, orc file and sco file are now quoted in shell call.</li>
+    <li class="change">Bug fix: the first level of escape char '\' is now removed in Sal2 and Sal1 strings.</li>
+    <li class="change">Bug fix: fixed bug in rangauss that didn't allow the optional second argument to be provided.</li>
     <li class="change">Bug fix: added back --gracecl build option to premake.lua. to build gracecl do: "premake --target gnu --sndlib /path/to/sndlib" and then "make". Note that you must still install sndlib in order to build gracecl.</li>
     <li class="change">Bug fix: fixed several compile bugs in CommonLisp.cpp that prevented GraceCl from compiling.</li>
-    <li class="change">Bug fix: fixed bug in rangauss that didn't allow the optional second argument to be provided.</li>
-    <li class="change">Bug fix: the first level of escape char '\' is now removed in Sal2 and Sal1 strings.</li>
-    <li class="change">Bug fix: fixed several csound bugs: "cs:i" and "cs:f" now quotify string arguments, renamed cs:data to cs:event, orc file and sco file are now quoted in shell call.</li>
   </ul>
 
   <h2>CM 3.7.0</h2>
@@ -358,7 +359,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Mon Nov 22 08:42:27 CST 2010 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sat Dec  4 08:26:54 CST 2010 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"
