@@ -1856,7 +1856,7 @@ int Sal2Syntax::backwardExpr(CodeDocument& document, CodeDocument::Position& fro
   //CodeDocument::Position pos (getCaretPos());
   CodeDocument::Position pos (to);
   CodeDocument::Position bob (&document, 0);  // beginning of buffer
-  int scan=0, last=0, here=-1, level=0;
+  int scan=0, last=0, here=-1, level=0, scanned=0;
   #define SCAN_CURLY (ScanIDs::SCAN_PUNCT+1)
   #define SCAN_SQUARE (ScanIDs::SCAN_PUNCT+2)
 
@@ -1882,6 +1882,7 @@ int Sal2Syntax::backwardExpr(CodeDocument& document, CodeDocument::Position& fro
         //std::cout << "Code ("<<from.getPosition()<<","<<to.getPosition()<<"): '" << code.toUTF8() << "'\n";
         if (scan==ScanIDs::SCAN_TOKEN)
           {
+            scanned++;
             if (Syntax::SynTok* tok=getSynTok(code))
               {
                 // token is a literal (e.g. statement, op)
@@ -1918,12 +1919,14 @@ int Sal2Syntax::backwardExpr(CodeDocument& document, CodeDocument::Position& fro
         if (scan<=0)
           {
             //std::cout << "breaking with scan <= 0: " << scan << "\n";;
+            here=-1; // FIXED?
             break;
           }
         String code=document.getTextBetween(pos,end);
         //std::cout << "Code ("<<pos.getPosition()<<","<<end.getPosition()<<"): '" << code.toUTF8() << "'\n";
         if (scan==ScanIDs::SCAN_TOKEN)
           {
+            scanned++;
             Syntax::SynTok* tok=getSynTok(code);
             if (tok && !SalIDs::isSalBoolType(tok->getType()))  // booleans are values...
               {
@@ -1976,6 +1979,7 @@ int Sal2Syntax::backwardExpr(CodeDocument& document, CodeDocument::Position& fro
           }
         else if (scan==ScanIDs::SCAN_PUNCT)
           {
+            scanned++;
             // its a comma, stop if last not an expression
             if (last==0 || SalIDs::isSalType(last))
               {
@@ -1988,6 +1992,7 @@ int Sal2Syntax::backwardExpr(CodeDocument& document, CodeDocument::Position& fro
         // expr its the first or the previous thing was not an expr
         else if (last==0 || SalIDs::isSalType(last))
           {
+            scanned++;
             if (pos.getCharacter()==T('{'))
               scan=SCAN_CURLY;
             else if (pos.getCharacter()==T('['))
@@ -2022,7 +2027,8 @@ int Sal2Syntax::backwardExpr(CodeDocument& document, CodeDocument::Position& fro
   if (here<0) 
     {
       scan=ScanIDs::SCAN_EMPTY;
-      here=pos.getPosition();
+      if (scanned>0)
+       here=pos.getPosition();
     }
   //std::cout << "returning: "  << ((here>-1) ? 1 : scan) << "\n";
   return (here>-1) ? 1 : scan;
