@@ -174,7 +174,27 @@ class SchemeThread : public Thread
 
   bool pausing;
   bool sprouted;
-  //  CriticalSection lock;
+
+  bool interrupted;
+  ReadWriteLock interruptlock;
+
+  // called by s7 to see if it should quit currrent execution
+
+  bool isSchemeInterrupt()
+  {
+    const ScopedReadLock mylock (interruptlock);
+    return interrupted;
+  }
+
+  /* setSchemeInterrupt(true) called by user from editor thread to
+     tell scheme to quit current eval. scheme thread calls it with
+     false just before each eval to clear the status. */
+
+  void setSchemeInterrupt(bool flag)
+  {
+    const ScopedWriteLock mylock (interruptlock);
+    interrupted=flag;
+  }
 
   // Midi Receiving
   OwnedArray<MidiHook, CriticalSection> midiHooks;
@@ -213,6 +233,8 @@ class SchemeThread : public Thread
   // These next methods are defined in the scheme implementation files
   // (SndLib.cpp and Chicken.cpp)
   bool init();
+  void interruptScheme();
+  void printBanner();
   void cleanup();
   String getLispVersion();
 

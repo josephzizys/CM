@@ -10,6 +10,7 @@
 #include "Console.h"
 #include "Midi.h"
 #include "Csound.h"
+#include "CmSupport.h"
 #ifdef SNDLIB
 #include "SndLib.h"
 #endif
@@ -85,18 +86,27 @@ bool XEvalNode::applyNode(SchemeThread* schemethread, double curtime)
   Console* console=Console::getInstance();
   s7_scheme* sc=schemethread->scheme;
   //  console->setEvaling(true);
-  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 1, true);
+  ////  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 1, true);
+
+  // install the begin_hook that allows s7 to quit current eval
+  schemethread->setSchemeInterrupt(false);
+  s7_set_begin_hook(sc, cm_begin_hook);
   s7_pointer val=s7_eval_c_string(sc, (char *)expr.toUTF8());
-  if (val != schemethread->schemeError)
-    {
-      String str=String(s7_object_to_c_string(sc, val));
+  s7_set_begin_hook(sc,NULL);
+  if (schemethread->isSchemeInterrupt()) 
+  {
+    console->printWarning(T("Scheme interrupted!\n"));
+  }
+  else if (val != schemethread->schemeError)
+  {
+    String str=String(s7_object_to_c_string(sc, val));
 #ifdef GRACE
-      str << T("\n");
+    str << T("\n");
 #endif
-      console->printValues(str);
-    }
+    console->printValues(str);
+  }
   //  console->setEvaling(false);
-  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 0, true);
+  ////  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 0, true);
   return false; 
 }
 
@@ -139,7 +149,9 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
   int prot = s7_gc_protect(sc, data);
   s7_pointer retn;
   st->isSalEval(true);
-  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 1, true);
+  ////  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 1, true);
+  st->setSchemeInterrupt(false);
+  s7_set_begin_hook(sc, cm_begin_hook);
   if (vers==TextIDs::Sal)
     {
       // sal only side effects so we never process return values
@@ -160,8 +172,13 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
         }
     }
   s7_gc_unprotect_at(sc, prot);
+  s7_set_begin_hook(sc, NULL);
+  if (st->isSchemeInterrupt()) 
+  {
+    console->printWarning(T("Scheme interrupted!\n"));
+  }
   st->isSalEval(false);
-  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 0, true);
+  ///  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 0, true);
   return false;
 }
 
@@ -577,6 +594,7 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
 SchemeThread::SchemeThread() 
   : Thread(T("Scheme Thread")),
     pausing (false),
+    interrupted (false),
     scoremode (ScoreTypes::Empty),
     sprouted (false),
     showvoid (false),
@@ -740,6 +758,23 @@ void SchemeThread::read()
     eval(text);
 }
 
+void SchemeThread::printBanner()
+{
+  String banner=String::empty;
+  banner << SystemStats::getJUCEVersion()
+         << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n")
+         << getLispVersion() 
+         << T("\n");
+#ifdef WITHFOMUS
+  if (fomus_exists) 
+    banner << Fomus::getFomusVersion() 
+           << T("\n");
+#endif
+  banner << SysInfo::getCMLogo() 
+         << T("\n" );
+  Console::getInstance()->printOutput(banner);
+}
+
 void SchemeThread::run()
 {
   double qtime, utime;
@@ -748,18 +783,7 @@ void SchemeThread::run()
   if (!init())
       return;
   if (!isQuiet())
-    {
-      String banner=String::empty;
-      banner << SystemStats::getJUCEVersion()
-	     << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n")
-	     << getLispVersion() << T("\n");
-#ifdef WITHFOMUS
-      if (fomus_exists) banner << Fomus::getFomusVersion() << T("\n");
-#endif
-      banner << SysInfo::getCMLogo() << T("\n" );
-      Console::getInstance()->printOutput(banner);
-    }
-
+    printBanner();
   pausing=false;
   while (! threadShouldExit())
     {
@@ -958,3 +982,9 @@ bool SchemeThread::isQueueEmpty()
   return (size == 0);
 }
 
+void SchemeThread::interruptScheme()
+{
+  schemeNodes.clear(); // remove any running nodes from scheduler
+  clearMidiHook(-1);
+  clearOscHook(juce::String("*"));
+}

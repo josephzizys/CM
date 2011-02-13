@@ -48,6 +48,11 @@ void cm_quit()
 #endif
 }
 
+bool cm_begin_hook(s7_scheme* sc)
+{
+  return SchemeThread::getInstance()->isSchemeInterrupt();
+}
+
 void cm_print_output(char* str, bool quote)
 {
   if (quote)

@@ -1407,7 +1407,8 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
       buffer->setCaretPosition(1000000);
       break;
     case CommandIDs::ConsoleClearConsole:
-      buffer->clear();
+      //      buffer->clear();
+      SchemeThread::getInstance()->printBanner();
       break;
     default:
       app->invoke(info, false);

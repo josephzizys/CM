@@ -114,6 +114,7 @@ class Console :
   bool isEvaling;
   
   void display(String str, Colour color);
+  void clearConsole();
   void printPrompt(bool trigger=true);
   void setPrompt(String str);
   Colour getConsoleColor(int id);

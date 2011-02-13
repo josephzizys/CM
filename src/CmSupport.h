@@ -11,6 +11,7 @@
 #include "Scheme.h"
 
 void cm_quit();
+bool cm_begin_hook(s7_scheme* sc);
 
 void cm_print_output(char* str, bool quote=false);
 void cm_print_error(char* str);

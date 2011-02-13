@@ -63,7 +63,6 @@ bool Console::isSupportedFileType(String path)
   return (dot<0) ? false : supportedfiletypes.contains(path.substring(dot));
 }
 
-    
 void Console::setPrompt(String str)
 {
   prompt=str;
@@ -179,6 +178,13 @@ void Console::setEvaling(bool evaling)
 #endif
 }
 
+void Console::clearConsole()
+{
+#ifdef GRACE
+  postAsyncMessage(CommandIDs::ConsoleClearConsole, String::empty, true);
+#endif
+}
+
 //
 // printPrompt: call this method to print the REPL prompt
 //
@@ -242,7 +248,7 @@ void Console::handleAsyncUpdate()
       switch (cmd) 
 	{
 	case CommandIDs::ConsolePrintOutput :
-	  display(messages[i]->text, getConsoleColor(ConsoleTheme::outputColor));
+          display(messages[i]->text, getConsoleColor(ConsoleTheme::outputColor));
 	  break;
 	case CommandIDs::ConsoleIsEvaling :
           //std::cout << "evalling!, dat=" << dat << "\n";
@@ -279,6 +285,9 @@ void Console::handleAsyncUpdate()
 	    AudioManager::getInstance()->openAudioFilePlayer(file,true);
 	  }
 	  break;
+	case CommandIDs::ConsoleClearConsole :
+          buffer->clear();
+          break;
 #endif
 	default:
 	  {
@@ -534,8 +543,10 @@ void Console::paint(Graphics& g)
 
 void Console::resized()
 {
-  buffer->setTopLeftPosition(4,3);
-  buffer->setSize(getWidth()-8,getHeight()-7);
+  //  buffer->setTopLeftPosition(4,3);
+  //  buffer->setSize(getWidth()-8,getHeight()-7);
+  buffer->setTopLeftPosition(3,1);
+  buffer->setSize(getWidth()-6,getHeight()-4);
 }
 
 /*=======================================================================*
@@ -543,7 +554,7 @@ void Console::resized()
  *=======================================================================*/
 
 ConsoleWindow::ConsoleWindow ()
-  : DocumentWindow ( String::empty , Colours::white,
+  : DocumentWindow ( String::empty , Colour (227,227,227), //Colours::silver,
 		     DocumentWindow::allButtons, true )
 {
   setName(SysInfo::getApplicationName());

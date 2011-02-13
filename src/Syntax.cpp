@@ -1196,7 +1196,7 @@ int SalSyntax::readNextToken(CodeDocument::Iterator &source)
 int SalSyntax::getIndentation(CodeDocument& document, int line)
 // THIS METHOD IS SAL2 BUT WORKS OK FOR SAL SO DEFINED HERE
 {
-  bool trace=true;
+  bool trace=false;
   int orig=line;
   CodeDocument::Position pos (&document, line, 0);
   Array<int> subtypes;

@@ -230,8 +230,8 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
       CommandIDs::EditorExecute,      // Eval menu
       CommandIDs::EditorExpand,
       CommandIDs::SchedulerStop,
-      CommandIDs::SchedulerPause,
-
+      //      CommandIDs::SchedulerPause,
+      CommandIDs::SchedulerInterruptScheme,
       CommandIDs::EditorSymbolHelp
     } ;
   commands.addArray(ids, sizeof(ids) / sizeof(CommandID));       
@@ -457,10 +457,13 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.shortName=T("Abort Processes");
       info.setActive(!SchemeThread::getInstance()->isQueueEmpty());
       break;
-    case CommandIDs::SchedulerPause:
-      info.shortName=((SchemeThread::getInstance()->isPaused()) ? T("Resume Processes") :
-		      T("Pause Processes"));
-      info.setActive(!SchemeThread::getInstance()->isQueueEmpty());
+      //    case CommandIDs::SchedulerPause:
+      //      info.shortName=((SchemeThread::getInstance()->isPaused()) ? T("Resume Processes") :
+      //		      T("Pause Processes"));
+      //      info.setActive(!SchemeThread::getInstance()->isQueueEmpty());
+      //      break;
+    case CommandIDs::SchedulerInterruptScheme:
+      info.shortName=(T("Interrupt Scheme") );
       break;
     case CommandIDs::EditorSymbolHelp:
       info.shortName=T("Documention For Symbol under Cursor");
@@ -610,8 +613,12 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       getCodeBuffer()->eval(true);
       break;
     case CommandIDs::SchedulerStop:
+      SchemeThread::getInstance()->stop(-1);
       break;
-    case CommandIDs::SchedulerPause:
+      //    case CommandIDs::SchedulerPause:
+      //      break;
+    case CommandIDs::SchedulerInterruptScheme:
+      SchemeThread::getInstance()->setSchemeInterrupt(true);
       break;
     case CommandIDs::EditorSymbolHelp:
       getCodeBuffer()->lookupHelpAtPoint();
@@ -720,7 +727,8 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
       menu.addCommandItem(&commands, CommandIDs::EditorExpand);
       menu.addSeparator();
       menu.addCommandItem(&commands, CommandIDs::SchedulerStop);
-      menu.addCommandItem(&commands, CommandIDs::SchedulerPause);
+      //      menu.addCommandItem(&commands, CommandIDs::SchedulerPause);
+      menu.addCommandItem(&commands, CommandIDs::SchedulerInterruptScheme);
     }
   else if (name==T("Audio")) 
     {

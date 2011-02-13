@@ -139,6 +139,28 @@ class SysInfo
 #endif
   }
 
+  static bool isGraceApp()
+  {
+#ifdef GRACE
+#ifdef GRACECL
+    return false;
+#else
+    return true;
+#endif
+#else
+    return false;
+#endif
+  }
+
+  static bool isCmApp()
+  {
+#ifdef GRACE
+    return false;
+#else
+    return false;
+#endif
+  }
+
 };
 
 /*
@@ -804,6 +826,7 @@ class CommandIDs
   static const CommandID SchedulerError = COMID(Scheduler, 3);
   static const CommandID SchedulerScoreMode = COMID(Scheduler, 4);
   static const CommandID SchedulerScoreComplete = COMID(Scheduler, 5);
+  static const CommandID SchedulerInterruptScheme = COMID(Scheduler, 6);
 
   // Common Window Commands
   static const CommandID WindowSelect = COMID(Window, 1);
