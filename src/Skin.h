@@ -11,16 +11,16 @@
 #include "Fonts.h"
 
 ///An attempt to make the menu system a little more like normal Windows menus.
-class WindowsSkin : public juce::LookAndFeel
+class WindowsSkin : public LookAndFeel
 {
 public:
-  juce::Font* fontMenuBar;
+  Font* fontMenuBar;
   CustomTypeface* defaultTypeface;
   MemoryInputStream* defaultFontTypefaceStream;
 
  WindowsSkin()
   {
-    fontMenuBar = new juce::Font(16, 0);
+    fontMenuBar = new Font(16, 0);
     if(SystemStats::getOperatingSystemType() != SystemStats::MacOSX)
     {
       //Create the Bitstream Vera font from the resource.
@@ -28,8 +28,8 @@ public:
                                                         Fonts::vera_typefaceSize, 
                                                         false);
       defaultTypeface = new CustomTypeface(*defaultFontTypefaceStream);
-      Typeface::Ptr RefTypeface = juce::ReferenceCountedObjectPtr<juce::Typeface>(defaultTypeface);
-      *fontMenuBar = juce::Font(RefTypeface);
+      Typeface::Ptr RefTypeface = ReferenceCountedObjectPtr<Typeface>(defaultTypeface);
+      *fontMenuBar = Font(RefTypeface);
       fontMenuBar->setHeight(15);
     }
     else
@@ -47,18 +47,18 @@ public:
     //delete defaultFontTypefaceStream;
   }
 
-  virtual void drawPopupMenuBackground(juce::Graphics &g, int width, int height)
+  virtual void drawPopupMenuBackground(Graphics &g, int width, int height)
   {
-    g.fillAll(juce::Colour::Colour(255,255,255));
-    g.setColour(juce::Colour::Colour(157,157,161));
+    g.fillAll(Colour(255,255,255));
+    g.setColour(Colour(157,157,161));
     g.drawRect(0,0,width,height);
   }
 
-  virtual void drawPopupMenuItem(juce::Graphics& g, int width, int height,
+  virtual void drawPopupMenuItem(Graphics& g, int width, int height,
     bool isSeparator, bool isActive, bool isHighlighted,
-    bool isTicked, bool hasSubMenu, const juce::String& text,
-    const juce::String& shortcutKeyText, juce::Image* image, 
-    const juce::Colour* const textColourToUse)
+    bool isTicked, bool hasSubMenu, const String& text,
+    const String& shortcutKeyText, Image* image, 
+    const Colour* const textColourToUse)
   {
     using namespace juce;
     const float halfH = height * 0.5f;
@@ -66,7 +66,7 @@ public:
     if(isSeparator)
     {
       const float separatorIndent = 5.5f;
-      g.setColour(Colour::Colour(157,157,161));
+      g.setColour(Colour(157,157,161));
       g.drawLine(separatorIndent, halfH, width - separatorIndent, halfH);
     }
     else
@@ -81,12 +81,12 @@ public:
 	
         if(SystemStats::getOperatingSystemType()==SystemStats::MacOSX)
         {
-          juce::ColourGradient gb(juce::Colour::Colour(83,112,248), 0, 0, 
-            juce::Colour::Colour(30,67,246), 0, (float)height, false);
+          ColourGradient gb(Colour(83,112,248), 0, 0, 
+            Colour(30,67,246), 0, (float)height, false);
           g.setGradientFill(gb);
         }
         else
-          g.setColour(Colour::Colour(187,183,199));
+          g.setColour(Colour(187,183,199));
         
         g.fillRect(1, 1, width - 2, height - 2);
 
@@ -193,56 +193,56 @@ public:
   }
 
 
-  virtual void drawMenuBarItem(juce::Graphics &g, int width, int height, 
-    int itemIndex, const juce::String &itemText, bool isMouseOverItem, 
-    bool isMenuOpen, bool isMouseOverBar, juce::MenuBarComponent &menuBar)
+  virtual void drawMenuBarItem(Graphics &g, int width, int height, 
+    int itemIndex, const String &itemText, bool isMouseOverItem, 
+    bool isMenuOpen, bool isMouseOverBar, MenuBarComponent &menuBar)
   {
     g.setFont(*fontMenuBar);
     
     if(!(SystemStats::getOperatingSystemType()==SystemStats::MacOSX) && isMouseOverItem)
     {
-      g.setColour(juce::Colour::Colour(187,183,199));
+      g.setColour(Colour(187,183,199));
       g.fillRect(0,0,width,height-2);
 
-      g.setColour(juce::Colour::Colour(178,180,191));
+      g.setColour(Colour(178,180,191));
       g.drawRect(0,0,width,height-2);
       
-      g.setColour(juce::Colours::black);
+      g.setColour(Colours::black);
     }
     else if((SystemStats::getOperatingSystemType()==SystemStats::MacOSX) && isMenuOpen)
     {
-      juce::ColourGradient gb(juce::Colour::Colour(83,112,248), 0, 0, 
-        juce::Colour::Colour(30,67,246), 0, (float)height, false);
+      ColourGradient gb(Colour(83,112,248), 0, 0, 
+        Colour(30,67,246), 0, (float)height, false);
       g.setGradientFill(gb);
       g.fillRect(0,0,width,height-2);
       
-      g.setColour(juce::Colours::white);
+      g.setColour(Colours::white);
     }
     else
-      g.setColour(juce::Colours::black);
+      g.setColour(Colours::black);
 
-    g.drawText(itemText,0,0,width,height,juce::Justification::centred,false);
+    g.drawText(itemText,0,0,width,height,Justification::centred,false);
   }
 
-  virtual void drawMenuBarBackground(juce::Graphics &g, int width, int height, 
-    bool isMouseOverBar, juce::MenuBarComponent &menuBar)
+  virtual void drawMenuBarBackground(Graphics &g, int width, int height, 
+    bool isMouseOverBar, MenuBarComponent &menuBar)
   {
-    g.fillAll(juce::Colour::Colour(237,237,237));
+    g.fillAll(Colour(237,237,237));
     
-    g.setColour(juce::Colour::Colour(216,210,189));
+    g.setColour(Colour(216,210,189));
     g.drawHorizontalLine(height-2,0,(float)width);
 
-    g.setColour(juce::Colour::Colour(255,255,255));
+    g.setColour(Colour(255,255,255));
     g.drawHorizontalLine(height-1,0,(float)width);
   }
 
-  virtual const juce::Font getMenuBarFont(juce::MenuBarComponent &menuBar,
-    int itemIndex, const juce::String &itemText)
+  virtual const Font getMenuBarFont(MenuBarComponent &menuBar,
+    int itemIndex, const String &itemText)
   {
     return *fontMenuBar;
   }
 
-  virtual const juce::Font getPopupMenuFont(void)
+  virtual const Font getPopupMenuFont(void)
   {
     return *fontMenuBar;
   }
