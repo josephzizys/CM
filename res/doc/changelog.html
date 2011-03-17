@@ -16,12 +16,10 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <h1>Changelog</h1>
 
-  <h2>CM 3.7.1</h2>
+  <h2>CM 3.7.2</h2>
   <ul>
 
-    <li class="change">Enhancement: updated to S7 Scheme 1.83 (14-Mar-11).
-
-    <li class="change"> Enhancement: All of CM's random functions are now based on S7's random number generator. You can get and set the seed that controls CM's random number generation using <a href="cm.html#random-seed">random-seed</a> and <a href="cm.html#random-seed-set_">random-seed-set!</a> </li>
+    <li class="change"> Enhancement: All random functions are now based on S7's random number generator. You can get and set the seed that controls CM's random number generation using <a href="cm.html#random-seed">random-seed</a> and <a href="cm.html#random-seed-set_">random-seed-set!</a> This seed is also the seed for S7's default random state.</li>
 
     <li class="change"> Enhancement: The Hush command has been redefined to stop all sound output (not just midi) and is now situated in the top level audio menu along with the keyboard shortcut &#8984;-K. Selecting Hush triggers the following actions:
     <ol>
@@ -45,15 +43,18 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   <li>Command-W - close window</li>
   <li>Command-M - minimize window</li>
 </ul>
+</li>
 
     <li class="change">Enhancement: new instruments parse-samples and cut-samples for parsing samples from an audio file. See Instrument Browser window for more information.</li>
     
+    <li class="change">Enhancement: updated to S7 Scheme 1.83 (14-Mar-11).</li>
     <li class="change">Enhancement: upgraded to latest Fomus framework (version 0.1.15).</li>
+</ul>
 
+  <h2>CM 3.7.1</h2>
 
-    <li class="change">New CLM instruments parse-samples and cut-samples allow you to locate and cut individual sample notes from an audio track.
-    </li>
-
+<ul>
+ <li class="change">Enhancement: upgraded to latest Fomus framework (version 0.1.12)</li>
     <li class="change">Bug fix: fixed several csound bugs: "cs:i" and "cs:f" now quotify string arguments, renamed cs:data to cs:event, orc file and sco file are now quoted in shell call.</li>
     <li class="change">Bug fix: the first level of escape char '\' is now removed in Sal2 and Sal1 strings.</li>
     <li class="change">Bug fix: fixed bug in rangauss that didn't allow the optional second argument to be provided.</li>
@@ -103,8 +104,8 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
   <h2>CM 3.5.2</h2>
 <ul>
-    <li class="change">Sndlib Enhancement: <code>fullmix</code> takes negative srates and srate envelopes.
-    <li class="change">Sndlib Enhancement: <code>scaled-to:</code> now works in <code>with-sound</code>.
+    <li class="change">Sndlib Enhancement: <code>fullmix</code> takes negative srates and srate envelopes.</li>
+    <li class="change">Sndlib Enhancement: <code>scaled-to:</code> now works in <code>with-sound</code>.</li>
     <li class="change">Bug fix:  <code>expandn</code> now runs many times faster.</li>
     <li class="change">Enhancement: improvements to MIDI output timing result in fewer clipped repeated notes in the case of duration == rhythm.</li>
     <li class="change">Bug fix: Several Fomus bugs fixed. </li>
@@ -132,7 +133,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <li class="change"> Enhancement: SAL printing has been greatly speeded up</li>
     <li class="change"> Enhancement: SAL tokenizing is now in C with improvement in speed and consing.</li>
     <li class="change"> New feaure: SAL command <a href="cm.html#soundfile"><code>soundfile</code></a>  creates a sound file from  enclosed instrument calls.</li>
-    <li class="change"> New feaure:  <code>define function</code> in SAL now always creates a function with opt/key parameters. To specify an &rest argument add three dots to the parameter's name. This new behavior is implemented using S7's <code>define*</code> primative and should be backward compatible.</li>
+    <li class="change"> New feaure:  <code>define function</code> in SAL now always creates a function with opt/key parameters. To specify an &amp;rest argument add three dots to the parameter's name. This new behavior is implemented using S7's <code>define*</code> primative and should be backward compatible.</li>
 
     <li class="change">Enhancement: Instrument Browser now located at the toplevel Audio menu and can be opened using the keyboard shortcut Command-I.</li>
 
@@ -160,7 +161,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
     <li class="change">Incompatible change: function <code>osc:hook</code> function removed.</li>
 
-   <li class="change">Incompatible change: old function <code>spectrum-rescale!</code> has been renamed <code>spectrum-modify!<code>.</li>
+   <li class="change">Incompatible change: old function <code>spectrum-rescale!</code> has been renamed <code>spectrum-modify!</code>.</li>
 
     <li class="change">Bug fix: function <code>drunk</code> now accepts numeric modes and an avoid parameter.</li>
 
@@ -394,7 +395,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Wed Mar 16 20:51:14 CDT 2011 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Thu Mar 17 05:40:11 CDT 2011 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"
