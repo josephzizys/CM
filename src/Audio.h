@@ -27,6 +27,8 @@ public:
   //  void initAudioFilePlayer();
   AudioFilePlayer* getAudioFilePlayerComponent() {return audiofileplayer;}
   void openAudioSettings();
+  /** stop the audio file player if it is currently playing a sound file **/
+  void stopAudioPlayback();
   juce_DeclareSingleton (AudioManager, true)
 };
 
@@ -75,6 +77,9 @@ public:
   double getFileDuration();
   TextButton* getSettings();
   void setFileToPlay(File file, bool play=false);
+  void stop();
+  void pause();
+  void rewind();
   AudioTransportSource& getTransportSource();
   void audioDeviceIOCallback (const float** inputChannelData,
     int totalNumInputChannels,
@@ -91,6 +96,8 @@ public:
   //  void mouseWheelMove (const MouseEvent& e, float wheelIncrementX, float wheelIncrementY);
   void filenameComponentChanged (FilenameComponent*);
   void changeListenerCallback (void*);
+  bool keyPressed (const KeyPress& key);
+
 };
 
 class AudioFilePlayerWindow : public DocumentWindow 

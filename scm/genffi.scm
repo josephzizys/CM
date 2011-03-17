@@ -43,8 +43,10 @@
     (ffi_keynum_to_hertz   double "cm_keynum_to_hertz" double)
     (ffi_keynum_to_pc      int "cm_keynum_to_pc" double)
     (ffi_hertz_to_keynum   double "cm_hertz_to_keynum"  double)
-    (ffi_ranseed           void "cm_ranseed" integer64)
-    (ffi_ran64             integer64 "cm_ran64" )
+    ;; randomness
+;    (ffi_ranseed           void "cm_ranseed" integer64) ; old api
+    (ffi_get_random_seed   s7_pointer "cm_get_random_seed" )
+    (ffi_set_random_seed   void "cm_set_random_seed" s7_pointer)
     (ffi_ranint            int "cm_ranint" int)
     (ffi_ranfloat          double "cm_ranfloat" double)
     (ffi_ranint2           int "cm_ranint2" int int)
@@ -577,7 +579,8 @@ s7_pointer make_s7_boolean(s7_scheme *s7, bool b)
 	(format port "~%void cm_init(s7_scheme *s7)~%{")
 	(s7record-init port records)
 	(s7ffi-init port foreign-functions)
-	(format port "~%}~%")
+	(format port "~%  cm_init_randomness(s7);~%")
+	(format port "}~%")
 	)))
 
   )

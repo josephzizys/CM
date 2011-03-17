@@ -98,6 +98,13 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
     }
 }
 
+void AudioManager::stopAudioPlayback()
+{
+  if (audiofileplayer)
+    if (audiofileplayer->isVisible())
+      audiofileplayer->stop();
+}
+
 void AudioManager::openAudioSettings()
 {
   // Open an AudioDeviceSelectorComponent
@@ -149,6 +156,7 @@ AudioFilePlayerWindow::~AudioFilePlayerWindow()
 
 void AudioFilePlayerWindow::closeButtonPressed()
 {
+  player->stop();
   delete this;
 }
 
@@ -387,6 +395,7 @@ AudioFilePlayer::AudioFilePlayer ()
   zoomSlider->setSkewFactor (2);
 
   transportSource.addChangeListener (this);
+  setWantsKeyboardFocus(true);
   if (AudioManager::getInstance()->isAudioReady())
     {
       audioSourcePlayer.setSource (&transportSource);
@@ -447,6 +456,12 @@ void AudioFilePlayer::setFileToPlay(File file, bool play)
     {
       transport->pushButton(Transport::PlayFromBeginningButton);
     }
+}
+
+void AudioFilePlayer::stop()
+{
+  if (getTransportSource().isPlaying())
+    transport->pushButton(Transport::StopButton);
 }
 
 double AudioFilePlayer::getFileDuration()
@@ -570,4 +585,51 @@ void AudioFilePlayer::sliderValueChanged (Slider* slider)
 void AudioFilePlayer::changeListenerCallback (void*)
 {
 }
+
+bool AudioFilePlayer::keyPressed (const KeyPress& key)
+{
+  //  std::cout << "AudioFilePlayer::keyPressed ->" << key.getTextDescription().toUTF8() << "\n";
+  bool handled=false;
+  if (key == KeyPress(KeyPress::spaceKey))
+  {
+    transport->pushButton(Transport::PlayPauseButton);
+    handled=true;
+  }
+  else if ((key == KeyPress(KeyPress::returnKey) ||
+            (key == KeyPress(KeyPress::homeKey))))
+  {
+    transport->pushButton(Transport::RewindButton);
+    handled=true;
+  }
+  else if (key == KeyPress(KeyPress::rightKey))
+  {
+    transport->pushButton(Transport::ForwardButton);
+    handled=true;
+  }
+  else if (key == KeyPress(KeyPress::leftKey))
+  {
+    transport->pushButton(Transport::BackButton);
+    handled=true;
+  }
+  else if (key == KeyPress('M', ModifierKeys::commandModifier, T('M')))
+  {
+    AudioFilePlayerWindow* win=(AudioFilePlayerWindow*)getTopLevelComponent();
+    win->setMinimised(!win->isMinimised());
+    handled=true;
+  }
+  else if (key == KeyPress('W', ModifierKeys::commandModifier, T('W')))
+  {
+    AudioFilePlayerWindow* win=(AudioFilePlayerWindow*)getTopLevelComponent();
+    win->closeButtonPressed();
+    handled=true;
+  }
+
+ return handled;
+}
+
+
+
+
+
+
 

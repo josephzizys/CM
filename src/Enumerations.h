@@ -810,6 +810,7 @@ class CommandIDs
   static const CommandID MidiPlotPlayer = COMID(Audio, 3);
   static const CommandID AudioSettings = COMID(Audio, 4);
   static const CommandID AudioSamplerSettings = COMID(Audio, 5);
+  static const CommandID AudioHush = COMID(Audio, 6);
 
   // SndLib
   static const CommandID SndLibSrate = COMID(SndLib, 1);

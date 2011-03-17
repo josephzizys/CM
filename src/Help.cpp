@@ -500,7 +500,8 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("ranmid"), T("cm.html#ranmid"));
   cm.set(T("ranpink"), T("cm.html#ranpink"));
   cm.set(T("ranpoisson"), T("cm.html#ranpoisson"));
-  cm.set(T("ran-set!"), T("cm.html#ran-set_"));
+  cm.set(T("random-seed"), T("cm.html#random-seed"));
+  cm.set(T("random-seed-set!"), T("cm.html#random-seed-set_"));
   cm.set(T("ratio->cents"), T("cm.html#ratio-_cents"));
   cm.set(T("rescale"), T("cm.html#rescale"));
   cm.set(T("rest"), T("cm.html#rest"));

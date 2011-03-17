@@ -1235,11 +1235,10 @@ and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then rat
 
 <h3 id="randomness">Randomness</h3>
 
-<p>All the functions that perform random selection are based on a common C++ random
-state object that can be seeded using <a href="#ran-set_"><code>ran-set!</code></a>.</p>
+<p>All functions that perform random selection use a common random number generator whose current seed can be acquired using <a href="#random-seed"><code>random-seed</code></a> and set using <a href="#random-seed-set_"><code>random-seed-set!</code></a> Resetting the random generator with a saved seed will cause the random number generator to repeat the same sequence of numbers starting at that seed.
+</p>
 
 <h4>Uniform Distribution</h4>
-
 
 <!-- DEFINITION -->
 <table class="entry" id="ran">
@@ -1661,11 +1660,30 @@ Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wik
 <h4>Seeding</h4>
 
 <!-- DEFINITION -->
-<table class="entry" id="ran-set_">
+<table class="entry" id="random-seed">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">ran-set!</span>
-      (<var class="arg">uint</var>)
+      <span class="funcname">random-seed</span>
+      ()
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Return the current random seed used by the random number generator. This value can be used to "reseed" the random number generator so that the same series of values will be produced by the generator.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="random-seed-set_">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">random-seed-set!</span>
+      (<var class="arg">seed</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1673,7 +1691,8 @@ Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wik
 </table>
 <blockquote>
 <p>
-Initialize the random state generator with the unsigned integer value <var>uint</var>.
+Initializes the random state generator with <var>seed</var>,  an integer provided by the user or a two element seed list that was returned by <a href="#random-seed"><code>random-seed</code></a>.
+
 </p>
 </blockquote>
 <!-- END DEFINITION -->

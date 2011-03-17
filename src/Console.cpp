@@ -73,7 +73,11 @@ void Console::display(String str, Colour color)
 #ifdef GRACE
   buffer->setCaretPosition(0xFFFFFF);
   buffer->setColour(TextEditor::textColourId, color);
-  buffer->insertTextAtCaret(str);
+  // JUCE BUG: single \n does not get added to buffer so replace it with crlf.
+  if ((str.length()==1) && (str[0]=='\n'))
+    buffer->insertTextAtCaret(String("\r\n"));
+  else
+    buffer->insertTextAtCaret(str);
 #else
   std::cout << str.toUTF8() <<  std::flush;
 #endif
@@ -208,8 +212,8 @@ void Console::postAsyncMessage(int typ, String msg, bool trigger)
 {
   //  std::cout << "Posting console message " << msg.toUTF8() << "\n";
   // messages.lock();
+  const ScopedLock lock (messages.getLock());
   messages.add(new AsyncMessage(typ, msg));
-  // messages.unlockArray();
   if (trigger)
     triggerAsyncUpdate();
 }
@@ -235,72 +239,77 @@ void Console::postAsyncMessage(int typ, int msg, bool trigger)
 void Console::handleAsyncUpdate()
 {
   // THIS CALLBACK HAPPENS IN THE MAIN THREAD
-  Colour color=Colours::black;
   //std::cout << "Handling " << messages.size() << " messages\n";
-  // messages.lockArray(); // SHOULD THIS BE BEFORE LOOP?
+
   const ScopedLock lock (messages.getLock());
-  for (int i=0; i<messages.size(); i++)
+  int size=messages.size();
+
+  // if we have many pending messages then we probably have an
+  // infinite printing loop of some sort.  in this case just clear the
+  // array to keep the message thread alive and hope that the user can
+  // abort the lisp command that started it.
+
+  for (int i=0; i<size && (size<1000); i++)
+  {
+    AsyncMessage* msg=messages.getUnchecked(i);
+    int cid = msg->type;
+    int cmd = CommandIDs::getCommand(cid);
+    int arg = CommandIDs::getCommandData(cid);
+    int dat = msg->data;
+    switch (cmd) 
     {
-      int cid = messages[i]->type;
-      int cmd = CommandIDs::getCommand(cid);
-      int arg = CommandIDs::getCommandData(cid);
-      int dat = messages[i]->data;
-      switch (cmd) 
-	{
-	case CommandIDs::ConsolePrintOutput :
-          display(messages[i]->text, getConsoleColor(ConsoleTheme::outputColor));
-	  break;
-	case CommandIDs::ConsoleIsEvaling :
-          //std::cout << "evalling!, dat=" << dat << "\n";
-          setEvaling(dat);
-          break;
-	case CommandIDs::ConsolePrintValues :
-	  display(messages[i]->text, getConsoleColor(ConsoleTheme::valuesColor));
-	  break;
-	case CommandIDs::ConsolePrintWarning :
-	  display(messages[i]->text, getConsoleColor(ConsoleTheme::warningColor));
-	  break;
-	case CommandIDs::ConsolePrintError :
-          display(messages[i]->text, getConsoleColor(ConsoleTheme::errorColor));
+    case CommandIDs::ConsolePrintOutput :
+      display(msg->text, getConsoleColor(ConsoleTheme::outputColor));
+      break;
+    case CommandIDs::ConsoleIsEvaling :
+      setEvaling(dat);
+      break;
+    case CommandIDs::ConsolePrintValues :
+      display(msg->text, getConsoleColor(ConsoleTheme::valuesColor));
+      break;
+    case CommandIDs::ConsolePrintWarning :
+      display(msg->text, getConsoleColor(ConsoleTheme::warningColor));
+      break;
+    case CommandIDs::ConsolePrintError :
+      display(msg->text, getConsoleColor(ConsoleTheme::errorColor));
 #ifdef GRACE
-          getTopLevelComponent()->toFront(true); 
-          if (getBeepOnError() )
-            PlatformUtilities::beep();
+      getTopLevelComponent()->toFront(true); 
+      if (getBeepOnError() )
+        PlatformUtilities::beep();
 #endif
-	  break;
-	case CommandIDs::ConsolePrintPrompt :
-	  if (prompt!=String::empty)
-	    display(prompt, getConsoleColor(ConsoleTheme::errorColor));
-	  break;
+      break;
+    case CommandIDs::ConsolePrintPrompt :
+      if (prompt!=String::empty)
+        display(prompt, getConsoleColor(ConsoleTheme::errorColor));
+      break;
 #ifdef GRACE
-	case CommandIDs::AudioOpenFilePlayer :
-	  {
-	    String path=messages[i]->text;
-	    File file;
-	    if (File::isAbsolutePath(path))
-	      file=File(path);
-	    else
-	      file=File::getCurrentWorkingDirectory().
-		getChildFile(path).getFullPathName();
-	    AudioManager::getInstance()->openAudioFilePlayer(file,true);
-	  }
-	  break;
-	case CommandIDs::ConsoleClearConsole :
-          buffer->clear();
-          break;
+    case CommandIDs::AudioOpenFilePlayer :
+      {
+        String path=msg->text;
+        File file;
+        if (File::isAbsolutePath(path))
+          file=File(path);
+        else
+          file=File::getCurrentWorkingDirectory().
+            getChildFile(path).getFullPathName();
+        AudioManager::getInstance()->openAudioFilePlayer(file,true);
+      }
+      break;
+    case CommandIDs::ConsoleClearConsole :
+      std::cout << "clearing console\n";
+      buffer->clear();
+      break;
 #endif
-	default:
-	  {
-	    String text=T("Unimplemented message: ");
-	    text << CommandIDs::toString(cmd) << T("\n");
-	    display(text, getConsoleColor(ConsoleTheme::warningColor));
-	  }
-	  break;
-	}
-    }      
-  
+    default:
+      {
+        String text=T("Unimplemented message: ");
+        text << CommandIDs::toString(cmd) << T("\n");
+        display(text, getConsoleColor(ConsoleTheme::warningColor));
+      }
+      break;
+    }
+  }
   messages.clear();
-  //  messages.unlockArray();
 }
 
 #ifdef GRACE
@@ -553,9 +562,10 @@ void Console::resized()
                                  Console Window
  *=======================================================================*/
 
+
 ConsoleWindow::ConsoleWindow ()
-  : DocumentWindow ( String::empty , Colour (227,227,227), //Colours::silver,
-		     DocumentWindow::allButtons, true )
+  : DocumentWindow (String::empty , Colour (227,227,227), //Colours::silver,
+                    DocumentWindow::allButtons, true )
 {
   setName(SysInfo::getApplicationName());
   Preferences* prefs=Preferences::getInstance();
@@ -574,7 +584,7 @@ ConsoleWindow::ConsoleWindow ()
   // add buffer to Console component
   cons->addChildComponent(cons->buffer);
   // set the theme after buffer exists
-  cons->setTheme(Preferences::getInstance()->getStringProp(T("ConsoleTheme"), T("Clarity and Beauty")));
+  cons->setTheme(prefs->getStringProp(T("ConsoleTheme"), T("Clarity and Beauty")));
   cons->manager=new ApplicationCommandManager();
   cons->addKeyListener(cons->manager->getKeyMappings());
   cons->addKeyListener(CommandManager::getInstance()->getKeyMappings());
@@ -587,7 +597,13 @@ ConsoleWindow::ConsoleWindow ()
   setResizable(true, true); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
-  centreWithSize (450, 350);
+
+  String wstate=prefs->getStringProp(T("ConsoleState"));
+  if (wstate.isNotEmpty())
+    restoreWindowStateFromString(wstate);
+  else
+    centreWithSize (450, 350);
+
   setWantsKeyboardFocus(false);  // Console component has it.
   setVisible(true);
 }

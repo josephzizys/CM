@@ -145,18 +145,18 @@ void Grace::shutdown()
 {
   /* Typing COMMAND-Q on mac brings us here but WITHOUT closing any
      windows. */
-
   std::cout << "Quitting Grace...\n";
   ConsoleWindow* cw=(ConsoleWindow *)Console::getInstance()->getParentComponent();
+  // save current position and size as preference
+  Preferences::getInstance()->setStringProp(T("ConsoleState"), cw->getWindowStateAsString()); 	
   for (int i=0; i<Desktop::getInstance().getNumComponents(); i++)
+  {
+    Component* c=Desktop::getInstance().getComponent(i);
+    if (c!=cw) // handle console window later
     {
-      Component* c=Desktop::getInstance().getComponent(i);
-      if (c!=cw) // handle console window later
-	{
-	  c->removeFromDesktop();
-	  // delete c;
-	}
+      c->removeFromDesktop();
     }
+  }
   Preferences::getInstance()->getProps().saveIfNeeded();
   std::cout << "Deleting Scheme\n";
   SchemeThread::deleteInstance();
@@ -209,6 +209,14 @@ void Grace::chooseWorkingDirectory()
       choose.getResult().setAsCurrentWorkingDirectory();
       showWorkingDirectory();
     }
+}
+
+/** flush any musical processes currently running, interrupt any lisp
+    eval taking place and silence any audio/midi output **/
+
+void Grace::reset()
+{
+  std::cout << "RESET!\n";
 }
 
 START_JUCE_APPLICATION(Grace)

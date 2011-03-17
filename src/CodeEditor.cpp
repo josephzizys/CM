@@ -1383,7 +1383,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
   const int both = (ModifierKeys::ctrlModifier | ModifierKeys::altModifier);
   const bool emacs=isEmacsMode();
 
-  //std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
+  //  std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
   if (isParensMatchingActive()) 
       stopParensMatching();
 
@@ -1427,6 +1427,13 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
     movePageForward();
   else if (emacs && key == KeyPress(T('y'), ctrl, 0))
     paste();
+  else if (emacs && key == KeyPress(T('c'), ctrl, 0))
+  {
+    if (prevkey==KeyPress(T('c'), ctrl, 0))
+      SchemeThread::getInstance()->setSchemeInterrupt(true);
+    else
+      ;
+  }
   else if (emacs && key == KeyPress(T('x'), ctrl, 0))
     ;  
   // Meta commands  
@@ -1489,7 +1496,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
           //          //(KeyPress::leftKey)(KeyPress::rightKey) (KeyPress::upKey) (KeyPress::downKey) (KeyPress::pageDownKey) (KeyPress::pageUpKey) (KeyPress::homeKey) (KeyPress::endKey)
           return true;
         }
-      //std::cout << "searching window manager for keypress=" << key.getTextDescription().toUTF8() << "\n";
+      //     std::cout << "searching window manager for keypress=" << key.getTextDescription().toUTF8() << "\n";
       CommandID id=manager->getKeyMappings()->findCommandForKeyPress(key);
       //std::cout << "command id=" << id << "\n";
       if (id)
@@ -1503,7 +1510,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
       id=CommandManager::getInstance()->getKeyMappings()->findCommandForKeyPress(key);
       if (id)
         { 
-          //std::cout << "found " << id << " in global command mananger\n";
+          std::cout << "found " << id << " in global command mananger\n";
           CommandManager::getInstance()->invokeDirectly(id, true);
           //std::cout << "done invoking !\n";
           return true;

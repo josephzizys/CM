@@ -118,7 +118,14 @@ static void cm_stdout(s7_scheme *sc, unsigned char c, s7_pointer port)
   static int stdoutpos = 0;
   stdoutbuf[0]=c;
   stdoutbuf[1]=(char)NULL;
-  cm_print_output(stdoutbuf);
+  ////cm_print_output(stdoutbuf);
+  if (c=='\n')
+  {
+    stdoutbuf[2]=(char)NULL;
+    stdoutbuf[1]=stdoutbuf[0];
+    stdoutbuf[0]='\r';
+  }    
+  Console::getInstance()->printOutput(stdoutbuf);
   /*
   if (stdoutpos==MAXBUFPOS)  // flush if no more room in buffer
     {

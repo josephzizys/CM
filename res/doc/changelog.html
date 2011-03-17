@@ -18,10 +18,43 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
   <h2>CM 3.7.1</h2>
   <ul>
-    <li class="change">Enhancement: added <span class="menuitem">Eval&gt;Interrupt Scheme</span> menu item to the Editor's <span class="menuitem">Eval</span> menu. Use <span class="menuitem">Interupt Schme</span> to abort Scheme's current execution if the process seems to  be taking too long or if you managed to start an "infinite loop"  executing.  (Note: if an infinite loop has text output then Grace may still crash due to a bug in how the Console displays text, I am working on this...)</li>
+
+    <li class="change">Enhancement: updated to S7 Scheme 1.83 (14-Mar-11).
+
+    <li class="change"> Enhancement: All of CM's random functions are now based on S7's random number generator. You can get and set the seed that controls CM's random number generation using <a href="cm.html#random-seed">random-seed</a> and <a href="cm.html#random-seed-set_">random-seed-set!</a> </li>
+
+    <li class="change"> Enhancement: The Hush command has been redefined to stop all sound output (not just midi) and is now situated in the top level audio menu along with the keyboard shortcut &#8984;-K. Selecting Hush triggers the following actions:
+    <ol>
+      <li>all processes running in the scheduler are flushed</li>
+      <li>midi output message queue is flushed</li>
+      <li>AllNotesOff is sent to each midi channel</li>
+      <li>audio playback transport is stopped if an audio window is open and playing</li>
+      <li>any running scheme expression is interrupted back to top level.</li>
+</ol>
+</li>
+    <li class="change">Enhancement:  Grace now saves the position and size of the Console window on Quit and restores it to the same configuration on startup. </li>
+
+<li class="change">Enhancement: added <span class="menuitem">Eval&gt;Interrupt Scheme</span> menu item to the Editor's <span class="menuitem">Eval</span> menu. Use this command to abort Scheme's current execution if the process seems to be taking too long or if you managed to start an "infinite loop" running.  (Note: if the infinite loop is sending text output to the console then mouse and menu behavior will be very slow, try use the &#8984;-K shortcut to abort the loop ...)</li>
     
+    <li class="change">Enhancement:  Audio Playback window now supports the following keyboard shortcuts:
+<ul>
+  <li>Spacebar - play/pause</li>
+  <li>Return - move cursor to start of file</li>
+  <li>Right-arrow - move right in file</li>
+  <li>Left-arrow - move left in file</li>
+  <li>Command-W - close window</li>
+  <li>Command-M - minimize window</li>
+</ul>
+
+
+
     
     <li class="change">Enhancement: upgraded to latest Fomus framework (version 0.1.15).</li>
+
+
+    <li class="change">New CLM instruments parse-samples and cut-samples allow you to locate and cut individual sample notes from an audio track.
+    </li>
+
     <li class="change">Bug fix: fixed several csound bugs: "cs:i" and "cs:f" now quotify string arguments, renamed cs:data to cs:event, orc file and sco file are now quoted in shell call.</li>
     <li class="change">Bug fix: the first level of escape char '\' is now removed in Sal2 and Sal1 strings.</li>
     <li class="change">Bug fix: fixed bug in rangauss that didn't allow the optional second argument to be provided.</li>
@@ -362,7 +395,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sun Feb 13 09:06:11 CST 2011 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Wed Mar 16 20:47:45 CDT 2011 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

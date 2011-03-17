@@ -20,6 +20,7 @@
     <instrument Name="cellon" File="cellon.scm" Category="Frequency Modulation" Comment="feedback fm (Stanislaw Krupowiecz)" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="cnvrev" File="cnvrev.scm" Category="Sound Processing" Comment="Convolution of file with impulse" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="cross-fade" File="fade.scm" Category="Sound Processing" Comment="cross fade in the frequency domain" Examples="" Depend="" AutoLoad="no" />
+    <instrument Name="cut-samples" File="samples.scm" Category="Sound Processing" Comment="cut samples from file, see parse-samples" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="dlocsig" File="delocsig.scm" Category="Sound Processing" Comment="quad sound movement (Fernando Lopez-Lezcano)" Examples="" Depend="env.scm" AutoLoad="no" />
     <instrument Name="dissolve-fade" File="fade.scm" Category="Sound Processing" Comment="dissolving fade in the frequency domain" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="drone" File="bagpipes.scm" Category="Waveshaping" Comment="Peter Commons' bagpipe drone (bag.clm)" Examples="bagpipes.clm" Depend="" AutoLoad="no" />
@@ -53,6 +54,8 @@
     <instrument Name="metal" File="metal.scm" Category="Frequency Modulation" Comment="Perry Cook's heavy metal instrument" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="nrev" File="nrev.scm" Category="Reverberation" Comment="Michael McNabb's reverb" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="p" File="piano.scm" Category="Physical Modeling" Comment="Scott van Duyne's piano" Examples="" Depend="env.scm generators.scm" AutoLoad="no" />
+    <instrument Name="p" File="piano.scm" Category="Physical Modeling" Comment="Scott van Duyne's piano" Examples="" Depend="env.scm generators.scm" AutoLoad="no" />
+    <instrument Name="parse-samples" File="samples.scm" Category="Sound Processing" Comment="finds samples in an audio file, returns list of times" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="pins" File="pins.scm" Category="Filtering" Comment="spectral modeling a la SMS (Xavier Serra)" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="pluck" File="pluck.scm" Category="Physical Modeling" Comment="plucked string sound (David Jaffe)" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="pqw" File="pqw.scm" Category="Waveshaping" Comment="phase quadrature waveshaping" Examples="pqw.clm" Depend="" AutoLoad="no" />

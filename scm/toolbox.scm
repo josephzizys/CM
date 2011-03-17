@@ -318,7 +318,14 @@
 
 ;;; randomnesss
 
-(define ran-set! ffi_ranseed)
+;(define ran-set! ffi_ranseed)
+
+(define (random-seed)
+  (ffi_get_random_seed))
+
+(define (random-seed-set! seed)
+  (ffi_set_random_seed seed)
+  )
 
 (define (ran . num)
   (if (null? num) 

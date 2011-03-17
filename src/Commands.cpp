@@ -198,6 +198,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::MidiFilePlayer,
     CommandIDs::MidiPlotPlayer,
     CommandIDs::AudioSettings,
+    CommandIDs::AudioHush,
 
     CommandIDs::SndLibSrate + 0,
     CommandIDs::SndLibSrate + 1,
@@ -426,6 +427,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.shortName=T("Quit");
       info.addDefaultKeypress('Q', comk);
       break;
+
     case CommandIDs::PrefsOpenRecent:
       {
 	File f=pref->recentlyOpened.getFile(data);
@@ -809,6 +811,15 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
     case CommandIDs::AudioSettings:
       info.shortName=T("Audio Settings...");
       break;
+
+    case CommandIDs::AudioHush:
+      {
+      info.shortName=T("Hush");
+      //      const KeyPress kp=KeyPress::createFromDescription(T("command + ."));
+      //      info.defaultKeypresses.add(kp);
+      info.addDefaultKeypress('K', comk);
+      }
+      break;
       /** WINDOW COMMANDS **/
     case CommandIDs::WindowSelect:
       {
@@ -875,6 +886,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
   int comm = CommandIDs::getCommand(info.commandID);
   int data = CommandIDs::getCommandData(info.commandID);
   Preferences* pref=Preferences::getInstance();
+  //std::cout << "In Grace::perform -> comm=" << comm << " data=" << data << "\n";
   switch (comm)
     {
     case CommandIDs::AppQuit:
@@ -1031,6 +1043,19 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 
     case CommandIDs::AudioSettings:
       AudioManager::getInstance()->openAudioSettings();
+      break;
+
+    case CommandIDs::AudioHush:
+      std::cout << "AUDIO HUSH!\n";
+      // Stop all scheme processes
+      SchemeThread::getInstance()->stop(-1);
+      // Flush midi output queue
+      MidiOutPort::getInstance()->clear();
+      // Stop any sound file playing
+      AudioManager::getInstance()->stopAudioPlayback();
+      // Interrupt any scheme eval
+      SchemeThread::getInstance()->setSchemeInterrupt(true);
+      std::cout << "END AUDIO HUSH!\n";
       break;
 
       //
@@ -1361,7 +1386,7 @@ void Console::getCommandInfo(const CommandID id,
 
 bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
 {
-  //  std::cout << "perform (Console)\n";
+  //std::cout << "perform (Console)\n";
   int comm = CommandIDs::getCommand(info.commandID);
   int data = CommandIDs::getCommandData(info.commandID);
   Grace* app=(Grace *)JUCEApplication::getInstance();
@@ -1407,7 +1432,7 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
       buffer->setCaretPosition(1000000);
       break;
     case CommandIDs::ConsoleClearConsole:
-      //      buffer->clear();
+      buffer->clear();
       SchemeThread::getInstance()->printBanner();
       break;
     default:

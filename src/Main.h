@@ -19,6 +19,11 @@ public:
   ~Grace() {}
   void initialise (const juce::String& commandLine);
   void shutdown();
+
+  /** flush any musical processes currently running, interrupt any lisp
+      eval taking place and silence any audio/midi output **/
+
+  void reset();
   void systemRequestedQuit();
   void anotherInstanceStarted(const String& commandLine);
   const String getApplicationName();

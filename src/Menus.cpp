@@ -70,7 +70,7 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
     outmenu.addItem(CommandIDs::MidiOutOpen, T("<no devices>"), false);
   outmenu.addSeparator();
   outmenu.addCommandItem(comm, CommandIDs::MidiOutTest);
-  outmenu.addCommandItem(comm, CommandIDs::MidiOutHush);
+  //  outmenu.addCommandItem(comm, CommandIDs::MidiOutHush);
   outmenu.addSeparator();
 
   recout.addCommandItem(comm, CommandIDs::MidiOutRecording);
@@ -190,6 +190,8 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioSettings);
   menu.addCommandItem(comm, CommandIDs::MidiOutFileSettings);
+  menu.addSeparator();
+  menu.addCommandItem(comm, CommandIDs::AudioHush);
   return menu;
 }
 

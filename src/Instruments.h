@@ -6,10 +6,10 @@
 namespace Instruments
 {
     extern const char*  ins_xml;
-    const int           ins_xmlSize = 11209;
+    const int           ins_xmlSize = 11734;
 
     extern const char*  ins_zip;
-    const int           ins_zipSize = 369872;
+    const int           ins_zipSize = 372435;
 
 };
 

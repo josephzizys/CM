@@ -373,15 +373,103 @@ int cm_keynum_to_pc (double kn)
   return ((int)kn) % 12;
 }
 
-//
-// Randomness
-//
 
+/* 
+// randomness via JUCE Random object
 Random ranstate (1000);
-
 void cm_ranseed(int64 s)
 {
   ranstate.setSeed(s);
+}
+*/
+
+//
+// Randomness class replaces JUCE Random functions with s7's random() function.
+//
+
+class Randomness
+{
+  s7_scheme* scheme;
+  s7_Int seed;
+  s7_Int carry;
+  int protect;
+  s7_pointer rstate;
+  
+public:
+
+  Randomness() : scheme (0), rstate (0), seed (0), carry (0), protect (0)
+  {
+  };
+
+  ~Randomness()
+  {
+  };
+
+  // initialize random state with current time
+  void init(s7_scheme *sc)
+  {
+    scheme=sc;
+    setRandomSeed(Time::getCurrentTime().toMilliseconds());
+  }
+
+  // returns a list of the seed and carry values
+  s7_pointer getRandomSeed()
+  {
+    return s7_random_state_to_list(scheme, s7_nil(scheme));
+  }
+
+  // initalizes random state to the seed and optional carry
+  void setRandomSeed(s7_Int s, s7_Int c=1675393560)
+  {
+    seed = s;
+    carry=c;
+    s7_set_default_random_state(scheme, seed, carry);
+  }
+
+  void setRandomSeed(s7_pointer arg)
+  {
+    if (s7_is_integer(arg))
+    {
+      setRandomSeed(s7_integer(arg));
+    }
+    else if (s7_is_pair(arg) &&
+             s7_list_length(scheme, arg)==2 &&
+             s7_is_integer(s7_car(arg)) &&
+             s7_is_integer(s7_car(s7_cdr(arg))))
+    {
+      setRandomSeed(s7_integer(s7_car(arg)), s7_integer(s7_car(s7_cdr(arg))));
+    }
+    else
+      SchemeThread::getInstance()->signalSchemeError(T("random seed is not an integer or a list of two integers."));
+  }
+
+  s7_Double nextDouble()
+  {
+    return (s7_Double)s7_random(scheme, 0);
+  }
+
+  s7_Int nextInt(s7_Int range)
+  {
+    return (s7_Int)(s7_random(scheme, 0)*range);
+  }
+
+};
+
+static Randomness ranstate;
+
+void cm_init_randomness(s7_scheme* sc)
+{
+  ranstate.init(sc);
+}
+
+s7_pointer cm_get_random_seed()
+{
+  return ranstate.getRandomSeed();
+}
+
+void cm_set_random_seed(s7_pointer args)
+{
+  ranstate.setRandomSeed(args);
 }
 
 double cm_ranfloat(double f)
@@ -400,11 +488,6 @@ double cm_ranfloat2(double f1, double f2)
   if (f1 < f2)
     return (f1 + (ranstate.nextDouble() * (f2-f1)));
   return (double) (f1 - (ranstate.nextDouble() * (f1-f2)));
-}
-
-int64 cm_ran64()
-{
-  return ranstate.nextInt64();
 }
 
 int cm_ranint(int i)
@@ -470,13 +553,6 @@ double cm_ranexp2 (double lambda)
   }
 }
 
-//double cm_gauss() {
-//  double a = ranstate.nextDouble();
-//  double b = ranstate.nextDouble();
-//  return (double)( SQRTF(-2.0 * LOGF(1.0-a)) *
-//		  cosf(juce::double_Pi * 2 * b) );
-//}
-
 double cm_rangauss (double sigma, double mu)
 {
   // sigma=stand dev, mu=mean
@@ -517,24 +593,6 @@ double cm_rangamma (double nu)
     r = r * (1 - ranstate.nextDouble());
   return - log(r); //LOGF
 }
-
-//// http://home.earthlink.net/~ltrammell/tech/pinkalg.htm
-//// this doesnt seem to work.. too bad as it would keep the load even
-//#define NGEN 3
-//double av[NGEN] = {0.0046306,  0.0059961,  0.0083586};
-//double pv[NGEN] = {0.31878,  0.77686,  0.97785};
-//
-//// (loop for x in  '(0.0046306  0.0059961  0.0083586) collect (* x 2 (- (random 1.0) .5)))
-//double randreg[NGEN] = {0.0018758787, -0.0027519993, 0.0025562837};
-//double cm_ranpink() {
-//  // Update each generator state per probability schedule
-//  double rv = ranstate.nextDouble();
-//  for (int i=0; i<NGEN; i++)
-//    if (rv > pv[i])
-//      randreg[i] = av[i] * 2 * (ranstate.nextDouble()-0.5);
-//  // sum the generators
-//  return randreg[0] + randreg[1] + randreg[2];
-//}
 
 #define POW2 5
 #define POWN 32

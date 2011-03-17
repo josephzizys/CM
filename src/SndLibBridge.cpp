@@ -338,22 +338,22 @@ s7_pointer ffi_hertz_to_keynum (s7_scheme *s7, s7_pointer args)
   return s7_make_real(s7, f0);
 }
 
-s7_pointer ffi_ranseed (s7_scheme *s7, s7_pointer args)
+s7_pointer ffi_get_random_seed (s7_scheme *s7, s7_pointer args)
 {
-  int64 il0;
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_ranseed", 1, s7_car(args), "a integer64"));
-  il0=(int64)s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  cm_ranseed(il0);
-  return s7_UNSPECIFIED(s7);
+  s7_pointer p0;
+  p0=cm_get_random_seed();
+  return (s7, p0);
 }
 
-s7_pointer ffi_ran64 (s7_scheme *s7, s7_pointer args)
+s7_pointer ffi_set_random_seed (s7_scheme *s7, s7_pointer args)
 {
-  int64 il0;
-  il0=cm_ran64();
-  return s7_make_integer(s7, il0);
+  s7_pointer p0;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_set_random_seed", 1, s7_car(args), "a s7_pointer"));
+  p0=s7_car(args);
+  args=s7_cdr(args);
+  cm_set_random_seed(p0);
+  return s7_UNSPECIFIED(s7);
 }
 
 s7_pointer ffi_ranint (s7_scheme *s7, s7_pointer args)
@@ -3131,8 +3131,8 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_keynum_to_hertz", ffi_keynum_to_hertz, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_keynum_to_pc", ffi_keynum_to_pc, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_hertz_to_keynum", ffi_hertz_to_keynum, 1, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_ranseed", ffi_ranseed, 1, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_ran64", ffi_ran64, 0, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_get_random_seed", ffi_get_random_seed, 0, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_set_random_seed", ffi_set_random_seed, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_ranint", ffi_ranint, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_ranfloat", ffi_ranfloat, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_ranint2", ffi_ranint2, 2, 0, false, "ffi function");
@@ -3238,4 +3238,5 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_osc_send_bundle", ffi_osc_send_bundle, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_set_hook", ffi_osc_set_hook, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_is_hook", ffi_osc_is_hook, 1, 0, false, "ffi function");
+  cm_init_randomness(s7);
 }

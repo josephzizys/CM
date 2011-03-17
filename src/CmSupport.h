@@ -52,8 +52,11 @@ double cm_keynum_to_hertz (double kn);
 int cm_keynum_to_pc (double kn);
 double cm_hertz_to_keynum (double hz);
 
-void cm_ranseed(int64 s);
-int64 cm_ran64();
+//void cm_ranseed(int64 s);
+void cm_init_randomness(s7_scheme* sc);
+s7_pointer cm_get_random_seed();
+void cm_set_random_seed(s7_pointer args);
+
 int cm_ranint(int i);
 double cm_ranfloat(double f);
 int cm_ranint2(int i1, int i2);
