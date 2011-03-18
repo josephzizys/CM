@@ -66,7 +66,7 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
       AudioFilePlayerWindow* win;
       win=(AudioFilePlayerWindow*)
 	(audiofileplayer->getTopLevelComponent());
-      win->grabKeyboardFocus();
+      win->getContentComponent()->grabKeyboardFocus();
       win->toFront(true);
     }
   else
@@ -141,6 +141,8 @@ AudioFilePlayerWindow::AudioFilePlayerWindow (AudioFilePlayer* comp)
   player=comp;
   player->setVisible(true);
   setContentComponent(player);
+  player->setWantsKeyboardFocus(true);
+  setWantsKeyboardFocus(false);
   setResizable(true, true); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
@@ -405,6 +407,7 @@ AudioFilePlayer::AudioFilePlayer ()
     {
       fileChooser->setEnabled(false);
     }
+  grabKeyboardFocus();
 }
 
 AudioFilePlayer::~AudioFilePlayer()
