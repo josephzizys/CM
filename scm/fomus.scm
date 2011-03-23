@@ -379,8 +379,12 @@
   (ffi_fms_select filename)
   #t)
 
-(define (fms:clear-score)
-  (ffi_fms_clear)
+(define (fms:clear-score . all)
+  (if (null? all)
+      (ffi_fms_clear #t)
+      (if (boolean? (car all))
+          (ffi_fms_clear (car all))
+          (error "expected a boolean for all argument")))
   #t)
 
 (define (fms:run)
@@ -408,7 +412,8 @@
 
 (define (fms:open-score filename . args)
   (unless (string? filename) (error "expected a string for filename argument"))
-  (with-optkeys (args (percinsts '()) (insts '()) (parts '()) (metaparts '()) (measdefs '()) (sets '()) (clear #t) (new #t) (run #t) &allow-other-keys) ; (midi #f)
+  (with-optkeys (args (percinsts '()) (insts '()) (parts '()) (metaparts '()) (measdefs '()) (sets '()) (clear #t) ;(new #t) 
+                      (run #t) &allow-other-keys) ; (midi #f)
 		(unless (list? percinsts) (error "expected a list for percinsts argument"))
 		(unless (list? insts) (error "expected a list for insts argument"))
 		(unless (list? parts) (error "expected a list for parts argument"))
@@ -416,11 +421,11 @@
 		(unless (list? measdefs) (error "expected a list for measdefs argument"))
 		(unless (list? sets) (error "expected a list for sets argument"))
 		(unless (boolean? clear) (error "expected a boolean for clear argument"))
-		(unless (boolean? new) (error "expected a boolean for new argument"))
+		;;(unless (boolean? new) (error "expected a boolean for new argument"))
 		(unless (boolean? run) (error "expected a boolean for run argument"))
 		;; (unless (boolean? midi) (error "expected a boolean for midi argument"))
 		(let ((f (member (fms:string-downcase filename) '("" "fomus"))))
-		  (if new
+		  (if #f ;new
 		      (if f (fms:new-score "") (fms:new-score filename))
 		      (unless f (fms:select-score filename))))
 		(when clear (fms:clear-score))

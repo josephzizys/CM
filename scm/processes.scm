@@ -135,12 +135,25 @@
 
 ; (sprout aaa 0 "test.snd" ...)
 
+(define *sprout-hook* #f)
+
+(define (sprout-hook . hook)
+  (if (not (null? hook))
+      (if (not (car hook))
+          (set! *sprout-hook* #f)
+          (if (procedure? (car hook))
+              (if (= (car (procedure-arity (car hook))) 1)
+                  (set! *sprout-hook* (car hook))
+                  (error "sprout-hook: hook is not a procedure of one argument: ~S" (car hook)))           
+              (error "sprout-hook: hook is not a procedure or #f: ~S" (car hook)))))
+  *sprout-hook*)
 
 (define (sprout proc . args)
   ;; (sprout {proc|list} [ahead|list] [id|list|file] ...)
   (let ((start 0)
 	(id -1)
-	(file #f))
+	(file #f)
+        )
     ;; parse args and check for illegal values before sprouting
     ;; anything. first make sure all procs are really procedures...
     (or (procedure? proc)
@@ -183,7 +196,8 @@
 			  (car tail)))))
 	(error "~S is not a process id" id))
     ;; open output file or signal error
-    (if file (set! file (apply open-file file args)))
+    (if file (apply open-file file args))
+    (if *sprout-hook* (*sprout-hook* file))
     ;; everything ok, do process sprouting!
     (let ((nextstart
 	   (lambda ()

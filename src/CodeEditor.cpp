@@ -470,11 +470,13 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
        if (commandkeyactive)
          {
            info.addDefaultKeypress(T('D'), ModifierKeys::commandModifier );
+           /*
            CodeBuffer* buf=getCodeBuffer();
            tchar chr=buf->getCaretPos().getCharacter();
            info.setActive((buf->getHighlightedRegion().getLength()>0) ||
                           buf->syntax->isWordChar(chr) ||
                           buf->syntax->isSymbolChar(chr));
+           */
          }
       break;
     default:
@@ -732,7 +734,7 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
     }
   else if (name==T("Audio")) 
     {
-      menu=CommandMenus::getAudioMenu(true);
+      menu=CommandMenus::getAudioMenu(false); // was true for fomus
     }
   else if (name==T("Windows")) 
     {
@@ -1547,29 +1549,56 @@ void CodeBuffer::mouseDoubleClick (const MouseEvent &e)
 {
   tchar c=getCaretPos().getCharacter();
   switch (c)
+  {
+  case T('(') :
+  case T('{') :
     {
-    case T('(') :
-    case T('{') :
-      {
-        CodeDocument::Position a (getCaretPos());
-        moveExprForward();
-        CodeDocument::Position b (getCaretPos());
-        if (b!=a) moveCaretTo(a,true);
-        break;
-      }
-    case T(')') :
-    case T('}') :
-      {
-        CodeDocument::Position a (getCaretPos());
-        moveExprBackward();
-        CodeDocument::Position b (getCaretPos());
-        if (b!=a) moveCaretTo(a,true);
-        break;
-      }
-    default:
-      CodeEditorComponent::mouseDoubleClick(e);
+      CodeDocument::Position a (getCaretPos());
+      moveExprForward();
+      CodeDocument::Position b (getCaretPos());
+      if (b!=a) moveCaretTo(a,true);
       break;
     }
+  case T(')') :
+  case T('}') :
+    {
+      CodeDocument::Position a (getCaretPos());
+      moveExprBackward();
+      CodeDocument::Position b (getCaretPos());
+      if (b!=a) moveCaretTo(a, true);
+      break;
+    }
+  case T('\"') :
+    //case T('\'') :
+    {
+      // search right within same line for end-of-string
+      CodeDocument::Position a=getCaretPos();
+      CodeDocument::Position b=a.movedBy(1);
+      CodeDocument::Position z=getEOL(a);
+      bool f=false;
+      while (b.getPosition() < z.getPosition())
+      {
+        if (//(c==T('\'') && b.getCharacter()==T('\'')) ||
+            (c==T('\"') && b.getCharacter()==T('\"')) )
+        {
+          f=true;
+          break;
+        }
+        else
+          b.moveBy(1);
+      }
+      if (f)
+      {
+        b.moveBy(1);  // move one past found char
+        moveCaretTo(b, true);
+      }
+      break;
+    }
+
+  default:
+    CodeEditorComponent::mouseDoubleClick(e);
+    break;
+  }
 }  	
 
 void CodeBuffer::addPopupMenuItems (PopupMenu& m, const MouseEvent*)
@@ -2106,9 +2135,72 @@ void CodeBuffer::lookupHelpAtPoint()
   CodeDocument::Position a;
   CodeDocument::Position e;
   if (region)
+  {
+    a=CodeDocument::Position(&document, getHighlightedRegion().getStart());
+    e=CodeDocument::Position(&document, getHighlightedRegion().getEnd());
+    // e is one past last selected char
+    if (a.getCharacter()==T('\"') && e.movedBy(-1).getCharacter()==T('\"') )
+    {
+      a.moveBy(1);
+      e.moveBy(-1);
+    }
+    text=document.getTextBetween(a, e);
+  }
+  else
+  {
+    a=getCaretPos();
+    e=getCaretPos();
+    if (syntax->isWordChar(a.getCharacter()) || syntax->isSymbolChar(a.getCharacter()))
+    {
+      while (a.getPosition()>=0 &&
+             (syntax->isWordChar(a.getCharacter()) || syntax->isSymbolChar(a.getCharacter())))
+        a.moveBy(-1);
+      // a is now one below start of word
+      a.moveBy(1);
+      while (e.getPosition()<document.getNumCharacters() &&
+             (syntax->isWordChar(e.getCharacter()) || syntax->isSymbolChar(e.getCharacter())))
+        e.moveBy(1);
+      // e is now one past end of word
+      if (a.getPosition()<e.getPosition())
+        text=document.getTextBetween(a, e);
+    }
+  }
+  //std::cout << "help target='" << text.toUTF8() << "'\n";
+  if (text.isNotEmpty())
+  {
+    Help::getInstance()->symbolHelp(text, helppath);
+  }
+}
+
+/*
+void CodeBuffer::lookupHelpAtPoint()
+{
+  bool region=(getHighlightedRegion().getLength() > 0);
+  String text;
+  String helppath;
+
+  switch (getTextType())
+    {
+    case TextIDs::Sal:
+      helppath=T("Sal:CM");
+      break;
+    case TextIDs::Sal2:
+      helppath=T("Sal:CM");
+      break;
+    case TextIDs::Lisp:
+      helppath=T("CM");
+      break;
+    default:
+      return;
+    }
+  helppath<<T(":SndLib:Scheme");
+  CodeDocument::Position a;
+  CodeDocument::Position e;
+  if (region)
     {
       a=CodeDocument::Position(&document, getHighlightedRegion().getStart());
       e=CodeDocument::Position(&document, getHighlightedRegion().getEnd()+1);
+      std::cout << "region text=" << document.getTextBetween(a, e).toUTF8() << "\n";
     }
   else
     {
@@ -2138,6 +2230,10 @@ void CodeBuffer::lookupHelpAtPoint()
       Help::getInstance()->symbolHelp(text, helppath);
     }
 }
+*/
+
+
+
 
 /*=======================================================================*
                              Emacs Editing Commands

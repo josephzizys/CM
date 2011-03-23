@@ -1134,7 +1134,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       Fomus::getInstance()->deleteScore();
       break;
     case CommandIDs::FomusClearScore:
-      Fomus::getInstance()->clearScore();
+      Fomus::getInstance()->clearScore(true);
       break;
     case CommandIDs::FomusSaveScore:
       Fomus::getInstance()->saveScore(T(""), false);

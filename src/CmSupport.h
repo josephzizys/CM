@@ -87,6 +87,7 @@ void cm_sched_stop(int id);
 void cm_sched_hush();
 bool cm_sched_busy_p();
 bool cm_sched_score_mode_p();
+int  cm_sched_get_score_mode();
 void cm_sched_set_score_mode(int val);
 double cm_sched_score_time();
 
@@ -104,6 +105,7 @@ bool cm_pathname_exists_p(char* path);
 bool cm_pathname_writable_p(char* path);
 bool cm_pathname_directory_p(char* path);
 int cm_pathname_to_key(char* path);
+int cm_insure_new_file_version(String pathname, int vers);
 s7_pointer cm_directory(char* path, bool recurse=true);
 
 s7_pointer cm_midifile_import(char* path, int track, s7_pointer midivalues);
@@ -175,7 +177,7 @@ void fms_new(const char* name);
 void fms_select(const char* name);
 void fms_merge(const char* name, long num, long den, double flt);
 void fms_free();
-void fms_clear();
+void fms_clear(bool all);
 void fms_ival(int par, int act, long val);
 void fms_rval(int par, int act, long num, long den);
 void fms_fval(int par, int act, double val);

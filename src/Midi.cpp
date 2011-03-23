@@ -733,16 +733,23 @@ void MidiOutPort::importTracks()
 // output queue 
 //
 
-void MidiOutPort::run() {
+void MidiOutPort::run() 
+{
   double qtime, utime;
   MidiNode* node;
-  while ( true ) {
+  while ( true ) 
+  {
     if ( threadShouldExit() )
       break;
-    while ( true ) {     
+    while ( true )
+    {     
       //      outputNodes.lockArray();
-      node=outputNodes.getFirst();
-      if ( node == NULL ) {
+      {
+        ScopedLock mylock (outputNodes.getLock());
+        node=outputNodes.getFirst();
+      }
+      if ( node == NULL )
+      {
         //	outputNodes.unlockArray();      
 	break;
       }
@@ -751,26 +758,54 @@ void MidiOutPort::run() {
       // this should probably test if the difference between qtime and
       // utime is less that 1ms, if not then it probably shouldn't
       // sleep (?)
-      if ( (qtime-utime) >= 1.5 ) { //( qtime > utime )
+      if ( (qtime-utime) >= 1.5 ) 
+      { //( qtime > utime )
         //	outputNodes.unlockArray();
 	wait(1);
       }
-      else {
+      else 
+      {
+        ScopedLock mylock (outputNodes.getLock());
         if (node->process())
-          {
-            outputNodes.remove(0,false);
-            outputNodes.addSorted(comparator, node); // reinsert at new time
-          }
+        {
+          outputNodes.remove(0,false);
+          outputNodes.addSorted(comparator, node); // reinsert at new time
+        }
         else
+        {
           outputNodes.remove(0, true);
-        //      outputNodes.unlockArray();      
+          //      outputNodes.unlockArray();      
+        }
       }
     }
     wait(-1);
   }
 }
 
-/*** THIS VERSIONS WORKS
+#if 0
+void MidiOutPort::run() {
+  double curr;
+  while( !threadShouldExit() ) {
+    while(outputNodes.size() > 0) {     
+      curr = Time::getMillisecondCounterHiRes() ;
+      while ( outputNodes.getFirst()->time <= curr ) { 
+        const ScopedLock myScopedLock (outputNodes.getLock());
+	outputNodes.getFirst()->process();
+        outputNodes.remove(0, true);
+        if(outputNodes.size() == 0) {
+          break;
+        }
+	// im not sure that we want to do this, it
+        //curr = Time::getMillisecondCounterHiRes() ;
+      }
+      wait(1);
+    }
+    wait(-1);
+  }
+}
+#endif
+
+/*
 void MidiOutPort::run() {
   double curr;
   while( !threadShouldExit() ) {
@@ -793,7 +828,7 @@ void MidiOutPort::run() {
     wait(-1);
   }
 }
-***/
+*/
 
 bool MidiOutPort::isOutputQueueActive() { 
   //  outputNodes.lockArray(); 
@@ -813,12 +848,16 @@ void MidiOutPort::clear()
   //  outputNodes.unlockArray();
 }
 
-void MidiOutPort::addNode(MidiNode *n) {
+void MidiOutPort::addNode(MidiNode *n) 
+{
   //  outputNodes.lockArray();
   n->midiOutPort = this;
   // MILLI
   n->time = (n->time * 1000.0) + Time::getMillisecondCounterHiRes();
-  outputNodes.addSorted(comparator, n);
+  {
+    ScopedLock mylock (outputNodes.getLock());
+    outputNodes.addSorted(comparator, n);
+  }
   //  outputNodes.unlockArray();
   /*  printf("added type=%d, at %f pos=%d of %d\n", 
 	 n->type,

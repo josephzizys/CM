@@ -624,6 +624,13 @@ s7_pointer ffi_sched_score_mode_p (s7_scheme *s7, s7_pointer args)
   return make_s7_boolean(s7, b0);
 }
 
+s7_pointer ffi_sched_get_score_mode (s7_scheme *s7, s7_pointer args)
+{
+  int i0;
+  i0=cm_sched_get_score_mode();
+  return s7_make_integer(s7, i0);
+}
+
 s7_pointer ffi_sched_set_score_mode (s7_scheme *s7, s7_pointer args)
 {
   int i0;
@@ -781,6 +788,22 @@ s7_pointer ffi_pathname_to_key (s7_scheme *s7, s7_pointer args)
   s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
   i0=cm_pathname_to_key(s0);
+  return s7_make_integer(s7, i0);
+}
+
+s7_pointer ffi_insure_new_file_version (s7_scheme *s7, s7_pointer args)
+{
+  int i0, i1;
+  char* s0;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_insure_new_file_version", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_integer(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_insure_new_file_version", 2, s7_car(args), "a int"));
+  i1=(int)s7_integer(s7_car(args));
+  args=s7_cdr(args);
+  i0=cm_insure_new_file_version(s0, i1);
   return s7_make_integer(s7, i0);
 }
 
@@ -1285,7 +1308,12 @@ s7_pointer ffi_fms_free (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_fms_clear (s7_scheme *s7, s7_pointer args)
 {
-  fms_clear();
+  bool b0;
+  if (!s7_is_boolean(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_fms_clear", 1, s7_car(args), "a bool"));
+  b0=s7_boolean(s7, s7_car(args));
+  args=s7_cdr(args);
+  fms_clear(b0);
   return s7_UNSPECIFIED(s7);
 }
 
@@ -3159,6 +3187,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_sched_stop", ffi_sched_stop, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sched_busy_p", ffi_sched_busy_p, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sched_score_mode_p", ffi_sched_score_mode_p, 0, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sched_get_score_mode", ffi_sched_get_score_mode, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sched_set_score_mode", ffi_sched_set_score_mode, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sched_score_time", ffi_sched_score_time, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_user_home_directory", ffi_user_home_directory, 0, 0, false, "ffi function");
@@ -3174,6 +3203,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_pathname_directory_p", ffi_pathname_directory_p, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_directory", ffi_directory, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_pathname_to_key", ffi_pathname_to_key, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_insure_new_file_version", ffi_insure_new_file_version, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_midifile_import", ffi_midifile_import, 3, 0, false, "ffi function");
   s7_define_function(s7, "ffi_midifile_header", ffi_midifile_header, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_allocate_tokens", ffi_sal_allocate_tokens, 0, 0, false, "ffi function");
@@ -3214,7 +3244,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_fms_new", ffi_fms_new, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_select", ffi_fms_select, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_free", ffi_fms_free, 0, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_fms_clear", ffi_fms_clear, 0, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_fms_clear", ffi_fms_clear, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_load", ffi_fms_load, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_run", ffi_fms_run, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_save", ffi_fms_save, 1, 0, false, "ffi function");

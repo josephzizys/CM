@@ -29,6 +29,7 @@
 
 ;; see ScoreTypes in Enumerations.h
 
+(define *score-type-empty* 0) ;; no score, send to midi out
 (define *score-type-midi* 1)
 (define *score-type-sndlib* 2)
 (define *score-type-csound* 3)

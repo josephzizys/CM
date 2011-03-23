@@ -74,6 +74,7 @@
     (ffi_sched_stop            void   "cm_sched_stop" int)
     (ffi_sched_busy_p          bool   "cm_sched_busy_p")
     (ffi_sched_score_mode_p    bool   "cm_sched_score_mode_p" )
+    (ffi_sched_get_score_mode  int    "cm_sched_get_score_mode" )
     (ffi_sched_set_score_mode  void   "cm_sched_set_score_mode" int)
     (ffi_sched_score_time      double "cm_sched_score_time" )
 
@@ -88,9 +89,9 @@
     (ffi_pathname_exists_p bool "cm_pathname_exists_p" c-string)
     (ffi_pathname_writable_p bool "cm_pathname_writable_p" c-string)
     (ffi_pathname_directory_p bool "cm_pathname_directory_p" c-string)
-    ;;(ffi_directory c-string "cm_directory" c-string bool)
     (ffi_directory s7_pointer "cm_directory" c-string bool)
     (ffi_pathname_to_key int "cm_pathname_to_key" c-string)
+    (ffi_insure_new_file_version int "cm_insure_new_file_version" c-string int)
 
     (ffi_midifile_import s7_pointer "cm_midifile_import" c-string int s7_pointer)
     (ffi_midifile_header s7_pointer "cm_midifile_header" c-string s7_pointer)
@@ -141,7 +142,7 @@
     (ffi_fms_new void "fms_new" c-string)
     (ffi_fms_select void "fms_select" c-string)
     (ffi_fms_free void "fms_free" )
-    (ffi_fms_clear void "fms_clear" )
+    (ffi_fms_clear void "fms_clear" bool)
     (ffi_fms_load void "fms_load" c-string)
     (ffi_fms_run void "fms_run" )
     (ffi_fms_save void "fms_save" c-string)

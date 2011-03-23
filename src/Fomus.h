@@ -171,7 +171,7 @@ class Fomus
   void selectScore(const String& nam, const bool fromscm);
   void mergeScore(const String& nam, fomus_int num, fomus_int den, fomus_float flt);
   void deleteScore();
-  void clearScore();
+  void clearScore(const bool all);
   void loadScore(String filename);
   void runScore(const bool fromscm);
 

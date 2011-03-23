@@ -350,7 +350,7 @@ void Help::addSalSymbolHelp()
   sal.set(T("function"), T("cm.html#function"));
   sal.set(T("if"), T("cm.html#if"));
   sal.set(T("loop"), T("cm.html#loop"));
-  sal.set(T("process"), T("cm.html#process"));
+  sal.set(T("process"), T("cm.html#processes"));
   sal.set(T("set"), T("cm.html#set"));
   sal.set(T("variable"), T("cm.html#variable"));
   sal.set(T("wait"), T("cm.html#process_wait"));
@@ -388,6 +388,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("eop?"), T("cm.html#eop_"));
   cm.set(T("elapsed"), T("cm.html#elapsed"));
   cm.set(T("fifth"), T("cm.html#fifth"));
+  cm.set(T("file-version"), T("cm.html#file-version"));
   cm.set(T("first"), T("cm.html#first"));
   cm.set(T("fit"), T("cm.html#fit"));
   cm.set(T("float"), T("cm.html#float"));
@@ -487,6 +488,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("plus"), T("cm.html#plus"));
   cm.set(T("print"), T("cm.html#print"));
   cm.set(T("promise"), T("cm.html#promise"));
+  cm.set(T("process"), T("cm.html#processes"));
   cm.set(T("quantize"), T("cm.html#quantize"));
   cm.set(T("ran"), T("cm.html#ran"));
   cm.set(T("ranbeta"), T("cm.html#ranbeta"));
@@ -501,11 +503,12 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("ranpink"), T("cm.html#ranpink"));
   cm.set(T("ranpoisson"), T("cm.html#ranpoisson"));
   cm.set(T("random-seed"), T("cm.html#random-seed"));
-  cm.set(T("random-seed-set!"), T("cm.html#random-seed-set_"));
+  //  cm.set(T("random-seed-set!"), T("cm.html#random-seed-set_"));
   cm.set(T("ratio->cents"), T("cm.html#ratio-_cents"));
   cm.set(T("rescale"), T("cm.html#rescale"));
   cm.set(T("rest"), T("cm.html#rest"));
   cm.set(T("retrograde"), T("cm.html#retrograde"));
+  cm.set(T("rhythm"), T("cm.html#rhythm"));
   cm.set(T("rm-spectrum"), T("cm.html#rm-spectrum"));
   cm.set(T("run"), T("cm.html#run"));
 
@@ -534,6 +537,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("spectrum-size"), T("cm.html#spectrum-size"));  
   cm.set(T("spectrum-time"), T("cm.html#spectrum-time"));  
   cm.set(T("sprout"), T("cm.html#sprout"));
+  cm.set(T("sprout-hook"), T("cm.html#sprout-hook"));
   cm.set(T("state"), T("cm.html#state"));
   cm.set(T("stop"), T("cm.html#stop"));
   cm.set(T("times"), T("cm.html#times"));

@@ -9,10 +9,10 @@ namespace SchemeSources
     const int           automata_scmSize = 8886;
 
     extern const char*  fomus_scm;
-    const int           fomus_scmSize = 21396;
+    const int           fomus_scmSize = 21582;
 
     extern const char*  genffi_scm;
-    const int           genffi_scmSize = 22270;
+    const int           genffi_scmSize = 22360;
 
     extern const char*  loop_scm;
     const int           loop_scmSize = 37992;
@@ -27,10 +27,10 @@ namespace SchemeSources
     const int           plot_scmSize = 12502;
 
     extern const char*  ports_scm;
-    const int           ports_scmSize = 19952;
+    const int           ports_scmSize = 20012;
 
     extern const char*  processes_scm;
-    const int           processes_scmSize = 7228;
+    const int           processes_scmSize = 7768;
 
     extern const char*  s7_scm;
     const int           s7_scmSize = 3090;
@@ -48,7 +48,7 @@ namespace SchemeSources
     const int           spectral_scmSize = 21865;
 
     extern const char*  toolbox_scm;
-    const int           toolbox_scmSize = 36445;
+    const int           toolbox_scmSize = 36679;
 
     extern const char*  utilities_scm;
     const int           utilities_scmSize = 15354;

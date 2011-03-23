@@ -320,7 +320,9 @@
 
 ;(define ran-set! ffi_ranseed)
 
-(define (random-seed)
+(define (random-seed . seed)
+  (if (not (null? seed))
+      (ffi_set_random_seed (car seed)))
   (ffi_get_random_seed))
 
 (define (random-seed-set! seed)
@@ -1047,24 +1049,27 @@
 ; (file-version "test.mid" )
 
 (define (file-version file . args)
-  (let ((ver (if (pair? args) (car args) #t)))
-    (if (not ver)
-        file
-        (let* ((nam (pathname-name file))
-               (ext (pathname-type file))
-               (key (string-append nam "." ext))
-               (num (hash-ref *versions* key)) ; num to use or #f
-               )
-          (cond ((and (integer? ver) (>= ver 0))
-                 (set! num ver) )
-                ((eq? ver #t)
-                 (if (not num) (set! num 1)))
-                (else
-                 (error "versioning value not #t, #f or integer: ~S" ver)))
-          ;; increment version number for file
-          (hash-set! *versions* key (+ num 1))
-          (make-pathname :name (string-append nam "-" (number->string num))
-                         :defaults file)))))
+  (with-optkeys (args (version #t) (nooverwrite #f))
+    (let ((ver version))
+      (if (not ver)
+          file
+          (let* ((nam (pathname-name file))
+                 (ext (pathname-type file))
+                 (key (string-append nam "." ext))
+                 (num (hash-ref *versions* key)) ; num to use or #f
+                 )
+            (cond ((and (integer? ver) (>= ver 0))
+                   (set! num ver) )
+                  ((eq? ver #t)
+                   (if (not num) (set! num 1)))
+                  (else
+                   (error "versioning value not #t, #f or integer: ~S" ver)))
+            (if nooverwrite
+                (set! num (ffi_insure_new_file_version file num)))
+            ;; store next version number for file
+            (hash-set! *versions* key (+ num 1))
+            (make-pathname :name (string-append nam "-" (number->string num))
+                           :defaults file))))))
 
 (define *colors*
   '("black"

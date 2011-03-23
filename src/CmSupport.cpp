@@ -715,6 +715,11 @@ bool cm_sched_score_mode_p()
   return SchemeThread::getInstance()->isScoreMode();
 }
 
+int cm_sched_get_score_mode()
+{
+  return SchemeThread::getInstance()->scoremode;
+}
+
 double cm_sched_score_time()
 {
   // should only be called under score mode
@@ -968,6 +973,21 @@ int cm_pathname_to_key(char* path)
     return pc + 120;
   else
     return -1;
+}
+
+// return the next file version that does not name an existing file
+
+int cm_insure_new_file_version(String pathname, int vers)
+{
+  File file=completeFile(pathname);
+  while (true)
+  {
+    File test=file.getSiblingFile(file.getFileNameWithoutExtension()+String("-")+String(vers)+file.getFileExtension());
+    if (!test.existsAsFile())
+      break;
+    vers++;
+  }
+  return vers;
 }
 
 /*=======================================================================*
@@ -1242,11 +1262,27 @@ void mp_send_note(double time, double dur, double key, double vel, double chn)
     {
       // if score capture is true AND we are under a process callback then
       // scoretime will be >= 0 else it will be 0
-      time+=scm->scoretime;
-      MidiOutPort::getInstance()->sendNote(time, dur, key, vel, chn, true);
+      time += scm->scoretime;
+      // if we have a Fomus score open then route the midi data to
+      // fomus as an fms:note.
+#ifdef WITHFOMUS
+      if (scm->scoremode==ScoreTypes::Fomus)
+      {
+        if (!check_fomus_exists()) return;
+        Fomus* fms=Fomus::getInstance();
+        fms->fval(fomus_par_pitch, fomus_act_set, key);
+        fms->fval(fomus_par_dynlevel, fomus_act_set, ((vel>=1.0) ? (vel/127.0) : vel));
+        fms->fval(fomus_par_time, fomus_act_set, time);
+        fms->fval(fomus_par_duration, fomus_act_set, dur);
+        fms->ival(fomus_par_part, fomus_act_set, (int)chn);
+        fms->act(fomus_par_noteevent,  fomus_act_add);
+      }
+      else
+        MidiOutPort::getInstance()->sendNote(time, dur, key, vel, chn, true);
       //std::cout << "sending score mode " << time << " " << key << "\n";
     }
   else
+#endif   
     MidiOutPort::getInstance()->sendNote(time, dur, key, vel, chn, false);
 }
 
@@ -1711,11 +1747,11 @@ void fms_free()
   Fomus::getInstance()->deleteScore();
 }
 
-void fms_clear()
+void fms_clear(bool all)
 {
   if (!check_fomus_exists()) return;
   fomuserr = false;
-  Fomus::getInstance()->clearScore();
+  Fomus::getInstance()->clearScore(all);
 }
 
 void fms_load(char* filename)

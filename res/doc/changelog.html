@@ -19,7 +19,10 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   <h2>CM 3.7.2</h2>
   <ul>
 
-    <li class="change"> Enhancement: All random functions are now based on S7's random number generator. You can get and set the seed that controls CM's random number generation using <a href="cm.html#random-seed">random-seed</a> and <a href="cm.html#random-seed-set_">random-seed-set!</a> This seed is also the seed for S7's default random state.</li>
+    <li class="change"> Enhancement: It is now possible to send midi events directly to Fomus scores. That is, if a process using mp:midi is sprouted in the context of a Fomus score then mp:midi will automatically convert its data to a Fomus note and add it to the score, with the midi channel number used as the Fomus part id.</li>
+
+
+    <li class="change"> Enhancement: All random functions are now based on S7's random number generator. You can get and set the seed that controls CM's random number generation (S7's default random state) using <a href="cm.html#random-seed">random-seed</a>.</li>
 
     <li class="change"> Enhancement: The Hush command has been redefined to stop all sound output (not just midi) and is now situated in the top level audio menu along with the keyboard shortcut &#8984;-K. Selecting Hush triggers the following actions:
     <ol>
@@ -47,8 +50,22 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
     <li class="change">Enhancement: new instruments parse-samples and cut-samples for parsing samples from an audio file. See Instrument Browser window for more information.</li>
     
+    <li class="change">Enhancement: the <a href="cm.html#file-version">file-version</a> function now has an optional  <var>nooverwrite</var> arg that, if set to true, returns a versioned file name that is guaranteed to not reference an existing file. </li>
+    
+    <li class="change">Enhancement: in the editor double-clicking the left-side <code>&quot;</code> character of a string now selects the whole string.</li>
+
     <li class="change">Enhancement: updated to S7 Scheme 1.83 (14-Mar-11).</li>
-    <li class="change">Enhancement: upgraded to latest Fomus framework (version 0.1.15).</li>
+    <li class="change">Enhancement: upgraded to latest Fomus framework (version 0.1.17).</li>
+
+    <li class="change">Change: each unique Fomus output file name now has only one fomus score associated with it and if the file is regenerated its fomus score is cleared and reused. To output different versions of a file use the file-version function to create new (versioned) file names and scores each time.
+</li>
+
+    <li class="change">Change: the Fomus menu in the Code Editor window is now the same as in the Console Window</li>
+    
+    <li class="change">Bug Fix: fixed a bug in the midi output queue that sometimes caused data to be double-freed and producing a noticible glitch in real-time sound output.</li>
+
+    <li class="change">Bug Fix: fixed a bug in documentation lookup for symbols that caused some symbols to not be found.</li>
+
 </ul>
 
   <h2>CM 3.7.1</h2>
@@ -395,7 +412,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Thu Mar 17 05:40:11 CDT 2011 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Wed Mar 23 12:15:51 CDT 2011 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

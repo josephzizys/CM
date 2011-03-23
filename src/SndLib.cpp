@@ -304,6 +304,8 @@ bool SchemeThread::init()
   s7_eval_c_string(s7,"(define *clm-file-name* \"test.wav\")");
 #endif
 
+  s7_gc_stats(s7, true);
+
   return true;
 }
 

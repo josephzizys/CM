@@ -283,7 +283,7 @@ void Fomus::selectScore(const String& nam, const bool fromscm)
     String fn2(fapi_fomus_get_sval(scores.getUnchecked(i)->getfom(), "filename"));
     if (!fn2.isEmpty() && completeFile(fn2) == fn) { // find an exact match
       current = i;
-      return;
+     return;
     }
   }
   newScore(nam, fromscm); // selectScore is always from Scheme
@@ -318,9 +318,19 @@ void Fomus::deleteScore()
     }
 }
 
-void Fomus::clearScore()
+void Fomus::clearScore(const bool all)
 {
-  fapi_fomus_act(getfomusdata(), fomus_par_events, fomus_act_clear);
+  // clear out everthing but the file name else just clear out notes
+  if (all)
+  {
+    // cache the filename before clearing!
+    String fn(fapi_fomus_get_sval(getfomusdata(), "filename"));
+    fapi_fomus_clear(getfomusdata());
+    sval(fomus_par_setting, fomus_act_set, "filename");
+    sval(fomus_par_settingval, fomus_act_set, fn);
+  }
+  else
+    fapi_fomus_act(getfomusdata(), fomus_par_events, fomus_act_clear);
 }
 
 void Fomus::loadScore(String filename)

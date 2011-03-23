@@ -1235,7 +1235,7 @@ and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then rat
 
 <h3 id="randomness">Randomness</h3>
 
-<p>All functions that perform random selection use a common random number generator whose current seed can be acquired using <a href="#random-seed"><code>random-seed</code></a> and set using <a href="#random-seed-set_"><code>random-seed-set!</code></a> Resetting the random generator with a saved seed will cause the random number generator to repeat the same sequence of numbers starting at that seed.
+<p>All functions that perform random selection use a common random number generator whose current seed can be acquired or set using <a href="#random-seed"><code>random-seed</code></a>.  Reseeding the random generator will cause the random number generator to repeat the same sequence of numbers based on that seed.
 </p>
 
 <h4>Uniform Distribution</h4>
@@ -1664,7 +1664,7 @@ Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wik
   <tr class="entry">
     <td class="formals">
       <span class="funcname">random-seed</span>
-      ()
+      (<span class="meta">[</span><var class="opt">seed</var><span class="meta">]</span>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1672,30 +1672,11 @@ Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wik
 </table>
 <blockquote>
 <p>
-Return the current random seed used by the random number generator. This value can be used to "reseed" the random number generator so that the same series of values will be produced by the generator.
+Returns or sets the current seed used by the random number generator. If <var>seed</var> is specified it should be a single integer or an actual <var>seed list</var> that was returned by this function. Reseeding the generator with a saved seed list will regenerate the exact same series of random numbers from that seed.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
-
-<!-- DEFINITION -->
-<table class="entry" id="random-seed-set_">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">random-seed-set!</span>
-      (<var class="arg">seed</var>)
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Initializes the random state generator with <var>seed</var>,  an integer provided by the user or a two element seed list that was returned by <a href="#random-seed"><code>random-seed</code></a>.
-
-</p>
-</blockquote>
-<!-- END DEFINITION -->
 
 <h3 id="patterns">Patterns</h3>
 
@@ -2777,7 +2758,8 @@ Returns a list of absolute filenames matching wildcard <var>spec</var>. If <var>
 <table class="entry" id="file-version">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">file-version</span> (<var class="arg">filename</var>, <span class="meta">[</span><var class="opt">vers</var> <var class="optval">#t</var><span class="meta">]</span>)
+      <span class="funcname">file-version</span> (<var class="arg">filename</var>, <var class="optkey">version</var><var class="optval">=#t</var>,
+      <var class="optkey">nooverwrite</var><var class="optval">=#f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2785,7 +2767,7 @@ Returns a list of absolute filenames matching wildcard <var>spec</var>. If <var>
 </table>
 <blockquote>
 <p>
-Returns a variant of <var>filename</var> with a version number appended to its name. If <var>vers</var> is <code>#t</code> then successive version numbers (starting with 1) are appended, if <var>vers</var> is a number then that number is used as the suffix, else if <var>vers</var> is false then no version number is appended to the name. Note that this function does not actually check to see if the versioned file exists or not: you are responsible for initializing <var>vers</var> to a version number that will not conflict with any existing version on disk.
+Returns a variant of <var>filename</var> with a version number appended to its name. If <var>vers</var> is <code>#t</code> then successive version numbers are appended (starting with 1), if <var>vers</var> is a number then that number is used as the version number, else if <var>vers</var> is false then no version number is appended to the name. If <var>nooverwrite</var> is true the versioned file name is guaranteed to be for a new file, i.e. if that name is used for output no existing file will be overwritten.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -4023,7 +4005,7 @@ time, or in faster-than real time if a file (string) is specified as the third a
 
 <p>
 
-Adds <var>process</var> to the scheduler to start executing <var>ahead</var> seconds from now. Both <var>process</var> and <var>ahead</var> can be lists, in this case each process will be paired with each start time in a left-to-right order.</p>
+Adds <var>process</var> to the scheduler to start executing <var>ahead</var> seconds from now. Both <var>process</var> and <var>ahead</var> can be lists, in which case processes and start time are paired in a left-to-right order.</p>
 
 <p>If a <var>file</var> is <span style="text-decoration:underline;">not</span> specified then the process(es) will run in real time. In this case <var>id</var> can be used to identify the process(es) in the scheduling queue; tagged processes can then be selectively removed from the scheduler using <a href="#stop">stop</a>.  </p>
 
@@ -4116,7 +4098,9 @@ Resumes the scheduler if it is currently paused.
 
 <h3 id="processes">Processes</h3>
 <p>
-Processes are iterative functions you <a href="#sprout"> <code>sprout</code></a> into the scheduler to execute. Processes can run in real time or in faster-than real time, depending on how they are sprouted. In SAL you create a process using the <a href="process">process</a> statement. In Scheme you create a process using the <a href="#run">process</a> macro. The following two examples are equivalent process definitions:
+Processes are iterative functions you <a href="#sprout"> <code>sprout</code></a> into the scheduler to execute. Processes can run in real time or in faster-than real time, depending on how they are sprouted.</p>
+<p>
+In SAL you create a process using the <a href="process">process</a> statement. In Scheme you create a process using the <a href="#run">process</a> macro. The following two examples are equivalent process definitions:
 </p>
 
 <div class="float">
@@ -4294,7 +4278,7 @@ that layer of points.</p>
     See the <a href="#fields">fields:</a> setting for complete control over record fields and axes.
   </dd>
   
-  <dt id="color"><span class="keyword"><code>layer:</code></span> <var>points</var> </dt>
+  <dt id="layer"><span class="keyword"><code>layer:</code></span> <var>points</var> </dt>
   <dd>A list of points defining a layer in the plot</dd>
 
   <dt id="color"><span class="keyword"><code>color:</code></span> <var>name</var> | <var>"rgb"</var></dt>
