@@ -8,7 +8,6 @@
 #include "Enumerations.h"
 #include "Help.h"
 #include "Console.h"
-//#include "TextEditor.h"
 #include "CodeEditor.h"
 #include "Documentation.h"
 #include "Preferences.h"
@@ -353,7 +352,7 @@ void Help::addSalSymbolHelp()
   sal.set(T("process"), T("cm.html#processes"));
   sal.set(T("set"), T("cm.html#set"));
   sal.set(T("variable"), T("cm.html#variable"));
-  sal.set(T("wait"), T("cm.html#process_wait"));
+  sal.set(T("wait"), T("cm.html#wait"));
   sal.set(T("with"), T("cm.html#with"));
 
   sal.set(T("="), T("cm.html#set"));
@@ -377,50 +376,59 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("concat"), T("cm.html#concat"));
   cm.set(T("cs:i"), T("cm.html#cs:i"));
   cm.set(T("cs:f"), T("cm.html#cs:f"));
-  cm.set(T("cs:clear"), T("cm.html#cs:clear"));
-  cm.set(T("cwd"), T("cm.html#cwd"));
   cm.set(T("decimals"), T("cm.html#decimals"));
+  cm.set(T("deltas"), T("cm.html#deltas"));
+  cm.set(T("directory"), T("cm.html#directory"));
   cm.set(T("discrete"), T("cm.html#discrete"));
   cm.set(T("divide"), T("cm.html#divide"));
   cm.set(T("drunk"), T("cm.html#drunk"));
+
   cm.set(T("eighth"), T("cm.html#eighth"));
   cm.set(T("eod?"), T("cm.html#eod_"));
   cm.set(T("eop?"), T("cm.html#eop_"));
   cm.set(T("elapsed"), T("cm.html#elapsed"));
+  cm.set(T("export-spear-frames"), T("cm.html#export-spear-frames"));
+
   cm.set(T("fifth"), T("cm.html#fifth"));
   cm.set(T("file-version"), T("cm.html#file-version"));
   cm.set(T("first"), T("cm.html#first"));
   cm.set(T("fit"), T("cm.html#fit"));
   cm.set(T("float"), T("cm.html#float"));
   cm.set(T("fm-spectrum"), T("cm.html#fm-spectrum"));
-
-  cm.set(T("fms:note"), T("cm.html#fms:note"));
-  cm.set(T("fms:rest"), T("cm.html#fms:rest"));
-  cm.set(T("fms:mark"), T("cm.html#fms:mark"));
-  cm.set(T("fms:meas"), T("cm.html#fms:meas"));
-  cm.set(T("fms:part"), T("cm.html#fms:part"));
-  cm.set(T("fms:inst"), T("cm.html#fms:inst"));
-  cm.set(T("fms:percinst"), T("cm.html#fms:percinst"));
-  cm.set(T("fms:metapart"), T("cm.html#fms:metapart"));
-  cm.set(T("fms:setting"), T("cm.html#fms:setting"));
-  cm.set(T("fms:measdef"), T("cm.html#fms:measdef"));
-  cm.set(T("fms:new-score"), T("cm.html#fms:new-score"));
-  cm.set(T("fms:load-score"), T("cm.html#fms:load-score"));
-  cm.set(T("fms:select-score"), T("cm.html#fms:select-score"));
-  cm.set(T("fms:run-score"), T("cm.html#fms:run-score"));
-  cm.set(T("fms:save-score"), T("cm.html#fms:save-score"));
   cm.set(T("fms:clear-score"), T("cm.html#fms:clear-score"));
   cm.set(T("fms:delete-score"), T("cm.html#fms:delete-score"));
+  cm.set(T("fms:inst"), T("cm.html#fms:inst"));
+  cm.set(T("fms:load-score"), T("cm.html#fms:load-score"));
+  cm.set(T("fms:mark"), T("cm.html#fms:mark"));
+  cm.set(T("fms:meas"), T("cm.html#fms:meas"));
+  cm.set(T("fms:measdef"), T("cm.html#fms:measdef"));
+  cm.set(T("fms:merge-score"), T("cm.html#fms:merge-score"));
+  cm.set(T("fms:metapart"), T("cm.html#fms:metapart"));
+  cm.set(T("fms:new-score"), T("cm.html#fms:new-score"));
+  cm.set(T("fms:note"), T("cm.html#fms:note"));
+  cm.set(T("fms:part"), T("cm.html#fms:part"));
+  cm.set(T("fms:percinst"), T("cm.html#fms:percinst"));
+  cm.set(T("fms:rest"), T("cm.html#fms:rest"));
+  cm.set(T("fms:run"), T("cm.html#fms:run"));
+  cm.set(T("fms:save-score"), T("cm.html#fms:save-score"));
+  cm.set(T("fms:select-score"), T("cm.html#fms:select-score"));
+  cm.set(T("fms:setting"), T("cm.html#fms:setting"));
   cm.set(T("fourth"), T("cm.html#fourth"));
   cm.set(T("greater?"), T("cm.html#greater_qm"));
   cm.set(T("greater=?"), T("cm.html#greater_eqm"));
+
+  cm.set(T("harmonics"), T("cm.html#harmonics"));
   cm.set(T("hz"), T("cm.html#hz"));
-  //  cm.set(T("hush"), T("cm.html#hush"));
+
   cm.set(T("int"), T("cm.html#int"));
   cm.set(T("import-spear-frames"), T("cm.html#import-spear-frames"));
-  cm.set(T("key"), T("cm.html#key"));
+
+  cm.set(T("in-tempo"), T("cm.html#in-tempo"));
   cm.set(T("interp"), T("cm.html#interp"));
-  cm.set(T("invert"), T("cm.html#ivert"));
+  cm.set(T("invert"), T("cm.html#invert"));
+
+  cm.set(T("key"), T("cm.html#key"));
+
   cm.set(T("last"), T("cm.html#last"));
   cm.set(T("less?"), T("cm.html#less_qm"));
   cm.set(T("less=?"), T("cm.html#less_eqm"));
@@ -448,28 +456,35 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("mouse-button"), T("cm.html#mouse-button"));
   cm.set(T("mouse-x"), T("cm.html#mouse-x"));
   cm.set(T("mouse-y"), T("cm.html#mouse-y"));
-  cm.set(T("mm:bend"), T("cm.html#midi_opcodes"));
-  cm.set(T("mm:ctrl"), T("cm.html#midi_opcodes"));
-  cm.set(T("mm:prog"), T("cm.html#midi_opcodes"));
-  cm.set(T("mm:press"), T("cm.html#midi_opcodes"));
-  cm.set(T("mm:off"), T("cm.html#midi_opcodes"));
-  cm.set(T("mm:on"), T("cm.html#midi_opcodes"));
-  cm.set(T("mm:touch"), T("cm.html#midi_opcodes"));
+  cm.set(T("mm:bend"), T("cm.html#mm:bend"));
+  cm.set(T("mm:ctrl"), T("cm.html#mm:ctrl"));
+  cm.set(T("mm:prog"), T("cm.html#mm:prog"));
+  cm.set(T("mm:press"), T("cm.html#mm:press"));
+  cm.set(T("mm:off"), T("cm.html#mm:off"));
+  cm.set(T("mm:on"), T("cm.html#mm:on"));
+  cm.set(T("mm:touch"), T("cm.html#mm:touch"));
   cm.set(T("most-positive-fixnum"), T("cm.html#most-positive-fixnum"));
   cm.set(T("most-negative-fixnum"), T("cm.html#most-negative-fixnum"));
+  cm.set(T("mp:bend"), T("cm.html#mp:bend"));
+  cm.set(T("mp:crtl"), T("cm.html#mp:ctrl"));
+  cm.set(T("mp:inchans"), T("cm.html#mp:inchans"));
+  cm.set(T("mp:inops"), T("cm.html#mp:inops"));
+  cm.set(T("mp:instruments"), T("cm.html#mp:instruments"));
   cm.set(T("mp:midi"), T("cm.html#mp:midi"));
   cm.set(T("mp:on"), T("cm.html#mp:on"));
   cm.set(T("mp:off"), T("cm.html#mp:off"));
+  cm.set(T("mp:press"), T("cm.html#mp:press"));
   cm.set(T("mp:prog"), T("cm.html#mp:prog"));
-  cm.set(T("mp:crtl"), T("cm.html#mp:ctrl"));
-  cm.set(T("mp:alloff"), T("cm.html#mp:alloff"));
-  cm.set(T("mp:inhook"), T("cm.html#mp:inhook"));
-  cm.set(T("multiply"), T("cm.html#multiply"));
+  cm.set(T("mp:receiver"), T("cm.html#mp:receiver"));
+  cm.set(T("mp:receiver?"), T("cm.html#mp:receiver_qm"));
+  cm.set(T("mp:touch"), T("cm.html#mp:touch"));
+
   cm.set(T("next"), T("cm.html#next"));
   cm.set(T("ninth"), T("cm.html#ninth"));
   cm.set(T("nth"), T("cm.html#nth"));
   cm.set(T("now"), T("cm.html#now"));
   cm.set(T("note"), T("cm.html#note"));
+
   cm.set(T("odds"), T("cm.html#odds"));
   cm.set(T("osc:bundle"), T("cm.html#osc:bundle"));
   cm.set(T("osc:close"), T("cm.html#osc:close"));
@@ -489,28 +504,31 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("print"), T("cm.html#print"));
   cm.set(T("promise"), T("cm.html#promise"));
   cm.set(T("process"), T("cm.html#processes"));
+  cm.set(T("pwd"), T("cm.html#pwd"));
+
   cm.set(T("quantize"), T("cm.html#quantize"));
+
   cm.set(T("ran"), T("cm.html#ran"));
   cm.set(T("ranbeta"), T("cm.html#ranbeta"));
   cm.set(T("ranbrown"), T("cm.html#ranbrown"));
-  cm.set(T("ranchauchy"), T("cm.html#ranchauchy"));
+  cm.set(T("rancauchy"), T("cm.html#rancauchy"));
   cm.set(T("ranexp"), T("cm.html#ranexp"));
   cm.set(T("rangamma"), T("cm.html#rangamma"));
   cm.set(T("rangauss"), T("cm.html#rangauss"));
   cm.set(T("ranhigh"), T("cm.html#ranhigh"));
   cm.set(T("ranlow"), T("cm.html#ranlow"));
-  cm.set(T("ranmid"), T("cm.html#ranmid"));
+  cm.set(T("ranmiddle"), T("cm.html#ranmiddle"));
   cm.set(T("ranpink"), T("cm.html#ranpink"));
   cm.set(T("ranpoisson"), T("cm.html#ranpoisson"));
   cm.set(T("random-seed"), T("cm.html#random-seed"));
-  //  cm.set(T("random-seed-set!"), T("cm.html#random-seed-set_"));
   cm.set(T("ratio->cents"), T("cm.html#ratio-_cents"));
+  cm.set(T("ratio->steps"), T("cm.html#ratio-_steps"));
   cm.set(T("rescale"), T("cm.html#rescale"));
   cm.set(T("rest"), T("cm.html#rest"));
+  cm.set(T("rest?"), T("cm.html#rest_qm"));
   cm.set(T("retrograde"), T("cm.html#retrograde"));
   cm.set(T("rhythm"), T("cm.html#rhythm"));
   cm.set(T("rm-spectrum"), T("cm.html#rm-spectrum"));
-  cm.set(T("run"), T("cm.html#run"));
 
   cm.set(T("scale"), T("cm.html#scale"));
   cm.set(T("scale-order"), T("cm.html#scale-order"));
@@ -518,11 +536,14 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("segs"), T("cm.html#segs"));
   cm.set(T("send"), T("cm.html#send"));
   cm.set(T("seventh"), T("cm.html#seventh"));
+  cm.set(T("shell"), T("cm.html#shell"));  
   cm.set(T("shuffle"), T("cm.html#shuffle"));  
+  cm.set(T("shuffle_"), T("cm.html#shuffle_"));  
   cm.set(T("sixth"), T("cm.html#sixth"));  
   cm.set(T("sort"), T("cm.html#sort"));
   cm.set(T("sort!"), T("cm.html#sort_"));
   cm.set(T("spectrum-add!"), T("cm.html#spectrum-add_"));  
+  cm.set(T("spectrum-amps"), T("cm.html#spectrum-amps"));  
   cm.set(T("spectrum-copy"), T("cm.html#spectrum-copy"));
   cm.set(T("spectrum-flip!"), T("cm.html#spectrum-flip_"));  
   cm.set(T("spectrum-freqs"), T("cm.html#spectrum-freqs"));  
@@ -1256,3 +1277,141 @@ void Help::addSndLibSymbolHelp ()
   clm.set(T("snap-mix-to-beat"), T("sndscm.html#snapmixtobeat"));
 }
 
+#if 0
+
+// hack functions to ensure help.cpp and cm.html are in sync and to
+// generate the dictionary index.
+
+void print_cm_entries ()
+{
+  std::cout << "\n(define cm.html '(";
+  File file=completeFile(T("/Users/hkt/Software/cm/res/doc/cm.html"));
+  if (! file.existsAsFile()) return;
+  FileInputStream stream (file);
+  bool first=true;
+  while (!stream.isExhausted())
+  {
+    String target=T("id=\"");
+    String line=stream.readNextLine();
+    if (line.contains(T("class=\"entry\"")))
+    {
+      int start=line.indexOf(target);
+      if (start>-1)
+      {
+        start+=target.length();
+        int end=line.indexOf(start, T("\""));
+        if (end>-1)
+        {
+          String tok=line.substring(start,end);
+          if (!first) std::cout << " ";
+          std::cout << tok ;
+          first=false;
+        }
+      }
+    }
+  }
+  std::cout << "))\n";
+}
+
+void print_help_entries ()
+{
+  std::cout << "\n(define help.cpp '(";
+  File file=completeFile(T("/Users/hkt/Software/cm/src/Help.cpp"));
+  if (! file.existsAsFile()) return;
+  FileInputStream stream (file);
+  bool first=true;
+  while (!stream.isExhausted())
+  {
+    String target=T("\"cm.html#");
+    String line=stream.readNextLine();
+    int start=line.indexOf(target);
+    if (start>-1)
+    {
+      start+=target.length();
+      int end=line.indexOf(start, T("\""));
+      if (end>-1)
+      {
+        String tok=line.substring(start,end);
+        if (!first) std::cout << " ";
+        std::cout << tok;
+        first=false;
+      }
+    }
+  }
+  std::cout << "))\n";
+}
+
+/*
+(loop for s in help.cpp if (not (member s cm.html)) collect s)
+(loop for s in cm.html if (not (member s help.cpp)) collect s)
+*/
+
+void print_cm_index ()
+{
+  std::cout << "\n<h2 id="index">Index</h2>\n";
+  File file=completeFile(T("/Users/hkt/Software/cm/res/doc/cm.html"));
+  if (! file.existsAsFile()) return;
+  FileInputStream stream (file);
+  StringArray entries;
+  while (!stream.isExhausted())
+  {
+    String target=T("id=\"");
+    String line=stream.readNextLine();
+    String entry;
+    if (line.contains(T("class=\"entry\"")))
+    {
+      int start=line.indexOf(target);
+      if (start>-1)
+      {
+        start+=target.length();
+        int end=line.indexOf(start, T("\""));
+        if (end>-1)
+        {
+          String tok=line.substring(start,end);
+          String target2=T("class=\"funcname\">");
+          int pos1=-1;
+          for (int a=0; a<5; a++)
+          {
+            line=stream.readNextLine();
+            pos1=line.indexOf(target2);
+            if (pos1>-1) break;
+          }
+          if (pos1>-1)
+          {
+            pos1+=target2.length();
+            int pos2=line.indexOf(pos1,T("<"));
+            if (pos2>-1)
+            {
+              String func=line.substring(pos1,pos2);
+              entries.add(func + T(" ") + tok);
+            }
+          }
+        }
+      }
+    }
+  }
+  entries.sort(true);
+  int size=entries.size();
+  juce_wchar alpha=0;
+  int letter=0;
+  for (int i=0; i<size; i++)
+  {
+    String ent=entries[i];
+    int sp=ent.indexOf(T(" "));
+    String name=ent.substring(0,sp);
+    String id=ent.substring(sp+1,ent.length());
+    if (name[0]!=alpha)
+    {
+      if (i>0) std::cout << "\n</p>\n";
+      std::cout << "\n<h4>" << String::charToString(name[0]).toUTF8() << "</h4>\n<p>\n";
+      letter=0;
+    }
+    if (letter>0) std::cout << ", ";        
+    std::cout << "<a href=\"#" << id.toUTF8() << "\">" << name.toUTF8() << "</a>" ; 
+    alpha=name[0];
+    letter++;
+  }
+  std::cout << "\n</p>\n\n";
+}
+
+#endif

@@ -143,7 +143,7 @@ void mp_close_input(int dev);
 void mp_open_score(char* file, s7_pointer args);
 void mp_close_score();
 
-void mp_send_note(double time, double dur, double key, double vel, double chan);
+void mp_send_note(s7_pointer time, s7_pointer dur, s7_pointer key, s7_pointer vel, s7_pointer chan);
 void mp_send_data(int type, double time, double chan, double data1, double data2);
 
 void mp_play_seq();
@@ -171,6 +171,7 @@ void cs_send_score(int typ, int inst, double time, char* pars);
 void fms_open_score(bool);
 void fms_close_score();
 void fms_save(const char* name);
+void fms_save_as(const char* name);
 /* void fms_init(); */
 int fms_isfiletype(const char* ext);
 void fms_new(const char* name);

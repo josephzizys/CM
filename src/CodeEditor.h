@@ -203,6 +203,7 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
 
   void saveFile(bool saveas);
   void saveFileAs();
+  void saveFileVersion();
   // static methods
   static void openFile(File file=File::nonexistent);
   static void newFile(String title=String::empty, int synt=TextIDs::Empty, String content=String::empty);

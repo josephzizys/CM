@@ -698,11 +698,12 @@ class CommandIDs
   static const CommandID EditorOpen = COMID(Editor, 2);
   static const CommandID EditorSave = COMID(Editor, 3);
   static const CommandID EditorSaveAs = COMID(Editor, 4);
-  static const CommandID EditorRevert = COMID(Editor, 5);
-  static const CommandID EditorShowDirectory = COMID(Editor, 6);
-  static const CommandID EditorSetDirectory = COMID(Editor, 7);
-  static const CommandID EditorPrint = COMID(Editor, 8);
-  static const CommandID EditorClose = COMID(Editor, 9);
+  static const CommandID EditorSaveVersion = COMID(Editor, 5);
+  static const CommandID EditorRevert = COMID(Editor, 6);
+  static const CommandID EditorShowDirectory = COMID(Editor, 7);
+  static const CommandID EditorSetDirectory = COMID(Editor, 8);
+  static const CommandID EditorPrint = COMID(Editor, 9);
+  static const CommandID EditorClose = COMID(Editor, 10);
 
   static const CommandID EditorUndo = COMID(Editor, 16);
   static const CommandID EditorRedo = COMID(Editor, 17);
@@ -803,6 +804,7 @@ class CommandIDs
   static const CommandID FomusRunCurr = COMID(Fomus, 9);
   static const CommandID FomusClearScore = COMID(Fomus, 10);
   static const CommandID FomusSaveScore = COMID(Fomus, 11);
+  static const CommandID FomusSaveScoreAs = COMID(Fomus, 12);
 
   // Audio Menu
   static const CommandID AudioOpenFilePlayer = COMID(Audio, 1);

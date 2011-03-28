@@ -1255,39 +1255,136 @@ void mp_close_score()
   MidiOutPort::getInstance()->performCommand(CommandIDs::SchedulerScoreComplete);
 }
 
-void mp_send_note(double time, double dur, double key, double vel, double chn) 
+void mp_send_note(s7_pointer time, s7_pointer dur, s7_pointer key, s7_pointer amp, s7_pointer chan) 
 {
   SchemeThread* scm=SchemeThread::getInstance();
-  if (scm->scoremode)
-    {
-      // if score capture is true AND we are under a process callback then
-      // scoretime will be >= 0 else it will be 0
-      time += scm->scoretime;
-      // if we have a Fomus score open then route the midi data to
-      // fomus as an fms:note.
+  // if a Fomus score is open reroute the midi data as an fms:note.
 #ifdef WITHFOMUS
-      if (scm->scoremode==ScoreTypes::Fomus)
-      {
-        if (!check_fomus_exists()) return;
-        Fomus* fms=Fomus::getInstance();
-        fms->fval(fomus_par_pitch, fomus_act_set, key);
-        fms->fval(fomus_par_dynlevel, fomus_act_set, ((vel>=1.0) ? (vel/127.0) : vel));
-        fms->fval(fomus_par_time, fomus_act_set, time);
-        fms->fval(fomus_par_duration, fomus_act_set, dur);
-        fms->ival(fomus_par_part, fomus_act_set, (int)chn);
-        fms->act(fomus_par_noteevent,  fomus_act_add);
-      }
-      else
-        MidiOutPort::getInstance()->sendNote(time, dur, key, vel, chn, true);
-      //std::cout << "sending score mode " << time << " " << key << "\n";
+  if (scm->scoremode==ScoreTypes::Fomus)
+  {
+    if (!check_fomus_exists()) return;
+    Fomus* fms=Fomus::getInstance();
+    //    std::cout << "fms:note ";
+    // keynum
+    if (s7_is_real(key))
+    {
+      fms->fval(fomus_par_pitch, fomus_act_set, s7_number_to_real(key));
+      //      std::cout << "pitch=" << s7_number_to_real(key);
     }
+    else
+      scm->signalSchemeError(T("mp:midi: key not a real number"));
+    // amp
+    if (s7_is_real(amp))
+    {
+      double a=s7_number_to_real(amp);
+      fms->fval(fomus_par_dynlevel, fomus_act_set, ((a>=1.0) ? (a/127.0) : a));
+      //      std::cout << ", amp=" << a;
+    }
+    else if (amp==s7_f(scm->scheme))
+    {
+      fms->fval(fomus_par_dynlevel, fomus_act_set, 0.0);
+      //      std::cout << ", amp=0.0";
+    }
+    else
+      scm->signalSchemeError(T("mp:midi: amp not a real number"));
+    // time
+    if (s7_is_ratio(time))
+    {
+      fms->rval(fomus_par_time, fomus_act_set, s7_numerator(time), s7_denominator(time));
+      //      std::cout << ", time=" << s7_numerator(time) << "/" << s7_denominator(time);
+    }
+    else if (s7_is_real(time))
+    {
+      fms->fval(fomus_par_time, fomus_act_set, s7_number_to_real(time));
+      //      std::cout << ", time=" << s7_number_to_real(time);
+    }
+    else if (time==s7_f(scm->scheme))
+    {
+      fms->act(fomus_par_time, fomus_act_n);      
+      //      std::cout << ", time=#f";
+    }
+    else
+      scm->signalSchemeError(T("mp:midi: time not a number"));
+    // dur
+    if (s7_is_real(dur))
+    {
+      fms->fval(fomus_par_duration, fomus_act_set, s7_number_to_real(dur));
+      //      std::cout << ", dur=" << s7_number_to_real(dur);
+    }
+    else
+      scm->signalSchemeError(T("mp:midi: dur not a real number"));
+    // chan
+    if (s7_is_integer(chan))
+    {
+      fms->ival(fomus_par_part, fomus_act_set, s7_integer(chan));
+      //      std::cout << ", part=" << s7_integer(chan);
+    }
+    else if (chan!=s7_f(scm->scheme))
+      scm->signalSchemeError(T("mp:midi: chan not an int"));
+    fms->act(fomus_par_noteevent,  fomus_act_add);
+    //    std::cout << "\n";
+    /*
+      if (!check_fomus_exists()) return;
+      Fomus* fms=Fomus::getInstance();
+      fms->fval(fomus_par_pitch, fomus_act_set, key);
+      fms->fval(fomus_par_dynlevel, fomus_act_set, ((vel>=1.0) ? (vel/127.0) : vel));
+      fms->fval(fomus_par_time, fomus_act_set, time);
+      fms->fval(fomus_par_duration, fomus_act_set, dur);
+      fms->ival(fomus_par_part, fomus_act_set, (int)chn);
+      //fms->sval(fomus_par_part, fomus_act_set, String(((int)chn)).toUTF8());
+      fms->act(fomus_par_noteevent,  fomus_act_add);
+    */
+  }
   else
 #endif   
-    MidiOutPort::getInstance()->sendNote(time, dur, key, vel, chn, false);
+    // otherwise send to midiport or midifile 
+  {
+    bool midifile=(scm->scoremode == ScoreTypes::Midi);
+    double f0, f1, f2, f3, f4;
+    // time is #f or number
+    if (time==s7_f(scm->scheme))
+      f0=0.0;
+    else if (s7_is_number(time))
+      f0=s7_number_to_real(time);
+    else
+      scm->signalSchemeError(T("mp:midi: time not a number"));
+    // dur is #f or number
+    if (dur==s7_f(scm->scheme))
+      f1=0.5;
+    else if (s7_is_number(dur))
+      f1=s7_number_to_real(dur);
+    else
+      scm->signalSchemeError(T("mp:midi: dur not a number"));
+    // key is #f or number
+    if (key==s7_f(scm->scheme))
+      f2=60.0;
+    else if (s7_is_number(key))
+      f2=s7_number_to_real(key);
+    else
+      scm->signalSchemeError(T("mp:midi: key not a number"));
+    // amp is #f or number
+    if (amp==s7_f(scm->scheme))
+      f3=0.5;
+    else if (s7_is_number(amp))
+      f3=s7_number_to_real(amp);
+    else
+      scm->signalSchemeError(T("mp:midi: amp not a number"));
+    // chan is #f or number
+    if (chan==s7_f(scm->scheme))
+      f4=0.0;
+    else if (s7_is_number(chan))
+      f4=s7_number_to_real(chan);
+    else
+      scm->signalSchemeError(T("mp:midi: chan not a number"));
+    // if score capture is true AND we are under a process callback
+    // then scoretime will be >= 0 else it will be 0
+    if (midifile)
+      f0 += scm->scoretime;
+    MidiOutPort::getInstance()->sendNote(f0, f1, f2, f3, f4, midifile);
+  }
 }
 
-void mp_send_data(int type, double time, double chan, 
-		  double data1, double  data2)
+void mp_send_data(int type, double time, double chan, double data1, double  data2)
 {
   SchemeThread* scm=SchemeThread::getInstance();
   if (scm->scoremode)
@@ -1685,6 +1782,12 @@ void fms_save(const char* name)
 {
   if (!check_fomus_exists()) return;
   Fomus::getInstance()->saveScore(name, true);
+}
+
+void fms_save_as(const char* name)
+{
+  if (!check_fomus_exists()) return;
+  Fomus::getInstance()->saveScoreAs(String(name));
 }
 
 // SAVE ME!

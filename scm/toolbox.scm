@@ -86,7 +86,9 @@
 	  (- arg))
       (if (list? arg)
 	  (map (lambda (x) (- x (car args))) arg)
-	  (apply - arg args))))
+          (if (and (pair? args) (pair? (car args)))
+              (map (lambda (n) (- arg n)) (car args))
+              (apply - arg args)))))
 
 (define (divide arg . args)
   (if (null? args)

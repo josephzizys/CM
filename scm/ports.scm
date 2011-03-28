@@ -163,9 +163,12 @@
          (ffi_sched_set_score_mode 0)
          (mp:close-score))))
 
-(define (mp:midi . args)
-  (with-optkeys (args (time 0) (dur .5) (key 60) (amp .5) (chan 0))
-    (ffi_mp_send_note time dur key amp chan)))
+(define* (mp:midi time dur key amp chan)
+  (ffi_mp_send_note time dur key amp chan))
+
+;(define (mp:midi . args)
+;  (with-optkeys (args (time 0) (dur .5) (key 60) (amp .5) (chan 0))
+;    (ffi_mp_send_note time dur key amp chan)))
 
 (define (mp:off . args)
   (with-optkeys (args (time 0) (key 60) (chan 0))

@@ -46,7 +46,7 @@
 <li><a href="#scheduler">The Scheduler</a>
 <ul>
     <li><a href="#processes">Processes</a></li>
-    <li><a href="#sprout">sprout</a></li>
+    <li><a href="#sprout">Sprouting</a></li>
     <li><a href="#scheduling">Other Scheduling functions</a></li>
 </ul>
 </li>
@@ -64,7 +64,6 @@
 </ul>
 </li>
 
-
 <li><a href="#appendix">Appendix</a>
 <ul>
   <li><a href="#metasyntax">A. Documentation Meta-syntax</a></li>
@@ -72,6 +71,7 @@
   <li><a href="#sal_scheme_cltl">C. Table of SAL, Scheme and Common Lisp</a></li>
 </ul>
 </li>
+<li><a href="#index">Index</a></li>
 </ul>
 
 <h2 id="introduction">Introduction</h2>
@@ -116,7 +116,8 @@ compared with the previous (CM2) branch are: </p>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">fit</span>
-      (<var class="arg">num</var>, <var class="arg">min</var>, <var class="arg">max</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">1</var><span class="meta">]</span>)
+      (<var class="arg">num</var>, <var class="arg">min</var>, <var class="arg">max</var> 
+      <a href="#opt">&amp;opt</a> <var class="arg">mode</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -196,6 +197,25 @@ Quantizes <var>num</var> or list of the same to be a multiple of <var>step</var>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<table class="entry" id="decimals">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">decimals</span>
+      (<var class="arg">num</var>, <var class="arg">places</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns floating point <var>num</var> rounded to <var>places</var> fractional digits.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
 <table class="entry" id="plus">
   <tr class="entry">
     <td class="formals">
@@ -228,37 +248,6 @@ Returns the addition of zero or more <var>nums</var>. If a single <var>list</var
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="minus">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">minus</span>
-      (<var class="arg">num</var> <var class="rest">...</var>)
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">minus</span>
-      (<var class="arg">list</var>)
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>
-    <tr class="entry">
-    <td class="formals">
-      <span class="funcname">minus</span>
-      (<var class="arg">list</var>, <var>num</var>)
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
-</table>
-<blockquote>
-<p>
-Returns the subtraction of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative subtraction is returned. Otherwise a list is returned of <var>num</var> subtracted from every element in <var>list</var>.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
 <table class="entry" id="times">
   <tr class="entry">
     <td class="formals">
@@ -285,6 +274,47 @@ Returns the subtraction of one or more <var>nums</var>. If a single number is gi
 <blockquote>
 <p>
 Returns the multiplication of zero or more <var>nums</var>. If a single <var>list</var> of numbers is given they are multiplied together.  Otherwise a list is returned of <var>num</var> multiplied with every element in <var>list</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="minus">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">minus</span>
+      (<var class="arg">num</var> <var class="rest">...</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">minus</span>
+      (<var class="arg">list</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">minus</span>
+      (<var class="arg">list</var>, <var>num</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">minus</span>
+      (<var>num</var>, <var class="arg">list</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  
+  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the subtraction of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative subtraction is returned. Otherwise a list is returned of <var>num</var> subtracted from every element in <var>list</var> or every number in <var>list</var> subtracted from <var>num</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -324,7 +354,7 @@ Returns the multiplication of zero or more <var>nums</var>. If a single <var>lis
 </table>
   <blockquote>
   <p>
-  Returns the division of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative division is returned. Otherwise a list is returned of <var>num</var> divided into every element in <var>list</var>.
+  Returns the division of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative division is returned. Otherwise a list is returned of every number in <var>list</var> divided by <var>num</var> or every number in <var>list</var> divided into <var>num</var>.
   </p>
   </blockquote>
   <!-- END DEFINITION -->
@@ -559,7 +589,16 @@ The largest negative fixed point integer representable in this Lisp implementati
 </table>
 <blockquote>
 <p>
-Returns the first element in <var>list</var>. Similar accessors for the <code><span class="funcname">second</span></code> to <code><span class="funcname">tenth</span></code> elements are also defined.
+Returns the first element in <var>list</var>. Similar accessors exist for these other common element positions:
+<code id="second">second</code>,
+<code id="third">third</code>,
+<code id="fourth">fourth</code>,
+<code id="fifth">fifth</code>,
+<code id="sixth">sixth</code>,
+<code id="seventh">seventh</code>,
+<code id="eighth">eighth</code>,
+<code id="ninth">ninth</code> and
+<code id="tenth">tenth</code>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -690,33 +729,6 @@ Concatenates its inputs, which can be lists and non-lists, into a single list.
 </blockquote>
 <!-- END DEFINITION -->
 
-
-<!-- DEFINITION 
-<table class="entry" id="make-list">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">make-list</span>
-      (<var class="arg">length</var> <span class="meta">[</span><var class="opt">fill</var> <var class="optval"> #f</var><span class="meta">]</span>)
-    </td>
-  </tr>
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">make-list</span>
-      (<var class="arg">length</var> <span class="meta">[</span><var class="opt">function</var><span class="meta">]</span> <var class="rest">args...</var>)
-    </td>
-  </tr>
-
-  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
-</table>
-<blockquote>
-<p>
-
-Creates a new list with <var>length</var> number of elements.  If <var>fill</var> is provided the initial elements in the list are set to it. If <var>function</var> is provided it is called <var>length</var> times with zero or more <var>args...</var> to produce the contents of the list.
-
-</p>
-</blockquote>
-END DEFINITION -->
-
 <!-- DEFINITION -->
 <table class="entry" id="list-set_">
   <tr class="entry">
@@ -741,7 +753,7 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">sort</span>
-      (<var class="arg">list</var>  <span class="meta">[</span><var class="opt">comparator</var> <code>less?</code><span class="meta">]</span>)
+      (<var class="arg">list</var>  <a href="#opt">&amp;opt</a> <var class="arg">comparator</var> = <code>less?</code>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -749,29 +761,10 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
 </table>
 <blockquote>
 <p>
-Returns a sorted copy of <var>list</var> given a pairwise <var>comparator</var> function of two arguments. The comparator should return true if the value  in its first argument will appear before the value in the second argument in the sorted results, otherwise the comparator should return false. The default comparator is <code>&lt;</code>.  
+Returns a sorted copy of <var>list</var> given a pairwise <var>comparator</var> function that is passed two arguments and returns true if the value in its first argument should appear before the value in the second argument in the sorted results, otherwise false. The default comparator is <a href="#less_qm"><code>less?</code></a>.  
 </p>
 </blockquote>
 <!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table class="entry" id="sort_">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">sort!</span>
-      (<var class="arg">list</var>  <span class="meta">[</span><var class="opt">comparator</var> <code>less?</code><span class="meta">]</span>)
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
-</table>
-<blockquote>
-<p>
-Exactly like <a href="#sort"><code>sort</code></a> except that <var>list</var> is destructively modified to hold the sorted results.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
 
 <h3 id="mapping">Mapping and Transformation</h3>
 
@@ -780,7 +773,7 @@ Exactly like <a href="#sort"><code>sort</code></a> except that <var>list</var> i
   <tr class="entry">
     <td class="formals">
       <span class="funcname">note</span>
-      (<var class="arg">nkl</var>)
+      (<var class="arg">ref</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -789,7 +782,7 @@ Exactly like <a href="#sort"><code>sort</code></a> except that <var>list</var> i
 <blockquote>
 <p>
 
-Returns the note (string) of <var>nkl</var>, which can be a note, key
+Returns the note (string) of <var>ref</var>, which can be a note, key
 or list of the same. A note name consists of a pitch class letter
 (<code>c</code> <code>d</code> <code>e</code> <code>f</code>
 <code>g</code> <code>a</code> <code>b</code>), an optional sharp or
@@ -809,7 +802,7 @@ to the last octave specified, or to octave 4.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">key</span>
-      (<var class="arg">nhl</var>)
+      (<var class="arg">ref</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -818,7 +811,7 @@ to the last octave specified, or to octave 4.
 </table>
 <blockquote>
 <p>
-Returns the key (number) of <var>nhl</var>, which can be a note, hertz or list of the same. A floating point key <var>kkk.cc</var> is interpreted as the frequency <var>cc</var> cents above the integer key number <var>kkk</var>, e.g. 60.5 is 50 cents above Middle C.
+Returns the key (number) of <var>ref</var>, which can be a note, hertz or list of the same. A floating point key <var>kkk.cc</var> is interpreted as the frequency <var>cc</var> cents above the integer key number <var>kkk</var>, e.g. 60.5 is 50 cents above Middle C.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -828,7 +821,7 @@ Returns the key (number) of <var>nhl</var>, which can be a note, hertz or list o
   <tr class="entry">
     <td class="formals">
       <span class="funcname">hz</span>
-      (<var class="arg">nkl</var>)
+      (<var class="arg">ref</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -836,7 +829,7 @@ Returns the key (number) of <var>nhl</var>, which can be a note, hertz or list o
 </table>
 <blockquote>
 <p>
-Returns the hertz value of <var>nkl</var>, which can be a note, key or list of the same.
+Returns the hertz value of <var>ref</var>, which can be a note, key or list of the same.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -846,7 +839,7 @@ Returns the hertz value of <var>nkl</var>, which can be a note, key or list of t
   <tr class="entry">
     <td class="formals">
       <span class="funcname">pc</span>
-      (<var class="arg">nkl</var>)
+      (<var class="arg">ref</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -854,17 +847,17 @@ Returns the hertz value of <var>nkl</var>, which can be a note, key or list of t
 </table>
 <blockquote>
 <p>
-Returns pitch class (0-11) of <var>nkl</var>, which can be a note, key or list of the same.
+Returns pitch class (0-11) of <var>ref</var>, which can be a note, key or list of the same.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="rest_">
+<table class="entry" id="rest_qm">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rest?</span>
-      (<var class="arg">x</var>)
+      (<var class="arg">ref</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -872,7 +865,7 @@ Returns pitch class (0-11) of <var>nkl</var>, which can be a note, key or list o
 </table>
 <blockquote>
 <p>
-Returns true if <var>x</var> is a 'musical rest' marker (<code>r</code> or the key number -1).
+Returns true if <var>ref</var> is a 'musical rest' marker (<code>r</code> or the key number -1).
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -882,7 +875,7 @@ Returns true if <var>x</var> is a 'musical rest' marker (<code>r</code> or the k
   <tr class="entry">
     <td class="formals">
       <span class="funcname">transpose</span>
-      (<var class="arg">nkl</var>, <var class="arg">amount</var>)
+      (<var class="arg">ref</var>, <var class="arg">amount</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -890,7 +883,7 @@ Returns true if <var>x</var> is a 'musical rest' marker (<code>r</code> or the k
 </table>
 <blockquote>
 <p>
-Transposes <var>nkl</var> by <var>amount</var>.
+Transposes <var>ref</var> by <var>amount</var>.
 If <var>freq</var> and <var>amount</var> are both pitch classes then the transposition occurs in pitch class (mod 12) space. Otherwise <var>nkl</var> should be a key, note or list of the same and it is transposed by <var>amount</var>.
 </p>
 </blockquote>
@@ -901,7 +894,7 @@ If <var>freq</var> and <var>amount</var> are both pitch classes then the transpo
   <tr class="entry">
     <td class="formals">
       <span class="funcname">invert</span>
-      (<var class="arg">nkl</var>)
+      (<var class="arg">ref</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -909,7 +902,7 @@ If <var>freq</var> and <var>amount</var> are both pitch classes then the transpo
 </table>
 <blockquote>
 <p>
-If <var>nkl</var> is a pitch class or list of pitch classes the pitch class complement(s) are returned. Otherwise <var>nkl</var> should be a list of notes or keys and the (strict) inversions around the first key or note in the list is returned.
+If <var>ref</var> is a pitch class or list of pitch classes the pitch class complement(s) are returned. Otherwise <var>nkl</var> should be a list of notes or keys and the (strict) inversions around the first key or note in the list is returned.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -944,7 +937,9 @@ Returns a version of <var>list</var> with its elements reversed.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">scale</span>
-      (<var class="arg">num</var>, <var class="arg">start</var>, <var class="arg">list</var>, <span class="meta">[</span><var class="opt">limit #f</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">mode</var> 1<span class="meta">]</span>)
+      (<var class="arg">num</var>, <var class="arg">start</var>, <var class="arg">list</var>
+      <a href="#opt">&amp;opt</a>
+      <var class="arg">limit</var> <var class="optval">= #f</var>, <var class="arg">mode</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -964,7 +959,7 @@ Returns a list of <var>num</var> keys starting on <var>start</var> and increment
   <tr class="entry">
     <td class="formals">
       <span class="funcname">scale-order</span>
-      (<var class="arg">list</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">1</var><span class="meta">]</span>)</td>
+      (<var class="arg">list</var> <a href="#opt">&amp;opt</a> <var class="arg">mode</var> <var class="optval">= 1</var>)</td>
     <!-- td class="label">Function</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; list</td></tr>
@@ -976,29 +971,13 @@ Returns a <var>list</var> of notes, keys or hertz values ordered according to <v
 </blockquote>
 <!-- END DEFINITION -->
 
-<!-- DEFINITION -->
-<table class="entry" id="scale-order_">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">scale-order!</span>
-      (<var class="arg">list</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">1</var><span class="meta">]</span>)</td>
-    <!-- td class="label">Function</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
-</table>
-<blockquote>
-<p>
-Like <a href="#scale-order"><code>scale-order</code></a> except that <var>list</var> is destructively modified by the ordering.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table class="entry" id="rhythm">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rhythm</span>
-      (<var class="arg">rhy</var>, <span class="meta">[</span><var class="opt">tempo 60</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">beat</var> 1/4<span class="meta">]</span>)
+      (<var class="arg">rhy</var> <a href="#opt">&amp;opt</a> <var class="arg">tempo</var> <var class="optval">= 60</var>, <var class="arg">beat</var> <var class="optval">= 1/4</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1044,7 +1023,8 @@ note, a <var>rhythmic symbol</var> or a list of the same. A fraction of a whole 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rescale</span>
-      (<var class="arg">x</var>, <var class="arg">x1</var>,  <var class="arg">x2</var>, <var class="arg">y1</var>, <var class="arg">y2</var>, <span class="meta">[</span><var class="opt">base</var> <var class="optval">1</var><span class="meta">]</span>)
+      (<var class="arg">x</var>, <var class="arg">x1</var>,  <var class="arg">x2</var>, <var class="arg">y1</var>, <var class="arg">y2</var>
+      <a href="#opt">&amp;opt</a> <var class="arg">base</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1062,7 +1042,8 @@ note, a <var>rhythmic symbol</var> or a list of the same. A fraction of a whole 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">discrete</span>
-      (<var class="arg">x</var>, <var class="arg">x1</var>, <var class="arg">x2</var>, <var class="arg">i1</var>, <var class="arg">i2</var>, <span class="meta">[</span><var class="opt">base</var> = <var class="optval">1</var><span class="meta">]</span>)
+      (<var class="arg">x</var>, <var class="arg">x1</var>, <var class="arg">x2</var>, <var class="arg">i1</var>, <var class="arg">i2</var>,
+     <a href="#opt">&amp;opt</a> <var class="arg">base</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1086,15 +1067,9 @@ Similar to <code>rescale</code> except floating point <var>x</var> is mapped ont
   <tr class="entry">
     <td class="formals">
       <span class="funcname">segs</span>
-      (<var class="arg">num</var>, <var class="arg">sum</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">1</var><span class="meta">]</span>,  <span class="meta">[</span><var class="opt">base</var> <var class="optval">2</var><span class="meta">]</span>)
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>
-
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">segs</span>
-      (<var class="arg">num</var>, <var class="arg">sum</var>, <span class="meta">[</span><var class="opt">mode</var> <var class="optval">3</var><span class="meta">]</span>,  <span class="meta">[</span><var class="opt">gen</var> <a href="#ran"><var class="optval">ran</var></a><span class="meta">]</span>, <var class="rest">args...</var><span class="meta">]</span>)
+      (<var class="arg">num</var>, <var class="arg">sum</var>
+      <a href="#opt">&amp;opt</a>
+      <var class="arg">mode</var> <var class="optval">= 1</var>, <var class="arg">base</var> <var class="optval">= 2</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1112,9 +1087,7 @@ increasing segments, and reciprocals produce exponentially decreasing
 segments. If <var>mode</var> is 2 then the segments returned are
 related by the <a
 href="http://en.wikipedia.org/wiki/Geometric_series">geometric
-series</a>. If <var>mode</var> is 3 then random segments are returned
-where <var>gen</var> is the random function to use and
-<var>args...</var> are any values to pass to it.
+series</a>. If <var>mode</var> is 3 then random segments that add up to <var>sum</var> are returned.
 
 </p>
 </blockquote>
@@ -1132,10 +1105,12 @@ where <var>gen</var> is the random function to use and
   <tr class="entry">
     <td class="formals">
       <span class="funcname">interp</span>
-      (<var class="arg">x</var>, <var class="arg">list</var>,  <span class="meta">[</span><var class="opt">base 1</var><span class="meta">]</span>)
+      (<var class="arg">x</var>, <var class="arg">list</var>
+      <a href="#opt">&amp;opt</a> <var class="arg">base</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">Function</td -->
-  </tr>  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
 <blockquote>
 
@@ -1209,11 +1184,12 @@ Converts a <var>cent</var> value or list of the same to the equivalent frequency
   <tr class="entry">
     <td class="formals">
       <span class="funcname">harmonics</span>
-      (<var class="arg">h1</var>, <var class="arg">h2</var>, <span class="meta">[</span><var class="optkey">fund</var> = 1<span class="meta">]</span>,
-      <span class="meta">[</span><var class="optkey">invert</var> = #f<span class="meta">]</span>,
-      <span class="meta">[</span><var class="optkey">order</var> = #f<span class="meta">]</span>,
-      <span class="meta">[</span><var class="optkey">keys</var> = #f<span class="meta">]</span>
-      )
+      (<var class="arg">h1</var>, <var class="arg">h2</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">fund</var> <var class="optval">= 1</var>,
+      <var class="arg">invert</var> <var class="optval">= #f</var>,
+      <var class="arg">order</var> <var class="optval">= #f</var>,
+      <var class="arg">keys</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1222,16 +1198,12 @@ Converts a <var>cent</var> value or list of the same to the equivalent frequency
 <blockquote>
 <p>
 
-Returns a series (list) of ratios, hertz values, or key numbers based on ratios from the harmonic series between harmonic numbers <var>h1</var>
-and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then ratios belong to the overtone series, otherwise if 0 &gt; <var>h1</var> &gt; <var>h2</var> then ratios belong to the "undertone" series. If <var>fund</var> is 1 then the values returned are true ratios, otherwise the series returned is based off of that hertz value. If <var>invert</var> is true then ratios between <var>h1</var> and <var>h2</var> are flipped. If <var>order</var> is false then the overtone series are in increasing order and undertones are in decreasing order. Otherwise, if <var>order</var> is 1 then the list is always ascending, if it is -1 the list always descending, and if it is 0 the list order is randomized. If <var>keys</var> is true then the values returned will be coerced to keynums.
+Returns a list of ratios, hertz values, or key numbers based on the harmonic series between the harmonic numbers <var>h1</var>
+and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then values will belong to the overtone series, otherwise if 0 &gt; <var>h1</var> &gt; <var>h2</var> then values will belong to the "undertone" series. If <var>fund</var> is 1 then the values returned will be frequency ratios, otherwise the series will be based on that hertz value. If <var>invert</var> is true then the ratios between <var>h1</var> and <var>h2</var> are reciprocals, i.e. "flipped". If <var>order</var> is false then the overtone series are in increasing order and undertones are in decreasing order. Otherwise, if <var>order</var> is 1 then the list is always ascending, if it is -1 the list always descending, and if it is 0 the list order is randomized. If <var>keys</var> is true then the values returned will be coerced to keynums.
 
 </p>
 </blockquote>
 <!-- END DEFINITION -->
-
-<!-- dl id="decimals">
-<dt class="entry"><span class="term">decimals</span> (<var>x</var> <span class="meta">[</span><var>precision</var> 3<span class="meta">]</span>)<br/>&rarr; <var>float</var></dt>
-<dd><p>Same as CM. </p></dd></dl -->
 
 <h3 id="randomness">Randomness</h3>
 
@@ -1245,7 +1217,7 @@ and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then rat
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ran</span>
-      (<span class="meta">[</span><var class="opt">num</var> <var class="optval"> 1.0</var><span class="meta">]</span>)
+      (<a href="#opt">&amp;opt</a>  <var class="arg">num</var> <var class="optval">= 1.0</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1283,9 +1255,8 @@ Returns a randomly chosen number between <var>a</var> and <var>b</var> (exclusiv
   <tr class="entry">
     <td class="formals">
       <span class="funcname">vary</span>
-      (<var class="arg">value</var>, <var class="arg">pct</var>,
-      <span class="meta">[</span><var class="opt">mode</var> <var class="optval">0</var><span class="meta">]</span>
-      )
+      (<var class="arg">value</var>, <var class="arg">pct</var>
+      <a href="#opt">&amp;opt</a> <var class="var">mode</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1309,7 +1280,9 @@ be returned.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">drunk</span>
-      (<var class="arg">num</var>, <var class="arg">width</var>, <var class="optkey">low</var> <var class="optval"> = #f</var>, <var class="optkey">high</var> <var class="optval"> = #f</var>, <var class="optkey">mode</var> <var class="optval"> = #f</var> <var class="optkey">avoid</var> <var class="optval"> = #f</var>)
+      (<var class="arg">num</var>, <var class="arg">width</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">low</var> <var class="optval">= #f</var>, <var class="arg">high</var> <var class="optval">= #f</var>, <var class="arg">mode</var> <var class="optval">= #f</var> <var class="arg">avoid</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1342,7 +1315,7 @@ previous value of <var>num</var> implements a random walk (see also <a href="#ra
   <tr class="entry">
     <td class="formals">
       <span class="funcname">odds</span>
-      (<var class="arg">num</var>, <span class="meta">[</span><var class="opt">true</var> <var class="optval">#t</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">false</var> <var class="optval">#f</var><span class="meta">]</span>)
+      (<var class="arg">num</var> <a href="#opt">&amp;opt</a> <var class="arg">true</var> <var class="optval">= #t</var>, <var class="var">false</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1440,7 +1413,7 @@ Like <a href="#shuffle"><code>shuffle</code></a> except that <var>list</var> is 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">tendency</span>
-      (<var class="arg">x</var>, <var class="arg">low</var>, <var class="arg">high</var>, <span class="meta">[</span><var class="opt">gen</var> <a href="#ran"><var class="optval">ran</var></a><span class="meta">]</span>, <var class="rest">args...</var>)
+      (<var class="arg">x</var>, <var class="arg">low</var>, <var class="arg">high</var> <a href="#opt">&amp;opt</a>  <var class="arg">gen</var> <var class="optval">= <a href="#ran">ran</a></var>, <var class="rest">args...</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1554,7 +1527,7 @@ Returns a value between 0 and 1 with middle values more likely.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rangauss</span>
-      (<span class="meta">[</span><var class="opt">a</var> <var class="optval">1</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">b</var> <var class="optval">0</var><span class="meta">]</span>)
+      (<a href="#opt">&amp;opt</a>  <var class="arg">a</var> <var class="optval">= 1</var>, <var class="arg">b</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1572,7 +1545,7 @@ Returns unbounded value from the  <a href="http://en.wikipedia.org/wiki/Normal_d
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ranexp</span>
-      (<span class="meta">[</span><var class="opt">lambda</var> <var class="optval">1</var><span class="meta">]</span>)
+      (<a href="#opt">&amp;opt</a>  <var class="arg">lambda</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1590,7 +1563,7 @@ Returns a value greater than 0 from the  <a href="http://en.wikipedia.org/wiki/E
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ranbeta</span>
-      (<span class="meta">[</span><var class="opt">a</var> <var class="optval">.5</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">b</var> <var class="optval">.5</var><span class="meta">]</span>)
+      (<a href="#opt">&amp;opt</a>  <var class="var">a</var> <var class="optval">= .5</var>, <var class="var">b</var> <var class="optval">= .5</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1608,7 +1581,7 @@ Returns value between 0 and 1 from the  <a href="http://en.wikipedia.org/wiki/Be
   <tr class="entry">
     <td class="formals">
       <span class="funcname">rangamma</span>
-      (<span class="meta">[</span><var class="opt">k</var> <var class="optval">1</var><span class="meta">]</span>)
+      (<a href="#opt">&amp;opt</a> <var class="arg">k</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1644,7 +1617,7 @@ Returns an unbounded value from the <a href="http://en.wikipedia.org/wiki/Cauchy
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ranpoisson</span>
-      (<span class="meta">[</span><var class="opt">lambda</var> <var class="optval">1</var><span class="meta">]</span>)
+      (<a href="#opt">&amp;opt</a> <var class="arg">lambda</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1664,7 +1637,7 @@ Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wik
   <tr class="entry">
     <td class="formals">
       <span class="funcname">random-seed</span>
-      (<span class="meta">[</span><var class="opt">seed</var><span class="meta">]</span>)
+      (<a href="#opt">&amp;opt</a> <var class="arg">seed</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1672,7 +1645,7 @@ Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wik
 </table>
 <blockquote>
 <p>
-Returns or sets the current seed used by the random number generator. If <var>seed</var> is specified it should be a single integer or an actual <var>seed list</var> that was returned by this function. Reseeding the generator with a saved seed list will regenerate the exact same series of random numbers from that seed.
+Returns or sets the current seed used by the random number generator. If <var>seed</var> is specified it should be a single integer or an actual <var>seed list</var> that was returned by this function. Reseeding the generator with a saved seed list will regenerate the identical series of random numbers that the seed originally produced.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -1697,8 +1670,8 @@ produce data.
 <tr><th class="lcol">Pattern</th><th class="lcol">Description</th></tr>
 <tr><td><a href="#make-cycle">Cycle</a> </td><td>generates its elements in a continuous loop</td></tr>
 <tr><td><a href="#make-line">Line</a></td><td>generates its elements sequentially and sticks on last element</td></tr>
-<tr><td><a href="#make-palindrome">Palindrome</a></td><td>generates its elements forwards and backwards</td></tr>
 <tr><td><a href="#make-heap">Heap</a></td><td>generates random permutations of its elements</td></tr>
+<tr><td><a href="#make-palindrome">Palindrome</a></td><td>generates its elements forwards and backwards</td></tr>
 <tr><td><a href="#make-rotation">Rotation</a></td><td>generates systematic permutations of its elements</td></tr>
 <tr><td><a href="#make-weighting">Weighting</a></td><td>generates elements from a weighted random distribution</td></tr>
 <tr><td><a href="#make-markov">Markov</a></td><td>generates nth order Markov chains of its elements</td></tr>
@@ -1707,11 +1680,14 @@ produce data.
 </table>
 </div>
 
-<table id="make-cycle" class="entry">
+<!-- DEFINITION -->
+<table class="entry" id="make-cycle">
   <tr class="entry">
     <td class="formals">
     <span class="funcname">make-cycle</span>
-      (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>)
+      (<var class="arg">items</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">for</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1725,12 +1701,16 @@ Returns a pattern that generates its elements in a continual loop.
 <var>Limit</var> sets an optional limit on the number of periods that the pattern will generate; once this limit has been reached the pattern returns an <a href="#eod_">end of data</a> marker instead of data.
 </p>
 </blockquote>
+<!-- END DEFINITION -->
 
-<table id="make-line" class="entry">
+<!-- DEFINITION -->
+<table class="entry" id="make-line">
   <tr class="entry">
     <td class="formals">
       <span class="term">make-line</span>
-      (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>)
+      (<var class="arg">items</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">for</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1741,12 +1721,36 @@ Returns a pattern that generates its elements in a continual loop.
 Returns a pattern that generates <var>items</var> sequentially and sticks on the last item.
 </p>
 </blockquote>
+<!-- END DEFINITION -->
 
-<table id="make-palindrome" class="entry">
+<!-- DEFINITION -->
+<table class="entry" id="make-heap">
+  <tr class="entry">
+  <td class="formals">
+    <span class="funcname">make-heap</span>
+    (<var class="arg">items</var>
+    <a href="#optkey">&amp;optkey</a>
+    <var class="arg">for</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>)
+  </td>
+  <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; pattern</td></tr>
+</table>
+<blockquote>
+<p>
+Generates  random permutations of its <var>items</var>  (sampling without replacement). 
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="make-palindrome">
   <tr class="entry">
   <td class="formals">
     <span class="funcname">make-palindrome</span>
-    (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>, <var class="optkey">elide</var> <var class="optval"> = #f</var>)
+    (<var class="arg">items</var>
+    <a href="#optkey">&amp;optkey</a>
+    <var class="arg">for</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>, <var class="arg">elide</var> <var class="optval"> = #f</var>)
   </td>
   <!-- td class="label">Function</td -->
   </tr>
@@ -1757,12 +1761,16 @@ Returns a pattern that generates <var>items</var> sequentially and sticks on the
 Returns a pattern that generates <var>items</var> forwards and backwards. <var>Elide</var> determines what happens to the first and last items when the pattern reverses itself. If the value is false then these items are repeated. If the value is true then neither item is directly repeated. Otherwise the value can should be a two element list {<var>bool</var> <var>bool</var>} specifying the repeat value for the first and last item.
 </p>
 </blockquote>
+<!-- END DEFINITION -->
 
-<table id="make-weighting" class="entry">
+<!-- DEFINITION -->
+<table class="entry" id="make-weighting">
   <tr class="entry">
   <td class="formals">
     <span class="funcname">make-weighting</span>
-    (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>)
+    (<var class="arg">items</var>
+    <a href="#optkey">&amp;optkey</a>
+    <var class="arg">for</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>)
   </td>
   <!-- td class="label">Function</td -->
   </tr>
@@ -1780,13 +1788,16 @@ Each item can be an item, sub-pattern, or list:
 where <var>item</var> is the thing to generate, <var>weight</var> is its weight in the distribution relative to the other items in the pattern, <var>min</var> is the minimum number of times that <var>item</var> must be directly selected before another item can be considered, and <var>max</var> is the maximum number of times that <var>item</var> can be directly selected before another item must be selected.
 </p>
 </blockquote>
+<!-- END DEFINITION -->
 
-
-<table id="make-rotation" class="entry">
+<!-- DEFINITION -->
+<table class="entry" id="make-rotation">
   <tr class="entry">
     <td class="formals">
     <span class="funcname">make-rotation</span>
-      (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>, <var class="optkey">rotate</var> <var class="optval"> = {0}</var>)
+      (<var class="arg">items</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">for</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>, <var class="arg">rotate</var> <var class="optval"> = {0}</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1800,12 +1811,16 @@ Returns a pattern that rotates its items according to <var>rotate</var>, which c
   <p><code>{<var>start</var> <span class="meta">[</span><var>step 1</var><span class="meta">]</span> <span class="meta">[</span><var>width 1</var><span class="meta">]</span> <span class="meta">[</span><var>end</var><span class="meta">]</span>}</code></p>
 </blockquote>
 </blockquote>
+<!-- END DEFINITION -->
   
-<table id="make-markov" class="entry">
+<!-- DEFINITION -->
+<table class="entry" id="make-markov">
   <tr class="entry">
   <td class="formals">
     <span class="funcname">make-markov</span>
-    (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>, <var class="optkey">past </var> <var class="optval"> = {}</var>)
+    (<var class="arg">items</var>
+    <a href="#optkey">&amp;optkey</a>
+    <var class="arg">for</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>, <var class="arg">past </var> <var class="optval"> = {}</var>)
   </td>
   <!-- td class="label">Function</td -->
   </tr>
@@ -1825,11 +1840,13 @@ Items appearing before <code>-&gt;</code> in the rule are the past choice(s) tha
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="markov-analyze">
+<table id="markov-analyze" class="entry">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">markov-analyze</span>
-      (<var class="arg">list</var>, <var class="opt">order</var> = <var class="optval">1</var>, <var class="opt">mode</var> = <var class="optval">1</var>)
+      (<var class="arg">list</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">order</var> = <var class="optval">1</var>, <var class="arg">mode</var> = <var class="optval">1</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1843,11 +1860,13 @@ Analyzes a <var>list</var> of data for a specified Markov <var>order</var> (0-n)
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="make-graph" class="entry">
+<table class="entry" id="make-graph">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">make-graph</span>
-      (<var class="arg">items</var>, <var class="optkey">for</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>)
+      (<var class="arg">items</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">for</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1867,11 +1886,13 @@ where <var>item</var> is the item or pattern to generate, <var>to</var> is an id
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="make-repeater" class="entry">
+<table class="entry" id="make-repeater">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">make-repeater</span>
-      (<var class="arg">pattern</var>, <var class="optkey">for</var> <var class="optval"> = 1</var>, <var class="optkey">repeat</var> <var class="optval"> = #f</var>, <var class="optkey">limit</var> <var class="optval"> = #f</var>)
+      (<var class="arg">pattern</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">for</var> <var class="optval"> = 1</var>, <var class="arg">repeat</var> <var class="optval"> = #f</var>, <var class="arg">limit</var> <var class="optval"> = #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1897,7 +1918,7 @@ generated. The <var>repeat</var> initialization causes the
   <tr class="entry">
     <td class="formals">
       <span class="funcname">next</span>
-      (<var class="arg">pattern</var>, <span class="meta">[</span><var class="opt">chunk</var> <var class="optval">#f</var><span class="meta">]</span>)
+      (<var class="arg">pattern</var>, <a href="#opt">&amp;opt</a>  <var class="arg">chunk</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1984,7 +2005,7 @@ The following functions create, access or modify <var>spectrum</var> objects. A 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">make-spectrum</span>
-      (<var class="arg">freqs</var>, <span class="meta">[</span><var class="optvar">amps</var> <var class="optval">#f</var><span class="meta">]</span>, <span class="meta">[</span><var class="optvar">time</var> <var class="optval">#f</var><span class="meta">]</span>)
+      (<var class="arg">freqs</var> <a href="#optkey">&amp;optkey</a> <var class="arg">amps</var> <var class="optval">= #f</var>, <var class="arg">time</var> <var class="optval">= #f</var>)
     </td>
 
   </tr>
@@ -2034,7 +2055,7 @@ Returns a spectrum generated by <a href="http://en.wikipedia.org/wiki/Ring_modul
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="import-spear-spectra">
+<table class="entry" id="import-spear-frames">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">import-spear-frames</span>
@@ -2052,11 +2073,11 @@ Imports <a href="http://www.klingbeil.com/spear/">SPEAR</a> frame data in <var>f
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="export-spear-spectra">
+<table class="entry" id="export-spear-frames">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">export-spear-frames</span>
-      (<var class="arg">spectra</var> <var class="arg">file</var>)
+      (<var class="arg">spectra</var>, <var class="arg">file</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2259,7 +2280,7 @@ Returns a list containing the frequencies and amplitudes of <var>spectrum</var> 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-keys</span>
-      (<var class="arg">spectrum</var>, <var class="opt">order</var> = <var class="optval">1</var>, <var class="opt">thresh</var> = <var class="optval">0.0</var>, <var class="opt">quant</var> = <var class="optval">#f</var>, <var class="opt">unique</var> = <var class="optval">#f</var>, <var class="opt">min</var> = <var class="optval">#f</var>, <var class="opt">max</var> = <var class="optval">#f</var>)
+      (<var class="arg">spectrum</var> <a href="#optkey">&amp;optkey</a> <var class="arg">order</var> <var class="optval">= 1</var>, <var class="arg">thresh</var> <var class="optval">= 0.0</var>, <var class="arg">quant</var> <var class="optval">= #f</var>, <var class="arg">unique</var> <var class="optval">= #f</var>, <var class="arg">min</var> <var class="optval">= #f</var>, <var class="arg">max</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2318,26 +2339,6 @@ Adds a pair of <var>freq</var> and <var>amp</var> values into <var>spectrum</var
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<!--
-<table class="entry" id="merge-spectra">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">merge-spectrum</span>
-      (<var class="arg">spectrum</var>, <var class="rest">spectra...</var>)
-    </td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
-</table>
-<blockquote>
-<p>
-Merges <var>spectrum</var> with zero or more additional <var>spectra</var>. If <var>spectra</var> is null then a copy of <var>spectrum</var> is returned.
-</p>
-</blockquote>
--->
-<!-- END DEFINITION -->
-
-
-<!-- DEFINITION -->
 <table class="entry" id="spectrum-flip_">
   <tr class="entry">
     <td class="formals">
@@ -2362,7 +2363,7 @@ Inverts the frequencies in <var>spectrum</var> while preserving the minimum and 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-invert!</span>
-      (<var class="arg">spectrum</var>, <var class="optkey">point</var> = #f)
+      (<var class="arg">spectrum</var> <a href="#optkey">&amp;optkey</a> <var class="arg">point</var> = #f)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2382,7 +2383,7 @@ Inverts frequencies in <var>spectrum</var> around <var>point</var>, or around th
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-rescale!</span>
-      (<var class="arg">spectrum</var>, <var class="optkey">min</var> = #t, <var class="optkey">max</var> = #t)
+      (<var class="arg">spectrum</var> <a href="#optkey">&amp;optkey</a> <var class="arg">min</var> = #t, <var class="arg">max</var> = #t)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2399,8 +2400,8 @@ rescaling.
 </blockquote>
 
 <!-- DEFINITION -->
-<!--
-<table class="entry" id="spectrum-modify_">
+<!-- id="spectrum-modify_"
+<table class="entry">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-modify!</span>
@@ -2496,13 +2497,14 @@ following rescaling or filtering operations:</p>
 <table class="entry" id="make-automata">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">make-automata</span> (<var class="arg">cells</var>, <var class="arg">transfunc</var>,
-      <var class="optkey">title</var> <var class="optval">= #f</var>,
-      <var class="optkey">colormap</var> <var class="optval">= {}</var>,
-      <var class="optkey">backgroundcolor</var> = <span class="string">"white"</span>,
-      <var class="optkey">cellsize</var> <var class="optval">= 50</var>,
-      <var class="optkey">cellbordersize</var> <var class="optval">= 1</var>,
-      <var class="optkey">rows</var> <var class="optval">= 1</var>)
+      <span class="funcname">make-automata</span> (<var class="arg">cells</var>, <var class="arg">transfunc</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">title</var> <var class="optval">= #f</var>,
+      <var class="arg">colormap</var> <var class="optval">= {}</var>,
+      <var class="arg">backgroundcolor</var> = <span class="string">"white"</span>,
+      <var class="arg">cellsize</var> <var class="optval">= 50</var>,
+      <var class="arg">cellbordersize</var> <var class="optval">= 1</var>,
+      <var class="arg">rows</var> <var class="optval">= 1</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2533,7 +2535,9 @@ The transition function <var>transfunc</var> is called automatically and passed 
 <table class="entry" id="state">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">state</span> (<var class="arg">automata</var>, <var class="optkey">all</var> = #f)
+      <span class="funcname">state</span> (<var class="arg">automata</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">all</var> = #f)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; integer or list</td></tr>
@@ -2550,7 +2554,9 @@ Return the next integer state from <var>automata</var> or a list of all the stat
 <table class="entry" id="cell-state">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">cell-state</span> (<var class="arg">automata</var>, <var class="arg">index</var>, <var class="optkey">neighbor</var> = 0)
+      <span class="funcname">cell-state</span> (<var class="arg">automata</var>, <var class="arg">index</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">neighbor</var> = 0)
     </td>
   </tr>
 
@@ -2619,7 +2625,7 @@ Returns a current time stamp. Note that now values are not used by the scheduler
   <tr class="entry">
     <td class="formals">
       <span class="funcname">mouse-button</span>
-      (<var class="optkey">upval</var> <var class="optval">= #f</var>, <var class="optkey">downval</var> <var class="optval">= #t</var>)
+      (<a href="#optkey">&amp;optkey</a> <var class="arg">upval</var> <var class="optval">= #f</var>, <var class="arg">downval</var> <var class="optval">= #t</var>)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; object</td></tr>
@@ -2636,7 +2642,7 @@ Returns <var>downval</var> if the mouse button is currently depressed, otherwise
   <tr class="entry">
     <td class="formals">
       <span class="funcname">mouse-x</span>
-      (<var class="optkey">minval</var> <var class="optval">= 0.0</var>, <var class="optkey">maxval</var> <var class="optval">= 1.0</var>, <var class="optkey">warp</var> <var class="optval">= 1.0</var>)
+      (<a href="#optkey">&amp;optkey</a> <var class="arg">minval</var> <var class="optval">= 0.0</var>, <var class="arg">maxval</var> <var class="optval">= 1.0</var>, <var class="arg">warp</var> <var class="optval">= 1.0</var>)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; float</td></tr>
@@ -2653,7 +2659,7 @@ Returns the screen mouse x position scaled <var>minval</var> to <var>maxval</var
   <tr class="entry">
     <td class="formals">
       <span class="funcname">mouse-y</span>
-      (<var class="optkey">minval</var> <var class="optval">= 0.0</var>, <var class="optkey">maxval</var> <var class="optval">= 1.0</var>, <var class="optkey">warp</var> <var class="optval">= 1.0</var>)
+      (<a href="#optkey">&amp;optkey</a> <var class="arg">minval</var> <var class="optval">= 0.0</var>, <var class="arg">maxval</var> <var class="optval">= 1.0</var>, <var class="arg">warp</var> <var class="optval">= 1.0</var>)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; float</td></tr>
@@ -2741,7 +2747,7 @@ Returns the full pathname string of the current working directory.
 <table class="entry" id="directory">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">directory</span> (<var class="arg">spec</var>, <span class="meta">[</span><var class="opt">recurse</var> <var class="optval">#f</var><span class="meta">]</span>)
+      <span class="funcname">directory</span> (<var class="arg">spec</var> <a href="#opt">&amp;opt</a>  <var class="var">recurse</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2758,8 +2764,10 @@ Returns a list of absolute filenames matching wildcard <var>spec</var>. If <var>
 <table class="entry" id="file-version">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">file-version</span> (<var class="arg">filename</var>, <var class="optkey">version</var><var class="optval">=#t</var>,
-      <var class="optkey">nooverwrite</var><var class="optval">=#f</var>)
+      <span class="funcname">file-version</span> (<var class="arg">filename</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">version</var> <var class="optval">= #t</var>,
+      <var class="arg">nooverwrite</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2892,19 +2900,8 @@ sprout(simp(10,60, 90), <span class="string">"test.mid"</span>)
 <p>Every audio target implements a set of <var>methods</var> that you
 can route data to.  This routing is accomplished  using the <a
  href="send">send</a> macro or by calling the underlying method
-functions directly. 
-
-For example, the following calls are equivalent:</p>
-
-<div class="float">
-  <pre class="code">
-send(<span class="string">"mp:midi"</span>, <span class="keyword">key:</span> between(60, 90))
-mp:midi(<span class="keyword">key:</span> between(60, 90))
-</pre>
-</div>
-
-<p>
-Using <code>send</code> has two advantages: (1) it clearly identifies code that sends data to audio ports (2) it can check arguments at read time so keyword argument errors are caught before any code actually executes.
+functions directly. Using <a
+ href="send">send</a> has two advantages: (1) it clearly identifies code that sends data to audio ports (2) it can check arguments at read time so keyword argument errors are caught before any code actually executes.
 </p>
 
 <!-- DEFINITION -->
@@ -2930,10 +2927,18 @@ underlying message function is (1) for some messages the send macro can
 perform argument testing at eval time rather
 than run time and (2) using send makes it very clear that the code is
 sending audio information. </p>
-
-
 </blockquote>
 <!-- END DEFINITION -->
+
+<p>
+For example, the following two calls are equivalent:</p>
+
+<div class="float">
+  <pre class="code">
+send(<span class="string">"mp:midi"</span>, <span class="keyword">key:</span> between(60, 90))
+mp:midi(<span class="keyword">key:</span> between(60, 90))
+</pre>
+</div>
 
 <h3 id="midi-out">Midi Out</h3>
 
@@ -2943,10 +2948,10 @@ class="menuitem">Audio&gt;Midi Out&gt;</span> menu to select an output device. Y
 random burst of messages to the output device.</p>
 
 <!-- DEFINITION -->
-<table id="mp:midi" class="entry">
+<table class="entry" id="mp:midi">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:midi"</span>, <var class="optkey">time</var> <var class="optval">= 0</var>, <var class="optkey">dur</var> <var class="optval"> = .5</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">amp</var> <var class="optval"> = .5</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+      <span class="funcname">mp:midi</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>, <var class="arg">dur</var> <var class="optval">= .5</var>, <var class="arg">key</var> <var class="optval">= 60</var>, <var class="arg">amp</var> <var class="optval">= .5</var>, <var class="arg">chan</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2956,16 +2961,16 @@ random burst of messages to the output device.</p>
 
 <blockquote>
 <p>
-Send note data to midi port.
+Send note data to midi port. Note: if a process using mp:midi is sprouted in the context of a Fomus score then mp:midi will automatically route its note date to the Fomus score, with the midi channel number used as the Fomus part id.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="mp:on"  class="entry">
+<table class="entry" id="mp:on">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:on"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">amp</var> <var class="optval"> = .5</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+      <span class="funcname">mp:on</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>, <var class="arg">key</var> <var class="optval">= 60</var>, <var class="arg">amp</var> <var class="optval">= .5</var>, <var class="arg">chan</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2983,7 +2988,7 @@ Send note on data to midi port.
 <table class="entry" id="mp:off">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:off"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">key</var> <var class="optval"> = 60</var>, <var class="optkey">vel</var> <var class="optval"> = 127</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+      <span class="funcname">mp:off</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>, <var class="arg">key</var> <var class="optval">= 60</var>, <var class="arg">vel</var> <var class="optval">= 127</var>, <var class="arg">chan</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2995,10 +3000,10 @@ Send note on data to midi port.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="mp:prog" class="entry">
+<table class="entry" id="mp:prog">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:prog"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+      <span class="funcname">mp:prog</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>, <var class="arg">val</var> <var class="optval">= 0</var>, <var class="arg">chan</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3010,10 +3015,10 @@ Send note on data to midi port.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="mp:instruments" class="entry">
+<table class="entry" id="mp:instruments">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:instruments"</span>, <var class="arg">pc</var> <var class="rest">...</var>)
+      <span class="funcname">mp:instruments</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">pc</var> <var class="rest">...</var>)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3026,10 +3031,10 @@ Sends up to sixteen program changes out the Midi port and updates the port's ins
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="mp:ctrl" class="entry">
+<table class="entry" id="mp:ctrl">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:ctrl"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">num</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+      <span class="funcname">mp:ctrl</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>, <var class="arg">num</var> <var class="optval">= 0</var>, <var class="arg">val</var> <var class="optval">= 0</var>, <var class="arg">chan</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3039,10 +3044,10 @@ Sends up to sixteen program changes out the Midi port and updates the port's ins
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="mp:touch" class="entry">
+<table class="entry" id="mp:touch">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:touch"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+      <span class="funcname">mp:touch</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>, <var class="arg">val</var> <var class="optval">= 0</var>, <var class="arg">chan</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3057,10 +3062,10 @@ Sends after touch value to midi port.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry">
+<table class="entry" id="mp:press">
   <tr class="entry">
-    <td id="mp:press" class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:press"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+    <td class="formals">
+      <span class="funcname">mp:press</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>, <var class="arg">val</var> <var class="optval">= 0</var>, <var class="arg">chan</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3075,10 +3080,10 @@ Sends channel pressure value to midi port.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry">
+<table class="entry" id="mp:bend">
   <tr class="entry">
-    <td id="mp:bend" class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:bend"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 8192</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var>)
+    <td class="formals">
+      <span class="funcname">mp:bend</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>, <var class="arg">val</var> <var class="optval">= 8192</var>, <var class="arg">chan</var> <var class="optval">= 0</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3094,9 +3099,13 @@ Sends pitch bend value 0-16383 to midi port.
 <h3 id="midi-in">Midi In</h3>
 
 <!-- DEFINITION -->
-<table id="mp:receiver" class="entry">
+<table class="entry" id="mp:receiver">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"mp:receiver"</span>, <span class="meta">[</span><var class="opt">opcode</var> ,<span class="meta">]</span> <var class="arg">function</var>)
+    <span class="funcname">mp:receiver</span> (<var class="arg">function</var>)
+  </td>
+  </tr>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">mp:receiver</span> (<var class="arg">opcode</var>, <var class="arg">function</var>)
   </td>
 
   </tr>
@@ -3120,12 +3129,10 @@ To clear all current receivers call <code>mp:receiver</code> with no arguments.
 </blockquote>
 <!-- END DEFINITION -->
 
-
 <!-- DEFINITION -->
-<table id="mp:receiverq" class="entry">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:receiver?"</span> <span class="meta">[</span>, <var class="opt">opcode</var><span class="meta">]</span>)
+<table class="entry" id="mp:receiver_qm">
+  <tr class="entry"> <td class="formals">
+      <span class="funcname">mp:receiver?</span> (<a href="#opt">&amp;opt</a> <var class="arg">opcode</var> <var class="optval">= #f</var>)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; boolean or list</td></tr>
@@ -3141,7 +3148,7 @@ Returns true if a receiver for <var>opcode</var> is currently in effect otherwis
 <table id="mp:inchans" class="entry">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:inchans"</span>, <var class="arg">chan ...</var>)
+      <span class="funcname">mp:inchans</span> (<var class="arg">chan ...</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3158,7 +3165,7 @@ Enables MIDI input only on the specified channels. Channel values are integers b
 <table id="mp:inops" class="entry">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">send</span> (<span class="string">"mp:inops"</span>, <var class="arg">opcode ...</var>)
+      <span class="funcname">mp:inops</span> (<var class="arg">opcode ...</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3167,7 +3174,7 @@ Enables MIDI input only on the specified channels. Channel values are integers b
 
 <blockquote>
 <p>
-Enables MIDI input only for the specified MIDI opcodes. Opcodes are integers between #x8 and #xE (<code>mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend</code>). Specify a single <code>#t</code> to enable all opcode types and <code>#f</code> to disable all opcodes.
+Enables MIDI input only for the specified MIDI opcodes. Opcodes are integers between #x8 and #xE (<code id="mm:off">mm:off</code> <code id="mm:on">mm:on </code> <code id="mm:touch">mm:touch</code> <code id="mm:ctrl">mm:ctrl</code> <code id="mm:prog">mm:prog</code> <code id="mm:press">mm:press</code> <code id="mm:bend">mm:bend</code>). Specify a single <code>#t</code> to enable all opcode types and <code>#f</code> to disable all opcodes.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -3353,16 +3360,15 @@ fms:note(0, 1, 60)
 <!-- DEFINITION -->
 <table id="fms:note" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:note"</span>,
-    <var class="optkey">time</var> <var class="optval">= 0</var>,
-    <var class="arg">dur</var>,
-    <var class="arg">pitch</var>,
-    <var class="optkey">part</var>,
-    <var class="optkey">voice</var> <var class="optval">= 1</var>,
-    <var class="optkey">dyn</var> <var class="optval">= 0</var>,
-    <var class="optkey">grace</var>,
-    <var class="optkey">marks</var> <var class="optval">= {}</var>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <span class="funcname">fms:note</span> (<var class="arg">dur</var>,
+    <var class="arg">pitch</var>
+    <a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>,
+    <var class="arg">part</var>,
+    <var class="arg">voice</var> <var class="optval">= 1</var>,
+    <var class="arg">dyn</var> <var class="optval">= 0</var>,
+    <var class="arg">grace</var>,
+    <var class="arg">marks</var> <var class="optval">= {}</var>,
+    <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3380,14 +3386,13 @@ and <var>sets</var> are lists of <a href="#marks">marks</a> and <a href="#settin
 <!-- DEFINITION -->
 <table id="fms:rest" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:rest"</span>,
-    <var class="optkey">time</var> <var class="optval">= 0</var>,
-    <var class="arg">dur</var>,
-    <var class="optkey">part</var>,
-    <var class="optkey">voice</var> <var class="optval">= 1</var>,
-    <var class="optkey">grace</var>,
-    <var class="optkey">marks</var> <var class="optval">= {}</var>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <span class="funcname">fms:rest</span> (<var class="arg">dur</var>
+    <a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>,
+    <var class="arg">part</var>,
+    <var class="arg">voice</var> <var class="optval">= 1</var>,
+    <var class="arg">grace</var>,
+    <var class="arg">marks</var> <var class="optval">= {}</var>,
+    <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3403,14 +3408,13 @@ Send a rest event to the currently selected score at <var>time</var>.
 <!-- DEFINITION -->
 <table id="fms:mark" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:mark"</span>,
-    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <span class="funcname">fms:mark</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>,
     <var class="arg">dur</var> <var class="optval">= 0</var>,
-    <var class="optkey">part</var> ,
-    <var class="optkey">voice</var> <var class="optval">= 1</var>,
-    <var class="optkey">grace</var> ,
-    <var class="optkey">marks</var> <var class="optval">= {}</var>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <var class="arg">part</var> ,
+    <var class="arg">voice</var> <var class="optval">= 1</var>,
+    <var class="arg">grace</var> ,
+    <var class="arg">marks</var> <var class="optval">= {}</var>,
+    <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3426,10 +3430,9 @@ Send a mark event to the currently selected score at <var>time</var>.
 <!-- DEFINITION -->
 <table id="fms:meas" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:meas"</span>,
-    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <span class="funcname">fms:meas</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>,
     <var class="arg">dur</var> <var class="optval">= 0</var>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3447,8 +3450,7 @@ Send a measure to the currently selected to score at <var>time</var>.
 <!-- DEFINITION -->
 <table id="fms:part" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:part"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <span class="funcname">fms:part</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3466,8 +3468,7 @@ defined.
 <!-- DEFINITION -->
 <table id="fms:inst" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:inst"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <span class="funcname">fms:inst</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3485,8 +3486,7 @@ instruments are defined.
 <!-- DEFINITION -->
 <table id="fms:percinst" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:percinst"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <span class="funcname">fms:percinst</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3503,8 +3503,7 @@ score.
 <!-- DEFINITION -->
 <table id="fms:metapart" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:metapart"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <span class="funcname">fms:metapart</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3520,10 +3519,9 @@ Create a new metapart to use in the currently selected score.
 <!-- DEFINITION -->
 <table id="fms:setting" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:setting"</span>,
-    <var class="arg">set</var>,
-    <var class="arg">value</var>,
-    <var class="arg">append</var> <var class="optval">= #f</var>)
+    <span class="funcname">fms:setting</span> (<var class="arg">set</var>,
+    <var class="arg">value</var>
+    <a href="#optkey">&amp;optkey</a> <var class="arg">append</var> <var class="optval">= #f</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3539,8 +3537,7 @@ selected score.
 <!-- DEFINITION -->
 <table id="fms:measdef" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:measdef"</span>,
-    <var class="optkey">sets</var> <var class="optval">= {}</var>)
+    <span class="funcname">fms:measdef</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">sets</var> <var class="optval">= {}</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3559,8 +3556,7 @@ score.  Measdefs are more useful in .fms files than in processes.
 <!-- DEFINITION -->
 <table id="fms:new-score" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:new-score"</span>,
-    <var class="arg">file</var>)
+    <span class="funcname">fms:new-score</span> (<var class="arg">file</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3576,8 +3572,7 @@ Create a brand new empty score with output <var>file</var>.
 <!-- DEFINITION -->
 <table id="fms:load-score" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:load-score"</span>,
-    <var class="arg">file</var>)
+    <span class="funcname">fms:load-score</span> (<var class="arg">file</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3593,8 +3588,7 @@ Load a .fms file into a new score.
 <!-- DEFINITION -->
 <table id="fms:select-score" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:select-score"</span>,
-    <var class="arg">file</var>)
+    <span class="funcname">fms:select-score</span> (<var class="arg">file</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3611,8 +3605,7 @@ score is created if one with that name does not already exist.
 <!-- DEFINITION -->
 <table id="fms:save-score" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:save-score"</span>,
-    <var class="arg">file</var>)
+    <span class="funcname">fms:save-score</span> (<var class="arg">file</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3629,9 +3622,8 @@ can be edited and/or reloaded with the <a href="#fms:load-score">load-score</a> 
 <!-- DEFINITION -->
 <table id="fms:merge-score" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:merge-score"</span>,
-    <var class="arg">fromfile</var>,
-    <var class="arg">time</var> <var class="optval">= 0</var>)
+    <span class="funcname">fms:merge-score</span> (<var class="arg">fromfile</var>
+    <a href="#optkey">&amp;optkey</a> <var class="arg">time</var> <var class="optval">= 0</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3649,7 +3641,7 @@ The optional <var>time</var> argument shifts the events in time by the specified
 <!-- DEFINITION -->
 <table id="fms:run" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:run"</span>)
+    <span class="funcname">fms:run</span> ()
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3666,7 +3658,7 @@ not been specified, this produces an error.
 <!-- DEFINITION -->
 <table id="fms:clear-score" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:clear-score"</span>)
+    <span class="funcname">fms:clear-score</span> ()
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3683,7 +3675,7 @@ definitions) from the currently selected score.
 <!-- DEFINITION -->
 <table id="fms:delete-score" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"fms:delete-score"</span>)
+    <span class="funcname">fms:delete-score</span> ()
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3717,7 +3709,7 @@ osc:open(7779, 7770)
 <!-- DEFINITION -->
 <table id="osc:open" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"osc:open"</span> <var class="arg">serverport</var>, <var class="arg">targetport</var>)
+    <span class="funcname">osc:open</span> (<var class="arg">serverport</var>, <var class="arg">targetport</var>)
   </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3732,7 +3724,7 @@ Opens an OSC connection with <var>serverport</var> as the CM application's input
 <!-- DEFINITION -->
 <table id="osc:close" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"osc:close"</span>)
+    <span class="funcname">osc:close</span> ()
   </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3747,9 +3739,9 @@ Closes an open OSC connection.
 <!-- DEFINITION -->
 <table id="osc:message" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"osc:message"</span>, <var class="arg">path</var>, <var class="rest">data ...</var>)</td>
+    <span class="funcname">osc:message</span> (<var class="arg">path</var>, <var class="rest">data ...</var>)</td>
   </tr>
-  <tr class="entry"> <td class="formals"><span class="funcname">send</span> (<span class="string">"osc:message"</span>, <var class="arg">list</var>)</td>
+  <tr class="entry"> <td class="formals"><span class="funcname">osc:message</span> (<var class="arg">list</var>)</td>
   </tr>
 
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3783,11 +3775,11 @@ Sends an OSC message consisting of an OSC <var>path</var> (string) followed by z
 <!-- DEFINITION -->
 <table id="osc:bundle" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"osc:bundle"</span>, <var class="arg">time</var>, <var class="rest">message ...</var>)
+    <span class="funcname">osc:bundle</span> (<var class="arg">time</var>, <var class="rest">message ...</var>)
   </td>
   </tr>
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"osc:bundle"</span>,  <var class="arg">time</var>, <var class="arg">list</var>)
+    <span class="funcname">osc:bundle</span> (<var class="arg">time</var>, <var class="arg">list</var>)
   </td>
   </tr>
 
@@ -3802,9 +3794,12 @@ Sends an OSC bundle consisting of a <var>time</var> tag (number) followed by one
 <!-- DEFINITION -->
 <table id="osc:receiver" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"osc:receiver"</span>, <span class="meta">[</span><var class="arg">path</var> ,<span class="meta">]</span> <var class="arg">function</var>)
+    <span class="funcname">osc:receiver</span> (<var class="arg">function</var>)
   </td>
-
+  </tr>
+  <tr class="entry"> <td class="formals">
+    <span class="funcname">osc:receiver</span> (<var class="arg">path</var>, <var class="arg">function</var>)
+  </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
@@ -3827,7 +3822,7 @@ To clear all current receivers call <code>osc:receiver</code> with no arguments.
 <!-- DEFINITION -->
 <table id="osc:receiver_qm" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"osc:receiver?"</span> <span class="meta">[</span>, <var class="opt">path</var><span class="meta">]</span>)
+    <span class="funcname">osc:receiver?</span> (<a href="#opt">&amp;opt</a>  <var class="arg">path</var>)
   </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; boolean or list</td></tr>
@@ -3865,7 +3860,7 @@ cs:i(1, 0, 1, 440, 1000)
 <!-- DEFINITION -->
 <table id="cs:i" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"cs:i"</span>, <var class="arg">ins</var>, <var class="arg">start</var>, <var class="arg">dur</var> <var class="rest">...</var>)
+    <span class="funcname">cs:i</span> (<var class="arg">ins</var>, <var class="arg">start</var>, <var class="arg">dur</var> <var class="rest">...</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3882,7 +3877,7 @@ Sends instrument data to Csound.  The first value should be the instrument's num
 <!-- DEFINITION -->
 <table id="cs:f" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"cs:f"</span>, <var class="arg">num</var> <var class="rest">...</var>)
+    <span class="funcname">cs:f</span> (<var class="arg">num</var> <var class="rest">...</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3898,9 +3893,9 @@ Sends function table data to Csound. Similar to <span class="string">"cs:i"</spa
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="cs:data" class="entry">
+<table id="cs:event" class="entry">
   <tr class="entry"> <td class="formals">
-    <span class="funcname">send</span> (<span class="string">"cs:event"</span>, <var class="arg">list</var>)
+    <span class="funcname">cs:event</span> (<var class="arg">list</var>)
   </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -3926,7 +3921,7 @@ Sends an <var>event list</var> to Csound. The first element in the list must be 
 
 <span class="reserved">process</span> mysco (num, rhy)
   <span class="reserved">repeat</span> num
-  send("mp:i", 1, elapsed(), .5, between(220,440), .2)
+  send("cs:i", 1, elapsed(), .5, between(220,440), .2)
   <span class="reserved">wait</span> rhy
 <span class="reserved">end</span>
 
@@ -3936,7 +3931,7 @@ sprout(mysco(20, .2), <span class="string">"mytest.sco</span>")
 
 <span class="reserved">file</span> <span class="string">"mytest.sco"</span> ()
   <span class="reserved">loop</span> <span class="reserved">for</span> time <span class="reserved">from</span> 0 <span class="reserved">by</span> .2
-    send(<span class="string">"mp:i"</span>, 1, time, .5, between(220,440), .2)
+    send(<span class="string">"cs:i"</span>, 1, time, .5, between(220,440), .2)
   <span class="reserved">end</span>
 <span class="reserved">end</span>
 </pre>
@@ -3983,17 +3978,25 @@ tick for real time scheduling and as fast as possible for file-based sheduling.<
 time, or in faster-than real time if a file (string) is specified as the third argument to the function. When the scheduler runs faster-than real time then the time values inside processes are still treated as if they were seconds but the scheduling clock is running as fast as it can, i.e. is does not actually wait that amount of (real) time before calling the next process in the queue.
 </p>
 
-<table id="sprout" class="entry">
+<!-- DEFINITION -->
+<table class="entry" id="sprout">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">sprout</span> (<var class="arg">process</var>, <span class="meta">[</span><var class="opt">ahead</var> <var class="optval">0</var><span class="meta">]</span>, <span class="meta">[</span><var class="opt">id</var> <var class="optval">#f</var><span class="meta">]</span>)
+      <span class="funcname">sprout</span> (<var class="arg">process</var> <a href="#opt">&amp;opt</a> <var class="arg">ahead</var> <var class="optval">= 0</var>, <var class="arg">id</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
 
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">sprout</span> (<var class="optkey">process</var>, <span class="meta">[</span><var class="opt">ahead</var> <var class="optval">0</var><span class="meta">]</span>, <var class="arg">file</var> <span class="meta">{</span>, <var class="rest">keyword option</var>}*)
+      <span class="funcname">sprout</span> (<var class="arg">process</var>, <var class="arg">file</var> <var class="rest">...</var>)
+    </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">sprout</span> (<var class="arg">process</var>, <var class="arg">ahead</var>, <var class="arg">file</var> <var class="rest">...</var>)
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -4005,12 +4008,12 @@ time, or in faster-than real time if a file (string) is specified as the third a
 
 <p>
 
-Adds <var>process</var> to the scheduler to start executing <var>ahead</var> seconds from now. Both <var>process</var> and <var>ahead</var> can be lists, in which case processes and start time are paired in a left-to-right order.</p>
+Adds <a href="#processes"><var>process</var></a> to the scheduler to start executing <var>ahead</var> seconds from now. Both <var>process</var> and <var>ahead</var> can be lists, in which case processes and start time are paired in a left-to-right order.</p>
 
 <p>If a <var>file</var> is <span style="text-decoration:underline;">not</span> specified then the process(es) will run in real time. In this case <var>id</var> can be used to identify the process(es) in the scheduling queue; tagged processes can then be selectively removed from the scheduler using <a href="#stop">stop</a>.  </p>
 
 
-<p>If the third argument is a <var>file</var> then the scheduler will run in faster-than real time and all output will be sent to the open file.
+<p>If a <var>file</var> is specified then the scheduler will run in faster-than real time and all output will be sent to the open file.
 CM currently supports the following file types:
 </p>
 
@@ -4031,7 +4034,26 @@ CM currently supports the following file types:
 </ul>
 
 </blockquote>
+<!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="sprout-hook">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">sprout-hook</span> (<a href="#opt">&amp;opt</a>  <var class="var">hook</var> <var class="optkey">= #f</var>)
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; #f or procedure</td></tr>
+</table>
+<blockquote>
+<p>
+Gets or sets the current hook function associated with sprouting.
+If called without any argument the current hook is return or #f if no hook is set. Otherwise, if <var>hook</var> is a function, it will be called each time sprout is involked and passed the current output file or #f if no file was specified to sprout. To clear the current sprout hook specify #f as the <var>hook</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
 <table class="entry" id="stop">
   <tr class="entry">
     <td class="formals">
@@ -4140,6 +4162,7 @@ sprout( simp(20, .5, 60, 80))
 Returns an iterative function to execute in the scheduler in real time or faster-than real time. <var>Parameters</var> consists of zero or more required parameters, optionally followed by <code><span class="reserved">&amp;optkey</span></code> and any <a href="#optkey_arguments">optkey arguments</a>.
 Following the parameter list comes a series of iteration clauses as documented under <a href="#loop">loop</a> and with the following two additional features:
 </p>
+<!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table class="entry" id="wait">
@@ -4164,7 +4187,7 @@ Causes the process to wait <var>time</var> seconds before the next iteration. To
 <table class="entry" id="elapsed">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">elapsed</span> (<span class="meta">[</span><var class="opt">scoretime?</var> <var class="optval">#f</var><span class="meta">]</span>)
+      <span class="funcname">elapsed</span> (<a href="#opt">&amp;opt</a> <var class="arg">scoretime?</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -4319,27 +4342,38 @@ Provides full control over the interpretation of the data fields in
 </blockquote>
 <!-- END DEFINITION -->
 
-<!-- DEFINITION --> <table class="entry" id="plot-data"> <tr
-class="entry"> <td class="formals"> <span
-class="funcname">plot-data</span> (<var class="arg">title</var> <span class="meta">[</span><var
-class="arg">all</var> #t<span class="meta">]</span>) </td> </tr> <tr><td class="retval"
-colspan="2">&rarr; list</td></tr> </table> <blockquote> <p> Returns
-the point data from the plot window whose <var>title</var> is
-specified. If <var>all</var> is false then only the points in the
-topmost (focus) layer will be returned otherwise all layer data will be
-returned.  </p> </blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION --> <table class="entry" id="plot-hook"> <tr
-class="entry"> <td class="formals"> <span
-class="funcname">plot-hook</span> (<var class="arg">title</var>, <var
-class="arg">function</var>, <var class="rest">userdata...</var>)</td> </tr> <tr><td class="retval"
-colspan="2">&rarr; list</td></tr> </table> <blockquote> <p>Associates <var>function</var> with Control-Option-Mouseclick inside the plot window named <var>title</var>. When a Control-Option-Mouseclick occurs, <var>function</var> will be be called automatically and passed the X and Y values of the mouse click along with any additional values specified in  <var>userdata</var>. The  <var>function</var> (hook) should return a list of fully specified <a href="#point_record">point records</a> to add to the window, or an empty list if no points should be added.
+<!-- DEFINITION -->
+<table class="entry" id="plot-data">
+  <tr class="entry">
+    <td class="formals">
+    <span class="funcname">plot-data</span>
+    (<var class="arg">title</var> <a href="#opt">&amp;opt</a> <var class="arg">all</var> <var class="optval">= #t</var>)
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p> Returns the point data from the plot window whose <var>title</var> is specified. If <var>all</var> is false then only the points in the topmost (focus) layer will be returned otherwise all layer data will be
+returned.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
-
+<!-- DEFINITION -->
+<table class="entry" id="plot-hook">
+  <tr class="entry">
+    <td class="formals"> <span class="funcname">plot-hook</span>
+      (<var class="arg">title</var>, <var class="arg">function</var>, <var class="rest">userdata...</var>)
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Associates <var>function</var> with Control-Option-Mouseclick inside the plot window named <var>title</var>. When a Control-Option-Mouseclick occurs, <var>function</var> will be be called automatically and passed the X and Y values of the mouse click along with any additional values specified in  <var>userdata</var>. The  <var>function</var> (hook) should return a list of fully specified <a href="#point_record">point records</a> to add to the window, or an empty list if no points should be added.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <h2 id="sal">SAL (version 2)</h2> 
 
@@ -4744,39 +4778,45 @@ follow <var>arg</var>.
 </p>
 
 <dl >
-<dt id="sal:required-parameters">Required arguments</dt>
-<dd>Required arguments must be specified. A required argument appears in the function definition documentation as <var class="arg">parameter</var>.</dd>
-
-<dt id="sal:optional-parameters">Optional argument</dt>
-<dd>Optional arguments may be specified or not.  If not, they receive a default value, which is false if not otherwise indicated.  An optional argument appears in function definitions  as <code><span class="meta">[</span><var class="arg">arg</var> <var class="optval">value</var><span class="meta">]</span></code></dd>
-
-<dt id="sal:optkey-parameters">Opt/key argument</dt>
-<dd>Opt/key arguments are optional arguments that can be specified either positionally or by preceding the value by the keyword name of the argument (the name of the argument with a colon at the end.) For example if the function <code>foo</code> is defined:
-
-  
-<pre><span class="reserved">function</span> foo (<span class="reserved">&amp;optkey</span> a, b = -99)
-  list(a,b)
-<span class="reserved">end</span>
-</pre>
-  
-<p> then it could be called in any of the following ways:</p>
-
-<code>foo() foo(4) foo(2,3)  foo(a: 3) foo( b: 99) foo(a: 2, b: 4)  foo(b: 99, a: 2)</code>   
-
-<p>
-  An opt/key parameter declaration is shown in the documentation as <var class="optkey">parameter</var> <var class="optval"> = value</var>
+<dt id="sal:required-parameters"><span style="font-weight:bold">Required arguments</span></dt>
+<dd>
+  <p>
+  Required arguments must be specified, that is, each required argument must have an explicit value provided in the function call.
 </p>
 </dd>
 
-<dt id="sal:variable-parameters">Variable parameters</dt>
-<dd>Variable parameters may be specified zero or more times.  A variable parameter is shown in the function definition documentation as <code><var class="rest">parameter...</var></code> where  <var>...</var> means "the rest of the arguments".
+<dt id="sal:optional-parameters"><span id="opt" style="font-weight:bold">Optional arguments</span></dt>
+<dd>
+  <p>
+  Optional arguments may be specified or not.  If not, they receive a default value, which is #f (false) if not otherwise indicated.
+</p>
+</dd>
+
+<dt id="sal:optkey-parameters"><span id="optkey" style="font-weight:bold">Optional/keyword arguments</span></dt>
+<dd>
+  <p>
+  Opt/key arguments are optional arguments that can be specified positionally or by preceding the argument value by its keyword name. In Scheme keyword argument names start with a colon and in SAL they end with a colon. For example, if a function <code>foo</code> has two opt/key arguments <var>a</var> and <var>b</var> then in SAL the function could be called in any of the following ways:</p>
+
+<code>foo() foo(4) foo(2,3) foo(a: 3) foo(b: 99) foo(a: 2, b: 4) foo(b: 99, a: 2)</code>   
+
+<p> and in Scheme:</p>
+
+<code>(foo) (foo 4) (foo 2 3) (foo :a 3) (foo :b 99) (foo :a 2 :b 4) (foo :b 99 :a 2)</code>   
+
 <p></p>
+</dd>
+
+<dt id="sal:variable-parameters"><span id="restarg" style="font-weight:bold">Variable arguments</span></dt>
+<dd>
+  <p>
+  A variable argument takes zero or more values.  A variable argument is shown in the documentation as <code><var class="rest">...</var></code> which means 'the rest of the arguments'.
+</p>
 </dd>
 </dl>
 
 <!-- EXAMPLES -->
 
-<h3 id="sal_scheme_cltl">c. Table of SAL, Scheme and Common Lisp</h3>
+<h3 id="sal_scheme_cltl">C. Table of SAL, Scheme and Common Lisp</h3>
 
 <table>
   <caption>A. Translation table for SAL, Scheme and Common Lisp entities.
@@ -5356,14 +5396,7 @@ follow <var>arg</var>.
       (loop ... )
     </td>
   </tr>
-
-  
-
-
   <!--  TABLE FOOTER -->
-
-
-
   <tr>
     <td> </td>
     <td colspan="3" id="foot1">1. Reference Scheme implementation: <a href="http://www.call-with-current-continuation.org/">Chicken Scheme</a>
@@ -5381,20 +5414,121 @@ follow <var>arg</var>.
 </table>    
 
 
+<h2 id="index">Index</h2>
 
+<h4>b</h4>
+<p>
+<a href="#between">between</a>, <a href="#butlast">butlast</a>
+</p>
 
+<h4>c</h4>
+<p>
+<a href="#cell-state">cell-state</a>, <a href="#cents-_ratio">cents-&gt;ratio</a>, <a href="#chdir">chdir</a>, <a href="#concat">concat</a>, <a href="#cont">cont</a>, <a href="#cs:event">cs:event</a>, <a href="#cs:f">cs:f</a>, <a href="#cs:i">cs:i</a>
+</p>
 
+<h4>d</h4>
+<p>
+<a href="#decimals">decimals</a>, <a href="#deltas">deltas</a>, <a href="#directory">directory</a>, <a href="#discrete">discrete</a>, <a href="#divide">divide</a>, <a href="#drunk">drunk</a>
+</p>
+
+<h4>e</h4>
+<p>
+<a href="#elapsed">elapsed</a>, <a href="#eod_">eod?</a>, <a href="#eop_">eop?</a>, <a href="#export-spear-frames">export-spear-frames</a>
+</p>
+
+<h4>f</h4>
+<p>
+<a href="#file-version">file-version</a>, <a href="#first">first</a>, <a href="#fit">fit</a>, <a href="#float">float</a>, <a href="#fm-spectrum">fm-spectrum</a>, <a href="#fms:clear-score">fms:clear-score</a>, <a href="#fms:delete-score">fms:delete-score</a>, <a href="#fms:inst">fms:inst</a>, <a href="#fms:load-score">fms:load-score</a>, <a href="#fms:mark">fms:mark</a>, <a href="#fms:meas">fms:meas</a>, <a href="#fms:measdef">fms:measdef</a>, <a href="#fms:merge-score">fms:merge-score</a>, <a href="#fms:metapart">fms:metapart</a>, <a href="#fms:new-score">fms:new-score</a>, <a href="#fms:note">fms:note</a>, <a href="#fms:part">fms:part</a>, <a href="#fms:percinst">fms:percinst</a>, <a href="#fms:rest">fms:rest</a>, <a href="#fms:run">fms:run</a>, <a href="#fms:save-score">fms:save-score</a>, <a href="#fms:select-score">fms:select-score</a>, <a href="#fms:setting">fms:setting</a>
+</p>
+
+<h4>g</h4>
+<p>
+<a href="#greater_eqm">greater=?</a>, <a href="#greater_qm">greater?</a>
+</p>
+
+<h4>h</h4>
+<p>
+<a href="#harmonics">harmonics</a>, <a href="#hz">hz</a>
+</p>
+
+<h4>i</h4>
+<p>
+<a href="#import-spear-frames">import-spear-frames</a>, <a href="#in-tempo">in-tempo</a>, <a href="#int">int</a>, <a href="#interp">interp</a>, <a href="#invert">invert</a>
+</p>
+
+<h4>k</h4>
+<p>
+<a href="#key">key</a>
+</p>
+
+<h4>l</h4>
+<p>
+<a href="#last">last</a>, <a href="#less_eqm">less=?</a>, <a href="#less_qm">less?</a>, <a href="#list-set_">list-set!</a>, <a href="#load">load</a>, <a href="#log10">log10</a>, <a href="#log2">log2</a>
+</p>
+
+<h4>m</h4>
+<p>
+<a href="#make-automata">make-automata</a>, <a href="#make-cycle">make-cycle</a>, <a href="#make-graph">make-graph</a>, <a href="#make-heap">make-heap</a>, <a href="#make-list">make-list</a>, <a href="#make-markov">make-markov</a>, <a href="#make-palindrome">make-palindrome</a>, <a href="#make-repeater">make-repeater</a>, <a href="#make-rotation">make-rotation</a>, <a href="#make-spectrum">make-spectrum</a>, <a href="#make-weighting">make-weighting</a>, <a href="#markov-analyze">markov-analyze</a>, <a href="#midifile-header">midifile-header</a>, <a href="#midifile-import">midifile-import</a>, <a href="#minus">minus</a>, <a href="#most-negative-fixnum">most-negative-fixnum</a>, <a href="#most-positive-fixnum">most-positive-fixnum</a>, <a href="#mouse-button">mouse-button</a>, <a href="#mouse-x">mouse-x</a>, <a href="#mouse-y">mouse-y</a>, <a href="#mp:bend">mp:bend</a>, <a href="#mp:ctrl">mp:ctrl</a>, <a href="#mp:inchans">mp:inchans</a>, <a href="#mp:inops">mp:inops</a>, <a href="#mp:instruments">mp:instruments</a>, <a href="#mp:midi">mp:midi</a>, <a href="#mp:off">mp:off</a>, <a href="#mp:on">mp:on</a>, <a href="#mp:press">mp:press</a>, <a href="#mp:prog">mp:prog</a>, <a href="#mp:receiver">mp:receiver</a>, <a href="#mp:receiver_qm">mp:receiver?</a>, <a href="#mp:touch">mp:touch</a>
+</p>
+
+<h4>n</h4>
+<p>
+<a href="#next">next</a>, <a href="#note">note</a>, <a href="#now">now</a>, <a href="#nth">nth</a>
+</p>
+
+<h4>o</h4>
+<p>
+<a href="#odds">odds</a>, <a href="#osc:bundle">osc:bundle</a>, <a href="#osc:close">osc:close</a>, <a href="#osc:message">osc:message</a>, <a href="#osc:open">osc:open</a>, <a href="#osc:receiver">osc:receiver</a>, <a href="#osc:receiver_qm">osc:receiver?</a>
+</p>
+
+<h4>p</h4>
+<p>
+<a href="#pause">pause</a>, <a href="#pc">pc</a>, <a href="#pi">pi</a>, <a href="#pick">pick</a>, <a href="#plot">plot</a>, <a href="#plot-data">plot-data</a>, <a href="#plot-hook">plot-hook</a>, <a href="#plus">plus</a>, <a href="#print">print</a>, <a href="#promise">promise</a>, <a href="#pwd">pwd</a>
+</p>
+
+<h4>q</h4>
+<p>
+<a href="#quantize">quantize</a>
+</p>
+
+<h4>r</h4>
+<p>
+<a href="#ran">ran</a>, <a href="#ranbeta">ranbeta</a>, <a href="#ranbrown">ranbrown</a>, <a href="#rancauchy">rancauchy</a>, <a href="#random-seed">random-seed</a>, <a href="#ranexp">ranexp</a>, <a href="#rangamma">rangamma</a>, <a href="#rangauss">rangauss</a>, <a href="#ranhigh">ranhigh</a>, <a href="#ranlow">ranlow</a>, <a href="#ranmiddle">ranmiddle</a>, <a href="#ranpink">ranpink</a>, <a href="#ranpoisson">ranpoisson</a>, <a href="#ratio-_cents">ratio-&gt;cents</a>, <a href="#ratio-_steps">ratio-&gt;steps</a>, <a href="#rescale">rescale</a>, <a href="#rest">rest</a>, <a href="#rest_qm">rest?</a>, <a href="#retrograde">retrograde</a>, <a href="#rhythm">rhythm</a>, <a href="#rm-spectrum">rm-spectrum</a>
+</p>
+
+<h4>s</h4>
+<p>
+<a href="#scale">scale</a>, <a href="#scale-order">scale-order</a>, <a href="#segs">segs</a>, <a href="#send">send</a>, <a href="#shell">shell</a>, <a href="#shuffle">shuffle</a>, <a href="#shuffle_">shuffle!</a>, <a href="#sort">sort</a>, <a href="#sort_">sort!</a>, <a href="#spectrum-add_">spectrum-add!</a>, <a href="#spectrum-amps">spectrum-amps</a>, <a href="#spectrum-copy">spectrum-copy</a>, <a href="#spectrum-flip_">spectrum-flip!</a>, <a href="#spectrum-freqs">spectrum-freqs</a>, <a href="#spectrum-invert_">spectrum-invert!</a>, <a href="#spectrum-keys">spectrum-keys</a>, <a href="#spectrum-maxamp">spectrum-maxamp</a>, <a href="#spectrum-maxfreq">spectrum-maxfreq</a>, <a href="#spectrum-minamp">spectrum-minamp</a>, <a href="#spectrum-minfreq">spectrum-minfreq</a>, <a href="#spectrum-pairs">spectrum-pairs</a>, <a href="#spectrum-rescale_">spectrum-rescale!</a>, <a href="#spectrum-size">spectrum-size</a>, <a href="#spectrum-time">spectrum-time</a>, <a href="#sprout">sprout</a>, <a href="#sprout-hook">sprout-hook</a>, <a href="#state">state</a>, <a href="#stop">stop</a>
+</p>
+
+<h4>t</h4>
+<p>
+<a href="#tail">tail</a>, <a href="#tendency">tendency</a>, <a href="#times">times</a>, <a href="#transpose">transpose</a>
+</p>
+
+<h4>u</h4>
+<p>
+<a href="#unique">unique</a>
+</p>
+
+<h4>v</h4>
+<p>
+<a href="#vary">vary</a>
+</p>
+
+<h4>x</h4>
+<p>
+<a href="#xy">xy</a>
+</p>
 
 </div>
 
 <hr/>
-
 <p>
 <a href="http://validator.w3.org/check?uri=referer"><img
 src="http://www.w3.org/Icons/valid-xhtml10-blue"
 alt="Valid XHTML 1.0 Strict" height="31" width="88" /></a>
 </p>
-
 </body>
 </html>
 

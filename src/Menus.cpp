@@ -170,6 +170,7 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
       fomus.addCommandItem(comm, CommandIDs::FomusLoadScore);
       fomus.addCommandItem(comm, CommandIDs::FomusRenameScore);
       fomus.addCommandItem(comm, CommandIDs::FomusSaveScore);
+      fomus.addCommandItem(comm, CommandIDs::FomusSaveScoreAs);
       fomus.addCommandItem(comm, CommandIDs::FomusClearScore);
       fomus.addCommandItem(comm, CommandIDs::FomusDeleteScore);
       fomus.addSeparator();

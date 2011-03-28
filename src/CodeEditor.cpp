@@ -157,6 +157,7 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
       CommandIDs::PrefsClearOpenRecent,
       CommandIDs::EditorSave,
       CommandIDs::EditorSaveAs,
+      CommandIDs::EditorSaveVersion,
       CommandIDs::LispLoadFile,
       CommandIDs::PrefsLoadRecent + 0,
       CommandIDs::PrefsLoadRecent + 1,
@@ -283,6 +284,12 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.shortName=T("Save As...");
       if (commandkeyactive)
 	info.addDefaultKeypress(T('S'), ModifierKeys::commandModifier | ModifierKeys::shiftModifier);
+      break;
+    case CommandIDs::EditorSaveVersion:
+      info.shortName=T("Save As Version");
+      if (commandkeyactive)
+	info.addDefaultKeypress(T('S'), ModifierKeys::commandModifier | ModifierKeys::altModifier);
+      info.setActive(sourcefile.existsAsFile());
       break;
     case CommandIDs::LispLoadFile:
       info.shortName=T("Load...");
@@ -510,6 +517,9 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
     case CommandIDs::EditorSaveAs:
       saveFile(true);
       break;
+    case CommandIDs::EditorSaveVersion:
+      saveFileVersion();
+      break;
     case CommandIDs::EditorShowDirectory:
       ((Grace *)JUCEApplication::getInstance())->showWorkingDirectory();
       break;
@@ -658,6 +668,7 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
       menu.addSeparator();
       menu.addCommandItem(&commands, CommandIDs::EditorSave);
       menu.addCommandItem(&commands, CommandIDs::EditorSaveAs);
+      menu.addCommandItem(&commands, CommandIDs::EditorSaveVersion);
       menu.addSeparator();
       menu.addCommandItem(&commands, CommandIDs::LispLoadFile);
       sub.clear();
@@ -899,6 +910,32 @@ void CodeEditorWindow::saveFile(bool saveas)
   else
     AlertWindow::showMessageBox(AlertWindow::WarningIcon, T("Save File"), 
                                 T("Error saving ") + sourcefile.getFullPathName() + T(". File not saved."));
+}
+
+// save current buffer contents to a version of file and never
+// overwriting a existing version. the buffer must already exist as a
+// file.
+
+void CodeEditorWindow::saveFileVersion()
+{
+  File clone;
+  int vers=1;
+  while (true)
+  {
+    clone=sourcefile.getSiblingFile(sourcefile.getFileNameWithoutExtension()+String("-")+String(vers)+sourcefile.getFileExtension());
+    if (!clone.existsAsFile())
+      break;
+    vers++;
+  }
+  if (clone.replaceWithText(document.getAllContent()))
+  {
+    String message (T("Editor contents saved as "));
+    message << clone.getFullPathName() << T("\n");
+    Console::getInstance()->printOutput(message, true);
+  }
+  else
+    AlertWindow::showMessageBox(AlertWindow::WarningIcon, T("Save File Version"), 
+                                T("Error saving file version, editor contents not saved."));
 }
 
 bool CodeEditorWindow::isCustomComment ()

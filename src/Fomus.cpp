@@ -104,6 +104,26 @@ void Fomus::saveScore(const String& fn, const bool fromscm) {
     }
 }
 
+void Fomus::saveScoreAs(String filename) 
+{
+  // if filename is empty we were called from gui, else we were called
+  // from scheme with filename guaranteed to end with .ly .xml or .mid
+#ifdef GRACE
+  if (filename.isEmpty()) 
+  {
+    FileChooser choose(T("Save Score As"), File::getCurrentWorkingDirectory(), "*.ly;*.xml;*.mid;");
+    if (!choose.browseForFileToSave(true))
+      return;
+    filename=choose.getResult().getFullPathName();
+  }
+#endif
+  //  std::cout << "save score as:" << filename.toUTF8() << "\n";
+  FOMUS tmp = fapi_fomus_copy(getfomusdata());
+  fapi_fomus_sval(tmp, fomus_par_setting, fomus_act_set, "filename");
+  fapi_fomus_sval(tmp, fomus_par_settingval, fomus_act_set, filename.toUTF8());  
+  fapi_fomus_run(tmp);   // calling `run' automatically destroys the copy
+}
+
 inline void spitout(const char* str) 
 {
   Console::getInstance()->printOutput(String(";; ") + str);

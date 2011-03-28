@@ -1063,28 +1063,28 @@ s7_pointer ffi_mp_close_score (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_send_note (s7_scheme *s7, s7_pointer args)
 {
-  double f0, f1, f2, f3, f4;
-  if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 1, s7_car(args), "a double"));
-  f0=s7_number_to_real(s7_car(args));
+  s7_pointer p0, p1, p2, p3, p4;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 1, s7_car(args), "a s7_pointer"));
+  p0=s7_car(args);
   args=s7_cdr(args);
-  if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 2, s7_car(args), "a double"));
-  f1=s7_number_to_real(s7_car(args));
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 2, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
   args=s7_cdr(args);
-  if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 3, s7_car(args), "a double"));
-  f2=s7_number_to_real(s7_car(args));
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 3, s7_car(args), "a s7_pointer"));
+  p2=s7_car(args);
   args=s7_cdr(args);
-  if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 4, s7_car(args), "a double"));
-  f3=s7_number_to_real(s7_car(args));
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 4, s7_car(args), "a s7_pointer"));
+  p3=s7_car(args);
   args=s7_cdr(args);
-  if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 5, s7_car(args), "a double"));
-  f4=s7_number_to_real(s7_car(args));
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_send_note", 5, s7_car(args), "a s7_pointer"));
+  p4=s7_car(args);
   args=s7_cdr(args);
-  mp_send_note(f0, f1, f2, f3, f4);
+  mp_send_note(p0, p1, p2, p3, p4);
   return s7_UNSPECIFIED(s7);
 }
 
@@ -1342,6 +1342,17 @@ s7_pointer ffi_fms_save (s7_scheme *s7, s7_pointer args)
   s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
   fms_save(s0);
+  return s7_UNSPECIFIED(s7);
+}
+
+s7_pointer ffi_fms_save_as (s7_scheme *s7, s7_pointer args)
+{
+  char* s0;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_fms_save_as", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  fms_save_as(s0);
   return s7_UNSPECIFIED(s7);
 }
 
@@ -3248,6 +3259,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_fms_load", ffi_fms_load, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_run", ffi_fms_run, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_save", ffi_fms_save, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_fms_save_as", ffi_fms_save_as, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_isfiletype", ffi_fms_isfiletype, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_merge", ffi_fms_merge, 4, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_ival", ffi_fms_ival, 3, 0, false, "ffi function");

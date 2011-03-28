@@ -396,6 +396,13 @@
   (ffi_fms_save filename)
   #t)
 
+(define (fms:save-score-as filename)
+  (unless (string? filename) (error "expected a string for filename argument"))
+  (unless (member (pathname-type filename) '("ly" "mid" "xml"))
+    (error "filename extension not .ly, .xml, or .mid: ~S" filename))
+  (ffi_fms_save_as filename)
+  #t)
+
 (define (fms:delete-score)
   (ffi_fms_free)
   #t)

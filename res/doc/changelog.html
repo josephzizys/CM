@@ -5,7 +5,7 @@
 <style type="text/css" media="all">
 @import "cm.css";
 <!--
-li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; border-bottom: .75pt dotted #999; }
+li.change { display: list-item; list-style: circle; padding-bottom: .5em; margin: 0em 0em .5em 0em; border-bottom: 2pt dotted #999; }
 -->
 </style>
 <title>Changelog</title>
@@ -19,10 +19,9 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   <h2>CM 3.7.2</h2>
   <ul>
 
-    <li class="change"> Enhancement: It is now possible to send midi events directly to Fomus scores. That is, if a process using mp:midi is sprouted in the context of a Fomus score then mp:midi will automatically convert its data to a Fomus note and add it to the score, with the midi channel number used as the Fomus part id.</li>
+    <li class="change"> Enhancement: If a process using mp:midi is sprouted in the context of a Fomus score then mp:midi will automatically route its note date to the Fomus score, with the midi channel number used as the Fomus part id.</li>
 
-
-    <li class="change"> Enhancement: All random functions are now based on S7's random number generator. You can get and set the seed that controls CM's random number generation (S7's default random state) using <a href="cm.html#random-seed">random-seed</a>.</li>
+    <li class="change"> Enhancement: All random functions, including S7's <code>random</code> function,  now use a common random number generator. Use <a href="cm.html#random-seed">random-seed</a> to get and set the seed that controls random number generation.</li>
 
     <li class="change"> Enhancement: The Hush command has been redefined to stop all sound output (not just midi) and is now situated in the top level audio menu along with the keyboard shortcut &#8984;-K. Selecting Hush triggers the following actions:
     <ol>
@@ -33,6 +32,9 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
       <li>any running scheme expression is interrupted back to top level.</li>
 </ol>
 </li>
+
+    <li class="change">Enhancement:  New editor command Save As Version saves the current contents of the buffer to a new file version (the file name with a number attached to its end) never overwriting an existing version. The editor must already have a file for this command to be active.</li>
+    
     <li class="change">Enhancement:  Grace now saves the position and size of the Console window on Quit and restores it to the same configuration on startup. </li>
 
 <li class="change">Enhancement: added <span class="menuitem">Eval&gt;Interrupt Scheme</span> menu item to the Editor's <span class="menuitem">Eval</span> menu. Use this command to abort Scheme's current execution if the process seems to be taking too long or if you managed to start an "infinite loop" running.  (Note: if the infinite loop is sending text output to the console then mouse and menu behavior will be very slow, try use the &#8984;-K shortcut to abort the loop ...)</li>
@@ -54,7 +56,10 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     
     <li class="change">Enhancement: in the editor double-clicking the left-side <code>&quot;</code> character of a string now selects the whole string.</li>
 
+    <li class="change">Enhancement: CM dictionary now has an Index section, the editor's &#8984;-D (documentation lookup) command now works for all entries in the dictionary.</li>
+
     <li class="change">Enhancement: updated to S7 Scheme 1.83 (14-Mar-11).</li>
+
     <li class="change">Enhancement: upgraded to latest Fomus framework (version 0.1.17).</li>
 
     <li class="change">Change: each unique Fomus output file name now has only one fomus score associated with it and if the file is regenerated its fomus score is cleared and reused. To output different versions of a file use the file-version function to create new (versioned) file names and scores each time.
@@ -412,7 +417,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Wed Mar 23 12:15:51 CDT 2011 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sat Mar 26 08:00:50 CDT 2011 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

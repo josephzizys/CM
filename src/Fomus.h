@@ -160,6 +160,7 @@ class Fomus
   bool openScore(String scorename, String scoreargs, const bool fromscm);
   void closeScore();
   void saveScore(const String& fn, const bool fromscm);
+  void saveScoreAs(String filename);
 
   int numScores() {return scores.size();}
   String getScoreName(int i) {return scores[i]->name;}

@@ -118,7 +118,7 @@
     (ffi_mp_open_score void "mp_open_score" c-string s7_pointer)
     (ffi_mp_close_score void "mp_close_score"  )
 
-    (ffi_mp_send_note void "mp_send_note" double double double double double)
+    (ffi_mp_send_note void "mp_send_note" s7_pointer s7_pointer s7_pointer s7_pointer s7_pointer)
     (ffi_mp_send_data void "mp_send_data" int double double double double)
     (ffi_mp_set_channel_mask void "mp_set_channel_mask" int)
     (ffi_mp_set_message_mask void "mp_set_message_mask" int)
@@ -146,6 +146,7 @@
     (ffi_fms_load void "fms_load" c-string)
     (ffi_fms_run void "fms_run" )
     (ffi_fms_save void "fms_save" c-string)
+    (ffi_fms_save_as void "fms_save_as" c-string)
     (ffi_fms_isfiletype int "fms_isfiletype" c-string)
     (ffi_fms_merge void "fms_merge" c-string long long double)
     
