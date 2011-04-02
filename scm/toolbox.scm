@@ -54,10 +54,10 @@
 (define (log2 n)
   (ffi_log_two n))
 
-;; equivalents for use in SAL
+;; arith functions that map lists.
 
 (define (plus . args)
-  ;; (plus ...) (plus '(....)) (plus '(....) n)
+  ;; (plus ...) (plus '(...)) (plus '(...) n) (plus n '(...))
   (if (null? args) 
       0
       (if (null? (cdr args))
@@ -66,9 +66,12 @@
 	      (apply + args))
 	  (if (pair? (car args))
 	      (map (lambda (x) (+ x (cadr args))) (car args))
-	      (apply + args)))))
+              (if (and (number? (car args)) (pair? (cdr args)) (pair? (cadr args)) (null? (cddr args)))
+                  (map (lambda (x) (+ x (car args))) (cadr args))
+                  (apply + args))))))
 
 (define (times . args)
+  ;; (times ...) (times '(...)) (times '(...) n) (times n '(...))
   (if (null? args) 
       1
       (if (null? (cdr args))
@@ -77,7 +80,9 @@
 	      (apply * args))
 	  (if (pair? (car args))
 	      (map (lambda (x) (* x (cadr args))) (car args))
-	      (apply * args)))))
+              (if (and (number? (car args)) (pair? (cdr args)) (pair? (cadr args)) (null? (cddr args)))
+                  (map (lambda (x) (* x (car args))) (cadr args))
+                  (apply * args))))))
 
 (define (minus arg . args)
   (if (null? args)
@@ -102,6 +107,7 @@
               (apply / arg args)))))
 
 (define (less? a . args)
+  ;; (less? ...) (less? '(...))
   (if (pair? a)
     (if (null? args)
         (apply < a)

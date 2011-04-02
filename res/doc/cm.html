@@ -2979,7 +2979,7 @@ Send note data to midi port. Note: if a process using mp:midi is sprouted in the
 
 <blockquote>
 <p>
-Send note on data to midi port.
+Send note on data to midi port. Supports floating point keynums and tunings
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -3010,22 +3010,6 @@ Send note on data to midi port.
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote><p>Sends program change value to midi port.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table class="entry" id="mp:instruments">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">mp:instruments</span> (<a href="#optkey">&amp;optkey</a> <var class="arg">pc</var> <var class="rest">...</var>)
-    </td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Sends up to sixteen program changes out the Midi port and updates the port's instrument table. The position of each value specifies the channel it is sent to, i.e. the first program change is sent to channel 0 and so on. To skip a particular channel provide #f as its program change value, otherwise specify its program change (integer 0-127) or GM instrument name (string), in which case the first instrument that matches or contains name as a substring will be selected.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -3095,6 +3079,70 @@ Sends pitch bend value 0-16383 to midi port.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="mp:instruments">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">mp:instruments</span> (<var class="arg">prog</var> <var class="rest">...</var>)
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Sends up to sixteen program changes out the Midi port and updates the port's instrument table. The position of each value specifies the channel it is sent to, i.e. the first program change is sent to channel 0 and so on. To skip a particular channel provide #f as its program change value, otherwise the value should be either a program change (integer 0-127) or a GM instrument name (string), in which case the first instrument that matches or contains name as a substring will be selected.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="mp:tuning">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">mp:tuning</span> (<var class="arg">divisions</var>)
+    </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+
+<blockquote>
+<p>
+Divides midi frequency space into <var>divisions</var> steps per semitone and automatically quantizes floating point key numbers in midi data to the nearest tuning step as they are sent out the port. A <var>division</var> of 1 implements standard semitonal tuning, 2 implements quarter-tone tuning, and so on. The maximum <var>divisions</var> of 16 per semitone provides a tuning step size of 6.25 cents, very close to the minimum perceivable frequency change (see table below.) For example, in quartertone tuning there are a total of 8 midi channels available (channel numbers 0 to 7, each with their own instrument assignment) and fractional keynum values <var>k</var>.0 &lt; <var>k</var>.5 (e.g. 60.0 &lt; 60.5) are quantized to the semitone and <var>k</var>.5 &lt; <var>K</var>.0 (e.g. 60.5 &lt; 61.0) are tuned to the quartertone. In some configurations it is possible to send both standard tuning in parallel with microtonal tuning by using any remaining "standard" channels numbers for semitonal output.
+Channel tuning is very efficient because it claims certain channels and "pretunes" them for the appropirate divisions.</p>
+
+<table >
+<tr><th >divisions</th>  <th class="headingth">tuning step</th>  <th class="headingth">microtuned<br/> channel #</th> <th class="headingth">standard<br/> channel #</th>
+</tr>
+
+<tr><td>1</td> <td>semi tone</td>   <td> &mdash;</td> <td>0-15</td></tr>
+<tr><td>2</td> <td>quarter tone (50 cents)</td>   <td>0-7</td>  <td> &mdash;</td></tr>
+<tr><td>3</td> <td>third tone (33 cents)</td>   <td>0-4</td> <td>15</td></tr>
+<tr><td>4</td> <td>fourth tone (25 cents)</td>   <td>0-3</td> <td> &mdash;</td> </tr>
+<tr><td>5</td> <td>fifth tone (20 cents)</td>   <td>0-2</td> <td> 15</td> </tr>
+
+<tr><td>6</td> <td>sixth tone (16.6 cents)</td>   <td>0-1</td> <td> 12-15</td> </tr>
+<tr><td>7</td> <td>seventh tone (14.28 cents)</td>   <td>0-1</td> <td> 14-15</td> </tr>
+<tr><td>8</td> <td>eighth tone (12.5 cents)</td>   <td>0-1</td> <td> &mdash;</td> </tr>
+<tr><td>9</td> <td>ninth tone (11.1 cents)</td>   <td>0</td> <td> 9-15</td> </tr>
+<tr><td>10</td> <td>tenth tone (10 cents)</td>   <td>0</td> <td> 10-15</td> </tr>
+<tr><td>11</td> <td>eleventh tone (9.09 cents)</td>   <td>0</td> <td> 11-15</td> </tr>
+<tr><td>12</td> <td>twelfth tone (8.33 cents)</td>   <td>0</td> <td> 12-15</td> </tr>
+<tr><td>13</td> <td>thirteeth tone (7.69 cents)</td>   <td>0</td> <td> 13-15</td> </tr>
+<tr><td>14</td> <td>fourteenth tone (7.14 cents)</td>   <td>0</td> <td> 14-15</td> </tr>
+<tr><td>15</td> <td>fifteenth tone (6.66 cents)</td>   <td>0</td> <td> 15</td> </tr>
+<tr><td>16</td> <td>sixteenth tone (6.25 cents)</td>   <td>0</td> <td> &mdash;</td> </tr>
+
+
+
+</table>
+
+
+</blockquote>
+<!-- END DEFINITION -->
+
+
 
 <h3 id="midi-in">Midi In</h3>
 

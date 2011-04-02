@@ -879,101 +879,111 @@ void MidiOutPort::sendNote(double wait, double duration, double keynum,
 
   // only microtune if current tuning is not semitonal and user's
   // channel is a microtonal channel.
-  if ( (getTuning() > 1) && (channel < microchanblock) ) 
+  if ((getTuning() > 1) && (channel < microchanblock)) 
+  {
+    // insure user's channel a valid microtonal channel, ie a channel
+    // within the first zone of microtuned channels and then shift to
+    // actual physical channel
+    int chan=(((int)channel) % microchancount) * microdivisions;
+    // calculate integer midi key quantize user's keynum to microtonal
+    // resolution size. this may round up to the next keynum. if it rounds up (or
+    // down) to an integer keynum then we dont need to microtune
+    keynum = cm_quantize( keynum, microincrement);
+    int key=(int)keynum;
+    // only microtune if we have a fractional keynum
+    if (keynum > key) 
+    {
+      // divide the fractional portion of keynum by the resolution size
+      // to see which zone of channels its in
+      int zone=(int)((keynum-key)/microincrement);
+      // shift channel to the appropriate zone and set keynum to integer
+      chan += zone;
+      if ((chan == 9) && avoiddrumtrack)
+      {
+        chan--;
+      }
+      channel=chan;
+      keynum=key;
+    }
+  }
+  
+  if (toseq)
+  {
+    // JUCE channel message constructors are 1-based channels
+    float amp=(float)((amplitude>1.0) ? (amplitude/127) : amplitude);
+
+    captureSequence.addEvent(MidiMessage::noteOn((int)channel+1, (int)keynum, amp), wait);
+    captureSequence.addEvent(MidiMessage::noteOff((int)channel+1, (int)keynum), wait+duration);
+    // don't call updatematchedpairs until the seq is used
+  }
+  // otherwise add it to the output queue, but dont do anything if
+  // there is no open output port (is this right?)
+  else if (device != NULL)
+  {
+    addNode(new MidiNode(MidiNode::MM_ON, wait, channel, keynum, amplitude, duration));
+    //addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel, keynum) );
+  }
+}
+
+void MidiOutPort::sendData(int type, double wait, double channel, 
+			   double data1, double data2, bool toseq)
+{
+  if (toseq)
+  {
+    int ch=(int)channel;
+    int d1=(int)data1;
+    int d2=(int)data2;
+    // JUCE channel message constructors are 1 based
+    if (type==MidiNode::MM_OFF)
+      captureSequence.addEvent(MidiMessage::noteOff(ch+1, d1), wait);
+    else if (type==MidiNode::MM_ON)
+      captureSequence.addEvent(MidiMessage::noteOn(ch+1, d1, (float)data2), wait);
+    else if (type==MidiNode::MM_TOUCH)
+      captureSequence.addEvent(MidiMessage::aftertouchChange(ch+1, d1, d2), wait);
+    else if (type==MidiNode::MM_CTRL)
+      captureSequence.addEvent(MidiMessage::controllerEvent(ch+1, d1, d2), wait);
+    else if (type==MidiNode::MM_PROG)
+      captureSequence.addEvent(MidiMessage::programChange(ch+1, d1), wait);
+    else if (type==MidiNode::MM_PRESS)
+      captureSequence.addEvent(MidiMessage::channelPressureChange(ch+1, d1), wait);
+    else if (type==MidiNode::MM_BEND)
+      captureSequence.addEvent(MidiMessage::pitchWheel(ch+1, d1), wait);
+  }
+  else if ( device != NULL )
+  {
+
+    if ( ((type==MidiNode::MM_OFF) || (type==MidiNode::MM_ON)) &&
+         (getTuning() > 1) && (channel < microchanblock) ) 
     {
       // insure user's channel a valid microtonal channel, ie a channel
       // within the first zone of microtuned channels and then shift to
       // actual physical channel
       int chan=(((int)channel) % microchancount) * microdivisions;
-      // calculate integer midi key quantize user's keynum to microtonal
-      // resolution size. this may round up to the next keynum
-      double foo=keynum;
-      // quantize keynumber to tuning resolution. if it rounds up (or
-      // down) to an integer keynum then we dont need to microtune
-      keynum = cm_quantize( keynum, microincrement);
-
-      ///keynum = floor((keynum/microincrement)+.5)*microincrement;
-
-      int key=(int)keynum;
+      // calculate integer midi key and quantize user's keynum to
+      // microtonal resolution size. this may round up to the next
+      // keynum quantize keynumber to tuning resolution. if it rounds
+      // up (or down) to an integer keynum then we dont need to
+      // microtune
+      data1 = cm_quantize( data1, microincrement);
+      int key=(int)data1;
       // only microtune if we have a fractional keynum
-      if ( keynum > key ) {
+      if (data1 > key) 
+      {
 	// divide the fractional portion of keynum by the resolution size
 	// to see which zone of channels its in
-	int zone=(int)((keynum-key)/microincrement);
+	int zone=(int)((data1-key)/microincrement);
 	// shift channel to the appropriate zone and set keynum to integer
 	chan += zone;
-	if ( (chan == 9) && avoiddrumtrack ) {
+	if ((chan == 9) && avoiddrumtrack)
+        {
 	  chan--;
 	}
 	channel=chan;
-	keynum=key;
+	data1=key;
       }
     }
-  
-  if (toseq)
-    {
-      // JUCE channel message constructors are 1-based channels
-      float amp=(float)((amplitude>1.0) ? (amplitude/127) : amplitude);
-
-      captureSequence.
-	addEvent(MidiMessage::noteOn((int)channel+1, (int)keynum, amp),
-		 wait);
-      captureSequence.
-	addEvent(MidiMessage::noteOff((int)channel+1, (int)keynum),
-		 wait+duration);
-      // don't call updatematchedpairs until the seq is used
-    }
-  // otherwise add it to the output queue, but dont do anything if
-  // there is no open output port (is this right?)
-  else if ( device != NULL )
-    {
-      addNode( new MidiNode(MidiNode::MM_ON, wait, channel, 
-			    keynum, amplitude, duration) );
-      //addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel,
-      //			    keynum) );
-    }
-}
-
-void MidiOutPort::sendData(int type, double wait, double chan, 
-			   double data1, double data2, bool toseq)
-{
-  if (toseq)
-    {
-      int ch=(int)chan;
-      int d1=(int)data1;
-      int d2=(int)data2;
-      // JUCE channel message constructors are 1 based
-      if (type==MidiNode::MM_OFF)
-	captureSequence.addEvent(MidiMessage::noteOff(ch+1, d1),
-				 wait);
-      else if (type==MidiNode::MM_ON)
-	captureSequence.
-	  addEvent(MidiMessage::noteOn(ch+1, d1, (float)data2),
-		   wait);
-      else if (type==MidiNode::MM_TOUCH)
-	captureSequence.
-	  addEvent(MidiMessage::aftertouchChange(ch+1, d1, d2),
-		   wait);
-      else if (type==MidiNode::MM_CTRL)
-	captureSequence.
-	  addEvent(MidiMessage::controllerEvent(ch+1, d1, d2),
-		   wait);
-      else if (type==MidiNode::MM_PROG)
-	captureSequence.
-	  addEvent(MidiMessage::programChange(ch+1, d1),
-		   wait);
-      else if (type==MidiNode::MM_PRESS)
-	captureSequence.
-	  addEvent(MidiMessage::channelPressureChange(ch+1, d1), 
-		   wait);
-      else if (type==MidiNode::MM_BEND)
-	captureSequence.addEvent(MidiMessage::pitchWheel(ch+1, d1),
-				 wait);
-    }
-  else if ( device != NULL )
-    {
-      addNode( new MidiNode(type, wait, chan, data1, data2) );
-    }
+    addNode( new MidiNode(type, wait, channel, data1, data2) );
+  }
 }
 
 void MidiOutPort::sendMessage(MidiMessage *message, bool toseq)
