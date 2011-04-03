@@ -4,21 +4,13 @@
 ;;  Sal 2.0 Quick Tour
 ;
 
-; Sal2 provides infix expressions, a minimalist set of control
-; statements ('if', 'begin', 'loop', 'set') and three definition forms
-; ('variable', 'function' and 'process').
+; Sal is a simple, minimalist languange providing infix expressions,
+; four control statements 'if', 'begin', 'loop', 'set' and three
+; definitional forms: 'variable', 'function' and 'process'.
 
-; Sal2 differs from its earlier version by:
-;
-;  o Expressions and statements return values, these values are
-;    printed to the Console window in a manner similar to Scheme.
-;  o There are no "commands" like 'print' 'sprout' and 'send'. In Sal2
-;    you simply call functions, e.g. print() sprout() and send().
-
-; To evaluate a Sal2 expression put your cursor at the end of the line
-; and press Command-Return (or C-x C-e if you have the Emacs Mode
-; option turned on in your Editor.) The result of the evaluation will
-; appear in the Console window. Try out these expressions:
+; To evaluate a Sal expression put your cursor just after the
+; expression and press Command-Return. Results of the evaluation will
+; appear in the Console window. Try evaluating these expressions:
 
 123
 
@@ -30,25 +22,27 @@
 
 #f ~= (44 = 33)
 
-5 + 5 + 3
-
 440 * 2 ^ -1/12
 
-{this is a list}
+{c4 e g b}
 
-; Function calls look like 'name(...)', where ... are arguments
-; separated by comma, e.g.:
+between(60,90)
+
+; To call a function specify its name followed by argument values
+; inside ().  Use commas to separate values if there is more than one
+; argument:
+
+list()
+
+list(1)
 
 list(1, 2, 3 + 4)
-
-; you can use the print function to print things to the Console
-; window:
-
-print("Hello, world!")
 
 ; function calls can be nested:
 
 print("my random keynum = ", random(127))
+
+print("my random chord  = ", note(list(random(127), random(127), random(127))))
 
 ; if an expression spans more than a single line put your cursor at
 ; the end of the last line and press Command-Return:
@@ -57,26 +51,21 @@ concat({Life is very},
        pick({long short happy sad})
       )
 
-; Keyword argument names looks like 'foo:'. Scheme keyword symbols
-; (e.g. ':foo') are legal symbols in Sal2 but they are values, not
-; keyword argument names:
+; Keyword argument names looks like 'foo:'. 
 
 send("mp:midi", key: between(60, 90), amp: .8)
 
-pick( :moe, :larry, :curly)
+; do not confuse keyword arguments with Lisp keywords, the latter are
+; symbols that start with a colon, for example
 
-; In Sal2 there is no 'send' command and the send() macro is
-; optional. For example, to send a sound to your open midi port you
-; can just call the midi port method directly:
-
-mp:midi(key: between(60, 90), amp: .8)
+pick(:bach, :berg, :chopin)
 
 ;
 ;; Control Statements
 ;
 
-; Sal2 provides a handful of control statements: 'if' 'begin' 'set'
-; and 'loop'. All but 'set' terminate with an 'end' tag.  To evaluate
+; Sal provides a handful of control statements: 'if' 'begin' 'set' and
+; 'loop'. All but 'set' terminate with an 'end' tag.  To evaluate
 ; statements that include an 'end', put your cursor just after the
 ; 'end' and press Command-Return.
 

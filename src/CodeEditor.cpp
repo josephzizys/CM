@@ -275,10 +275,10 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.shortName=T("Clear Menu");
       break;
     case CommandIDs::EditorSave:
-      info.shortName=T("Save...");
+      info.shortName=T("Save");
       if (commandkeyactive)
 	info.addDefaultKeypress(T('S'), ModifierKeys::commandModifier);
-      info.setActive(buff->isChanged());
+      //info.setActive(buff->isChanged());
       break;
     case CommandIDs::EditorSaveAs:
       info.shortName=T("Save As...");
@@ -890,6 +890,7 @@ void CodeEditorWindow::newFile(String title, int synt, String content)
 void CodeEditorWindow::saveFile(bool saveas)
 {
   bool exists=sourcefile.existsAsFile();
+  // get file name if its an new buffer or its a Save As
   if (saveas || !exists)
     {
       File saveto ((exists) ? sourcefile.getParentDirectory() : File::getCurrentWorkingDirectory());
@@ -899,6 +900,13 @@ void CodeEditorWindow::saveFile(bool saveas)
       else
         return;
     }
+  // otherwise abort if the code buffer isnt changed
+  else if (!getCodeBuffer()->isChanged())
+  {
+    //std::cout << "aborting save, buffer not changed\n";
+    return;
+  }
+  // save the file
   if (sourcefile.replaceWithText(document.getAllContent()))
     {
       getCodeBuffer()->isChanged(false);
@@ -927,6 +935,8 @@ void CodeEditorWindow::saveFileVersion()
       break;
     vers++;
   }
+  // save the buffer contents to the version. dont clear the changed
+  // bit since buffer is still the original file.
   if (clone.replaceWithText(document.getAllContent()))
   {
     String message (T("Editor contents saved as "));
