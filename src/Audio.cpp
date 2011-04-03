@@ -295,7 +295,7 @@ public:
             double visibleDuration=waveform->endTime-waveform->startTime ;
             double percentage=(thisTime-waveform->startTime)/visibleDuration;
             g.setColour (Colours::grey);
-            g.drawVerticalLine( (int)(percentage*((double)getWidth())), 0.0, (float)getHeight());
+            g.drawVerticalLine( (int)(percentage*((double)waveform->getWidth())), 0.0, (float)getHeight());
           }
       }
   }
