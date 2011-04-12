@@ -32,7 +32,7 @@ Console::Console() :
   isEvaling (false)
 {
   // GUI initialization code is done by window
-  supportedfiletypes=String(T(".scm.lisp.sal1.sal2.sal.ins.clm.fms.xml.mid"));
+  supportedfiletypes=String(T(".scm.lisp.sal1.sal2.sal.ins.clm.fms.xml.mid.text.txt"));
 #ifdef GRACE
 
   initThemes();

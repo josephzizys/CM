@@ -387,7 +387,8 @@ bool XMidiNode::applyNode(SchemeThread* st, double curtime)
   int prot = s7_gc_protect(sc, args);
   s7_pointer res=s7_call(sc, hook->proc, args);
   s7_gc_unprotect_at(sc, prot);
-  if (res == st->schemeError)
+  // stubbed out because a void return seems to be the same as schemeError ???????
+  if (0)// (res == st->schemeError)
     {
       st->removeMidiHook(hook);
       Console::getInstance()->printError(T(">>> Removed Midi receiver.\n"));
@@ -579,7 +580,8 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
       res = s7_call(sc, hook->proc, args);
     }
   s7_gc_unprotect_at(sc, loc);
-  if (res == st->schemeError)
+  // stubbed out because a void return seems to be the same as schemeError ???????
+  if (0) // (res == st->schemeError)
     {
       st->removeOscHook(hook);
       Console::getInstance()->printError(T(">>> Removed OSC receiver.\n"));

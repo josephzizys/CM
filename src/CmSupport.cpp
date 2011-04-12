@@ -1897,12 +1897,14 @@ void fms_clear(){}
 void fms_load(char* filename){}
 void fms_run(){}
 void fms_save(const char* name) {}
+void fms_save_as(char const* foo) {}
 void fms_ival(int par, int act, long val) {}
 void fms_rval(int par, int act, long num, long den) {}
 void fms_fval(int par, int act, double val) {}
 void fms_sval(int par, int act, const char* val) {}
 void fms_act(int par, int act) {}
 void fms_err() {}
+void fms_clear(bool all) {}
 #endif
 
 #ifdef GRACE
