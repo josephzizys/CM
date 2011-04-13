@@ -130,24 +130,24 @@ function arpeggiate-exprhy(keynums, offset, duration, rate, midpoint-frac,
                            amplow, amphi, legato, bass-legato,
                            bass-cutoff, last-legato)
   with segn = length(keynums),
-       last = segn - 1,
+       lastn = segn - 1,
        midpoint = floor(segn * midpoint-frac),
-       ;; deltas below midpoint follow one curve, above another.
-       deltas = append(segs(midpoint, (midpoint-frac * duration), 1, rate),
+       ;; rhythms below midpoint follow one curve, above another.
+       rhyts = append(segs(midpoint, (midpoint-frac * duration), 1, rate),
                        segs((segn - midpoint),
                             ((1 - midpoint-frac) * duration),
 			                            1 ,
                              (1 / rate))),
-       last = segn - 1,
+       lastn = segn - 1,
        data = {}
  
   loop with time = 0
     for i from 0
     for k in keynums
-    for d in deltas
+    for d in rhyts
     for r = #?((k < bass-cutoff),
                bass-legato,
-               #?((i = last),
+               #?((i = lastn),
                   (last-legato * d),
                   (legato * d)))
     for a = between(0.45, 0.5)
@@ -155,7 +155,7 @@ function arpeggiate-exprhy(keynums, offset, duration, rate, midpoint-frac,
                      k,
                      r,
                      a),
-     	  time += time d
+     	  time += d
   end
   data
 end
@@ -170,7 +170,7 @@ function distort-harmonics(fund, distort)
   end
 end
 
-function arpa-harmonic (note, dur, gap)
+function arpa-harmonic (fundnote, dur, gap)
   ;; spawn overlapping arpeggios with mean duration of dur and mean
   ;; gap between arpeggio starts of gap seconds. each arpeggio is
   ;; upward with the general direction of arpeggio starting notes
@@ -179,7 +179,7 @@ function arpa-harmonic (note, dur, gap)
 
   function sorter (a,b) (first(a) < first(b)) end
 
-  loop with fund = hz(note), time = 0
+  loop with fund = hz(fundnote), time = 0
     for distort from 0.7 below 1.05 by 0.05
     for notes = distort-harmonics(fund, distort)
     for arpa = arpeggiate-exprhy(notes,
