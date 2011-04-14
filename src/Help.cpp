@@ -465,19 +465,21 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("mm:touch"), T("cm.html#mm:touch"));
   cm.set(T("most-positive-fixnum"), T("cm.html#most-positive-fixnum"));
   cm.set(T("most-negative-fixnum"), T("cm.html#most-negative-fixnum"));
+
   cm.set(T("mp:bend"), T("cm.html#mp:bend"));
-  cm.set(T("mp:crtl"), T("cm.html#mp:ctrl"));
+  cm.set(T("mp:ctrl"), T("cm.html#mp:ctrl"));
   cm.set(T("mp:inchans"), T("cm.html#mp:inchans"));
   cm.set(T("mp:inops"), T("cm.html#mp:inops"));
   cm.set(T("mp:instruments"), T("cm.html#mp:instruments"));
   cm.set(T("mp:midi"), T("cm.html#mp:midi"));
-  cm.set(T("mp:on"), T("cm.html#mp:on"));
   cm.set(T("mp:off"), T("cm.html#mp:off"));
+  cm.set(T("mp:on"), T("cm.html#mp:on"));
   cm.set(T("mp:press"), T("cm.html#mp:press"));
   cm.set(T("mp:prog"), T("cm.html#mp:prog"));
   cm.set(T("mp:receiver"), T("cm.html#mp:receiver"));
   cm.set(T("mp:receiver?"), T("cm.html#mp:receiver_qm"));
   cm.set(T("mp:touch"), T("cm.html#mp:touch"));
+  cm.set(T("mp:tuning"), T("cm.html#mp:tuning"));
 
   cm.set(T("next"), T("cm.html#next"));
   cm.set(T("ninth"), T("cm.html#ninth"));
