@@ -496,13 +496,20 @@ public:
     if (bgstyle==Plotter::bgGrid)
       drawGrid(g, haxview, vaxview, bgcolors[2], bgcolors[3]);
     else if (bgstyle==Plotter::bgTiled)
-      g.fillCheckerBoard((int)haxview->getOrigin(),
+    {
+      Rectangle<int> r ((int)haxview->getOrigin(),
 			 (int)(vaxview->getOrigin()-vaxview->extent()),
 			 (int)haxview->extent(), 
-			 (int)vaxview->extent(),
+			 (int)vaxview->extent()
+			);
+      g.fillCheckerBoard(r, /*(int)haxview->getOrigin(),
+			 (int)(vaxview->getOrigin()-vaxview->extent()),
+			 (int)haxview->extent(), 
+			 (int)vaxview->extent(), */
 			 (int)haxview->tickSize(), 
 			 (int)vaxview->tickSize(),
 			 bgcolors[4],bgcolors[5]);
+    }
     else g.fillAll(bgcolors[1]);
 
     // draw non-focus plots
@@ -2277,7 +2284,7 @@ String Layer::toString(int exportid, int decimals,
 	}
       done=T(")");
     }
-  else if (exportid==TextIDs::Sal)
+  else if (exportid==TextIDs::Sal2)
     {
       text=T("{");
       if (asrecords)
@@ -2418,13 +2425,13 @@ ExportPointsDialog::ExportPointsDialog (Plotter* p)
   addAndMakeVisible(tomenu = new ComboBox (String::empty));
   tomenu->setEditableText(false);
   tomenu->addItem(T("Lisp"), TextIDs::Lisp);
-  tomenu->addItem(T("SAL"), TextIDs::Sal);
+  tomenu->addItem(T("SAL"), TextIDs::Sal2);
   tomenu->addItem(T("XML"), TextIDs::Xml);
   tomenu->setSelectedId(TextIDs::Lisp);
 
   addAndMakeVisible(fieldsbutton = new TextButton (String::empty));
   fieldsbutton->setButtonText(T("Fields..."));
-  fieldsbutton->addButtonListener(this);
+  fieldsbutton->addListener(this);
 
   addAndMakeVisible(formatlabel = new Label(String::empty, T("Format:")));
   formatlabel->setFont(font);
@@ -2454,7 +2461,7 @@ ExportPointsDialog::ExportPointsDialog (Plotter* p)
 
   addAndMakeVisible(exportbutton = new TextButton(String::empty));
   exportbutton->setButtonText(T("Export"));
-  exportbutton->addButtonListener(this);
+  exportbutton->addListener(this);
   setSize(440, 140);
 }
 
@@ -2631,7 +2638,7 @@ public:
   void resized();
   void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
   void buttonClicked (Button* buttonThatWasClicked);
-  void changeListenerCallback(void*);
+  void changeListenerCallback(ChangeBroadcaster* source);
 private:
   Label* namelabel;
   TextEditor* namebuffer;
@@ -2698,7 +2705,7 @@ LayerDialog::LayerDialog (Plotter* pl)
 
   addAndMakeVisible(colorbutton = new TextButton(String::empty));
   colorbutton->setButtonText(T("Color..."));
-  colorbutton->addButtonListener(this);
+  colorbutton->addListener(this);
   setSize(476, 76);
 }
 
@@ -2745,7 +2752,7 @@ void LayerDialog::buttonClicked (Button* buttonThatWasClicked)
     }
 }
 
-void LayerDialog::changeListenerCallback (void* source)
+void LayerDialog::changeListenerCallback (juce::ChangeBroadcaster* source)
 {
   ColourSelector* cs = (ColourSelector*)source;
   plotter->getFocusLayer()->setLayerColor(cs->getCurrentColour());
@@ -3294,20 +3301,20 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl)
   addAndMakeVisible(layerbutton=new ToggleButton(String::empty));
   layerbutton->setButtonText (T("All Layers"));
   layerbutton->setToggleState(true,false);
-  layerbutton->addButtonListener (this);
+  layerbutton->addListener (this);
 
   addAndMakeVisible(playbutton=new TextButton(String::empty));
   playbutton->setButtonText (T("Play"));
   playbutton->setEnabled(MidiOutPort::getInstance()->isOpen());
-  playbutton->addButtonListener(this);
+  playbutton->addListener(this);
   addAndMakeVisible(hushbutton=new TextButton(String::empty));
   hushbutton->setButtonText (T("Hush"));
   hushbutton->setEnabled(MidiOutPort::getInstance()->isOpen());
-  hushbutton->addButtonListener (this);
+  hushbutton->addListener (this);
 
   addAndMakeVisible(writebutton=new TextButton(String::empty));
   writebutton->setButtonText(T("Write"));
-  writebutton->addButtonListener(this);
+  writebutton->addListener(this);
   File path=completeFile(plotter->getPlotTitle()+T(".mid"));
   filebrowser=new FilenameComponent(String::empty,
 				    path,
@@ -3657,12 +3664,12 @@ RescalePointsDialog::RescalePointsDialog (Plotter* pltr, int cmd)
   addAndMakeVisible (xbutton = new ToggleButton (String::empty));
   xbutton->setButtonText (T("Horizontal"));
   xbutton->setRadioGroupId (1);
-  xbutton->addButtonListener (this);
+  xbutton->addListener (this);
 
   addAndMakeVisible (ybutton = new ToggleButton (String::empty));
   ybutton->setButtonText (T("Vertical"));
   ybutton->setRadioGroupId (1);
-  ybutton->addButtonListener (this);
+  ybutton->addListener (this);
 
   if (command==CommandIDs::PlotterShiftPoints)
     label1=new Label(String::empty, T("Amount to shift:"));

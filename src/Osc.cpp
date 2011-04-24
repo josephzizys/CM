@@ -428,7 +428,7 @@ OscOpenDialog::OscOpenDialog ()
   
   addAndMakeVisible(openButton = new TextButton(String::empty));
   openButton->setButtonText(T("Open"));
-  openButton->addButtonListener(this);
+  openButton->addListener(this);
   
   serverPortEditor->addListener(this);
   targetHostEditor->addListener(this);

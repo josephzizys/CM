@@ -241,8 +241,9 @@ public:
         int heightPerChannel = (getHeight() - 4) / thumbnail.getNumChannels();
         for (int i = 0; i < thumbnail.getNumChannels(); ++i)
           {
-            thumbnail.drawChannel (g, 2, 2 + heightPerChannel * i,
-                                   getWidth() - 4, heightPerChannel,
+            Rectangle<int> r (2, 2 + heightPerChannel * i, getWidth() - 4, heightPerChannel);
+            thumbnail.drawChannel (g, //2, 2 + heightPerChannel * i, getWidth() - 4, heightPerChannel,
+                                   r,
                                    startTime, endTime,
                                    i, 1.0f);
           }
@@ -253,7 +254,7 @@ public:
         g.drawFittedText ("(No audio file selected)", 0, 0, getWidth(), getHeight(), Justification::centred, 2);
       }
   }
-  void changeListenerCallback (void*)
+  void changeListenerCallback (ChangeBroadcaster* source)
   {
     // this method is called by the thumbnail when it has changed, so we should repaint it..
     repaint();
@@ -372,7 +373,7 @@ AudioFilePlayer::AudioFilePlayer ()
   audioSettingsButton=new TextButton(T("Audio Settings..."),
 				     T("Configure audio settings"));
   addAndMakeVisible (audioSettingsButton);
-  audioSettingsButton->addButtonListener(this);
+  audioSettingsButton->addListener(this);
   transport=new AudioTransport();
   transport->addAndMakeVisible(this);
   transport->player=this;
@@ -455,16 +456,16 @@ void AudioFilePlayer::setFileToPlay(File file, bool play)
   // change if its adding the same file
   fileChooser->setCurrentFile(File::nonexistent, false, false);
   fileChooser->setCurrentFile(file, true, true);
-  if (play)
-    {
-      transport->pushButton(Transport::PlayFromBeginningButton);
-    }
+  //  if (play)
+  //    {
+  //      transport->pushButton(Transport::PlayFromBeginningButton);
+  //    }
 }
 
 void AudioFilePlayer::stop()
 {
   if (getTransportSource().isPlaying())
-    transport->pushButton(Transport::StopButton);
+    transport->pushButton(Transport::PlayPauseButton);
 }
 
 double AudioFilePlayer::getFileDuration()
@@ -537,7 +538,7 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
   else if(!wasStreamFinished && transportSource.hasStreamFinished())
   {
     const MessageManagerLock mmLock;
-    transport->pushButton(Transport::StopButton);
+    transport->pushButton(Transport::PlayPauseButton);
     wasStreamFinished = !wasStreamFinished;
     playbackCursor->setPosition(-1);
   }
@@ -548,7 +549,9 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
       {
         const MessageManagerLock mmLock;
         double pos=transportSource.getCurrentPosition()/getFileDuration();
-        transport->setPosition(pos);
+        transport->setSliderPosition(pos, false);
+        // update the transport's position slider without triggering its action
+        transport->sendMessage(Transport::SetSliderPosition, pos, 0, false);
         playbackCursor->setPosition(pos);
       }
     counter=0;
@@ -585,7 +588,7 @@ void AudioFilePlayer::sliderValueChanged (Slider* slider)
     }
 }
 
-void AudioFilePlayer::changeListenerCallback (void*)
+void AudioFilePlayer::changeListenerCallback (ChangeBroadcaster* source)
 {
 }
 

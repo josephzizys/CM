@@ -14,6 +14,7 @@
 #include "Preferences.h"
 #include "CodeEditor.h"
 #include "Alerts.h"
+#include "MidiPlaybackThread.h"
 #endif
 #include <iostream>
 
@@ -265,6 +266,7 @@ MidiOutPort::MidiOutPort()
 
 MidiOutPort::~MidiOutPort()
 {
+  stopThread(100);
   if ( device != NULL ) delete device;
   tuningnames.clear();
   instrumentnames.clear();
@@ -2206,7 +2208,7 @@ public:
     // revert button initially disabled
     //    button1->setEnabled(false);
     addAndMakeVisible(button2=new TextButton(T("Send")) );
-    button2->addButtonListener(this);
+    button2->addListener(this);
     setSize(10 + 320 + 10 + 170 + 10, 450);
     setVisible(true);
   }
@@ -2430,13 +2432,13 @@ MidiFileInfoComponent::MidiFileInfoComponent(MidiFileInfo* info,
 			new ToggleButton (T("clearbutton")));
       clearbutton->setButtonText(T("Clear Seq after save"));
       clearbutton->setToggleState(midifileinfo->clear, false);
-      clearbutton->addButtonListener (this);
+      clearbutton->addListener (this);
       addAndMakeVisible(cancelbutton = new TextButton(T("cancelbutton")));
       cancelbutton->setButtonText (T("Cancel"));
-      cancelbutton->addButtonListener (this);
+      cancelbutton->addListener (this);
       addAndMakeVisible (savebutton = new TextButton (T("savebutton")));
       savebutton->setButtonText(T("Save"));
-      savebutton->addButtonListener(this);
+      savebutton->addListener(this);
     }
   else 
     savebutton=NULL;
@@ -2453,12 +2455,12 @@ MidiFileInfoComponent::MidiFileInfoComponent(MidiFileInfo* info,
   millibutton->setButtonText(T("Milliseconds"));
   millibutton->setRadioGroupId(1);
   
-  millibutton->addButtonListener(this);
+  millibutton->addListener(this);
   
   addAndMakeVisible(ticksbutton = new ToggleButton (T("")));
   ticksbutton->setButtonText(T("Ticks per Quarter:"));
   ticksbutton->setRadioGroupId(1);
-  ticksbutton->addButtonListener(this);
+  ticksbutton->addListener(this);
   
   addAndMakeVisible(ticksslider = new Slider (T("")));
   ticksslider->setRange (0, 4000, 2);
@@ -2547,13 +2549,13 @@ MidiFileInfoComponent::MidiFileInfoComponent(MidiFileInfo* info,
   addAndMakeVisible(tuningbutton = new ToggleButton (T("tuningbutton")));
   tuningbutton->setButtonText (T("Include Current Tuning"));
   tuningbutton->setToggleState(midifileinfo->bends, false);
-  tuningbutton->addButtonListener (this);
+  tuningbutton->addListener (this);
   
   addAndMakeVisible(instrumentbutton =
 		    new ToggleButton (T("instrumentbutton")));
   instrumentbutton->setToggleState(midifileinfo->insts, false);
   instrumentbutton->setButtonText (T("Include Current Instruments"));
-  instrumentbutton->addButtonListener (this);
+  instrumentbutton->addListener (this);
   
   setSize (600, (saveing) ? 200 : 120);
 }
@@ -2939,37 +2941,37 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi, Mid
 
   addAndMakeVisible(notesbutton = new ToggleButton(String::empty));
   notesbutton->setButtonText (T("Notes"));
-  notesbutton->addButtonListener (this);
+  notesbutton->addListener (this);
   notesbutton->setToggleState (true, false);
   
   addAndMakeVisible(programchangebutton = new ToggleButton(String::empty));
   programchangebutton->setButtonText (T("Program Changes"));
-  programchangebutton->addButtonListener (this);
+  programchangebutton->addListener (this);
   programchangebutton->setToggleState (true, false);
   
   addAndMakeVisible(pitchbendbutton = new ToggleButton(String::empty));
   pitchbendbutton->setButtonText (T("Pitch Bends"));
-  pitchbendbutton->addButtonListener (this);
+  pitchbendbutton->addListener (this);
   pitchbendbutton->setToggleState (true, false);
    
   addAndMakeVisible(controlchangebutton = new ToggleButton(String::empty));
   controlchangebutton->setButtonText (T("Control Changes"));
-  controlchangebutton->addButtonListener (this);
+  controlchangebutton->addListener (this);
   controlchangebutton->setToggleState (true, false);
   
   addAndMakeVisible(aftertouchbutton = new ToggleButton(String::empty));
   aftertouchbutton->setButtonText (T("Aftertouch"));
-  aftertouchbutton->addButtonListener (this);
+  aftertouchbutton->addListener (this);
   aftertouchbutton->setToggleState (true, false);
   
   addAndMakeVisible(pressurebutton = new ToggleButton(String::empty));
   pressurebutton->setButtonText (T("Channel Pressure"));
-  pressurebutton->addButtonListener (this);
+  pressurebutton->addListener (this);
   pressurebutton->setToggleState (true, false);
 
   addAndMakeVisible(metabutton = new ToggleButton(String::empty));
   metabutton->setButtonText (T("Meta Messages"));
-  metabutton->addButtonListener (this);
+  metabutton->addListener (this);
   metabutton->setToggleState (true, false);
 
   // Import To group
@@ -2979,18 +2981,18 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi, Mid
   addAndMakeVisible(consolebutton = new ToggleButton(String::empty));
   consolebutton->setButtonText (T("Console"));
   consolebutton->setRadioGroupId (1);
-  consolebutton->addButtonListener (this);
+  consolebutton->addListener (this);
   consolebutton->setToggleState (true, false);
   
   addAndMakeVisible(clipboardbutton = new ToggleButton(String::empty));
   clipboardbutton->setButtonText (T("Clipboard"));
   clipboardbutton->setRadioGroupId (1);
-  clipboardbutton->addButtonListener (this);
+  clipboardbutton->addListener (this);
   
   addAndMakeVisible(neweditorbutton = new ToggleButton(String::empty));
   neweditorbutton->setButtonText (T("Editor"));
   neweditorbutton->setRadioGroupId (1);
-  neweditorbutton->addButtonListener (this);
+  neweditorbutton->addListener (this);
   
   dataformatlabel=new Label(String::empty, T("Format:"));
   addAndMakeVisible(dataformatlabel);
@@ -3015,7 +3017,7 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi, Mid
 		    
   addAndMakeVisible(exportbutton = new TextButton(String::empty));
   exportbutton->setButtonText (T("Import"));
-  exportbutton->addButtonListener (this);
+  exportbutton->addListener (this);
   
   setSize (320, 412);
 }
@@ -3194,6 +3196,404 @@ void MidiOutPort::openImportRecordingDialog()
 {
   MidiFileImportComponent* c=new MidiFileImportComponent(File::nonexistent,0, &captureSequence);
   new MidifileImportWindow(T("Import Recording"),c);
+}
+
+/*=======================================================================*
+                             MidiFile Player
+ *=======================================================================*/
+
+class MidiFilePlayer : public Component,
+                       public FilenameComponentListener,
+                       public ButtonListener,
+                       public SliderListener,
+                       public ComboBoxListener,
+                       public MidiPlaybackSource,
+                       public ChangeListener
+
+{
+  class MidiTransport : public Transport
+  {
+  public:
+    MidiFilePlayer* player;
+
+    // this function called by the transport when it really toggles from pause to play.
+    void play(double position)
+    {
+      // std::cout << "MidiTransport::play pos=" << position << "\n" ;
+      player->play(position);
+    }
+
+    // this function is called by the transport when it really toggles from play to pause.
+    void pause(void)
+    {
+      //std::cout << "MidiTransport::pause\n";
+      player->pause();
+    }
+    void positionChanged(double position, bool isPlaying)
+    {
+      //std::cout << "MidiTransport::positionChanged pos=" << position << " is playing=" << isPlaying << "\n" ;
+      player->positionChanged(position, isPlaying);
+    }
+  };
+  Label* midiFileLabel;
+  FilenameComponent* midiFileChooser;
+  Label* midiPortLabel;
+  ComboBox* midiPortMenu;
+  String midiPortName;
+  MidiOutput* midiPort;
+  MidiTransport* transport;
+  Label* minTime;
+  Label* maxTime;
+  File midiFile;
+  double fileDuration;
+  int fileLength;
+  MidiMessageSequence sequence;
+  MidiPlaybackThread* pbthread;
+public:
+
+  MidiFilePlayer()
+    : 
+      midiFileLabel(0),
+      midiFileChooser(0),
+      midiPortLabel(0),
+      midiPortMenu(0),
+      midiPortName(String::empty),
+      midiPort(0),
+      transport (0),
+      minTime(0),
+      maxTime(0),
+      fileDuration(0.0),
+      fileLength(0),
+      midiFile(File::nonexistent)
+  {
+    setName(T("Midi File Player"));
+    // create label for midi file chooser
+    addAndMakeVisible(midiFileLabel = new Label(String::empty, T("Midi File:")));
+    midiFileChooser=new FilenameComponent(String::empty, File::nonexistent, true, false, false, 
+                                          T("*.mid;*.midi"), String::empty, T(""));
+    addAndMakeVisible(midiFileChooser);
+    midiFileChooser->addListener(this);
+    midiFileChooser->setBrowseButtonText(T("Open..."));
+    transport=new MidiTransport();
+    transport->addAndMakeVisible(this);
+    transport->player=this;
+
+    // create the playback thread with this object as the source.
+    pbthread=new MidiPlaybackThread(*this, 0, transport);
+    // start the thread running, this will put its run loop in pause mode.
+    pbthread->startThread();
+
+    // create label for midi output menu
+    addAndMakeVisible(midiPortLabel = new Label(String::empty, T("Midi Port:")));
+
+    // create menu of midi output devices. this must be done after the
+    // thread exists because it sets up the thread's output port
+
+    addAndMakeVisible(midiPortMenu = new ComboBox(String::empty));
+    midiPortMenu->setEditableText(false);
+    midiPortMenu->setTextWhenNoChoicesAvailable(T("No Midi output ports"));
+    midiPortMenu->setTextWhenNothingSelected(T("Select Midi output port"));
+    midiPortMenu->addListener(this);
+    StringArray devnames = MidiOutput::getDevices();
+    for (int i=0; i<devnames.size(); i++)
+    {
+      midiPortMenu->addItem(devnames[i], i+1);        
+      if (MidiOutPort::getInstance()->isOpen(i)) // select the same one as in the Audio menu
+        midiPortMenu->setSelectedId(i+1);   // creates device and sets it in midi thread       
+    }
+  }
+  
+  ~MidiFilePlayer()
+  {
+    pbthread->stopThread(100);
+    delete pbthread;
+    sequence.clear();
+    deleteAndZero(midiFileLabel);
+    deleteAndZero(midiFileChooser);
+    deleteAndZero(transport);
+    deleteAndZero(midiPortLabel);
+    deleteAndZero(midiPortMenu);
+    deleteAndZero(midiPort);
+    std::cout << "deleted MidiFilePlayer\n";
+  }
+  
+  // this function is called by the transport to start playing
+
+  void play(double position)
+  {
+    std::cout << "MidiFilePlayer::play(pos=" << position << ")\n" ;
+    pbthread->setPaused(false);
+  }
+
+  // this function is called by the transport to stop playing
+
+  void pause()
+  {
+    std::cout << "MidiFilePlayer::pause()\n" ;
+    pbthread->setPaused(true);
+  }
+
+  // this function is called by the transport to move the position slider
+
+  void positionChanged(double position, bool isPlaying)
+  {
+    std::cout << "MidiFilePlayer::positionChanged(pos=" << position << ", isPlaying=" << isPlaying << ")\n" ;
+    // convert the normalized position into a real position in the
+    // playback sequence and update the MidiPlaybackThread's playback
+    // position
+    double newtime=position * getFileDuration();
+    int newindex = sequence.getNextIndexAtTime(newtime);
+    // 
+    if (isPlaying)
+    {
+      pbthread->pause();
+    }
+    pbthread->clear();
+    pbthread->setPlaybackPosition(newtime,newindex);
+    if (isPlaying)
+    {
+      pbthread->play();
+    }
+  }
+
+  double getFileDuration()
+  {
+    return fileDuration;
+  }
+
+  double getFileLength()
+  {
+    return fileLength;
+  }
+
+  void loadMidiFile(File file, bool play=false)
+  {
+    // push the stop button on the transposrt to stop any playback
+    // push the rewind button on the transport
+    // clear the thread of any current messsages
+    transport->pushButton(Transport::StopButton);
+    transport->pushButton(Transport::RewindButton);
+    // FIXME THIS SHOULD CALLED IN THE POSITIONCHANGED METHOD
+    pbthread->position.rewind();
+
+    fileDuration=0;
+    fileLength=0;
+    sequence.clear();
+    midiFile=file;
+    // create input stream for midi file and read it
+    FileInputStream* input=midiFile.createInputStream();
+    if (input==0)
+    {
+      return;
+    }
+    MidiFile midifile;
+    if (!midifile.readFrom(*input))
+    {
+      //std::cout << "midi failed to read file\n";
+      delete input;
+      return;
+    }
+    int numtracks=midifile.getNumTracks();
+    int timeformat=midifile.getTimeFormat();
+    double smptetps=0.0; // smpte format ticks per second
+    // juce time format is postive for beats and negative for SMTPE
+    if (timeformat>0)
+    {
+      midifile.convertTimestampTicksToSeconds();    
+    }
+    else
+    {
+      // determine the smpte ticks per second. juce smpte frames per
+      // second is negative upper byte
+      int fps=0xFF-((timeformat & 0xFF00) >> 8)+1;
+      int tpf=timeformat & 0xFF;
+      smptetps=fps*tpf;
+    }
+    // iterate all the tracks in the file and merge them into our
+    // empty playback sequence.
+    for (int track=0; track <numtracks; track++)
+    {
+      const MidiMessageSequence* seq=midifile.getTrack(track);
+      // if file is in SMPTE FRAMES then convert it to seconds by
+      // hand. (juce's convertTimestampTicksToSeconds doesnt work for
+      // SMPTE format.)
+      if (timeformat<0) // is smpte
+      {
+        for (int i=0; i<seq->getNumEvents(); i++)
+        {
+          MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
+          double t=h->message.getTimeStamp();
+          h->message.setTimeStamp(t/smptetps);
+        }
+      }
+      // merge file track into our sigle playback sequence
+      sequence.addSequence(*seq, 0.0, 0.0, seq->getEndTime()+1);
+      sequence.updateMatchedPairs();
+    }
+
+    // the file may include more than the note ons and offs so the
+    // file length may not reflect the actual number of events that we
+    // play. set file playback duration to the very last note event
+    fileLength=sequence.getNumEvents();
+    for (int i=sequence.getNumEvents()-1; i>=0; i--)
+      if (sequence.getEventPointer(i)->message.isNoteOnOrOff())
+      {
+        fileDuration=sequence.getEventPointer(i)->message.getTimeStamp();
+        break;
+      }
+    // set the playback range to our upper bounds, note that the
+    // length may include meta message
+    pbthread->setPlaybackRange(fileDuration, sequence.getNumEvents());
+    pbthread->setPlaybackPort(MidiOutPort::getInstance()->device);
+    std::cout << "MidiFilePlayer::setFileToPlay: " << midiFile.getFullPathName().toUTF8() 
+              << " tracks=" << numtracks << " duration=" << fileDuration << "\n";
+  }
+
+  /** add noteOns for the current playback time and index and update
+      the index for the next (future) event. **/
+
+  void getMidiPlaybackMessages(MidiPlaybackQueue& queue, MidiPlaybackPosition& position)
+  {
+    //std::cout << "getMidiPlaybackMessages beat=" << position.time << " index=" << position.index << "\n";
+    int index=index=position.index;
+    for (; index<position.length; index++)
+    {
+      MidiMessageSequence::MidiEventHolder* ev=sequence.getEventPointer(index);
+      // skip over non-channel messages
+      if (ev->message.getChannel()<1)
+        continue;
+      // skip over noteOffs because we add by pairs with noteOns
+      if (ev->message.isNoteOff())
+        continue;
+      if (ev->message.getTimeStamp() <= position.time)
+      {
+        queue.addMessage(new MidiMessage(ev->message));
+        //MidiPlaybackThread::printMessage(ev->message);
+        if (ev->noteOffObject)
+        {
+          queue.addMessage(new MidiMessage(ev->noteOffObject->message));            
+          //MidiPlaybackThread::printMessage(ev->noteOffObject->message);
+        }
+      }
+      else
+        break;
+    }
+    // index is now the index of the next (future) event or length
+    position.index=index;
+  }
+  
+  void paint (Graphics& g)
+  {
+  }
+
+  bool isPlaying()
+  {
+    return false;
+  }
+
+  void resized()
+  {
+  int margin=8, lineheight=24;
+  int x=margin, y=margin;
+  int width=getWidth();
+  int height=getHeight();
+  int labwid = jmax(midiFileLabel->getFont().getStringWidthFloat(midiFileLabel->getText())+10,
+                    midiPortLabel->getFont().getStringWidthFloat(midiPortLabel->getText())+10);
+  midiFileLabel->setBounds(x, y, labwid, lineheight);
+  x=midiFileLabel->getRight()+8;
+  midiFileChooser->setBounds(x, y, width-margin-x, lineheight);
+  y=y+lineheight+margin;
+  x=margin;
+  midiPortLabel->setBounds(x, y, labwid, lineheight);
+  x=midiPortLabel->getRight()+8;
+  midiPortMenu->setBounds(x, y, 200, lineheight);
+  x=margin;
+  y=y+margin+(lineheight * 1.5);
+  // transport has 5 buttons, each 44px centered in window's width
+  transport->setPositions((width/2)-(44*2.5), y, 44, lineheight);
+  }
+
+  void buttonClicked (Button* button)
+  {
+  }
+
+  void sliderValueChanged (Slider* slider)
+  {
+  }
+
+  void MidiFilePlayer::setFileToPlay (File file)
+  {
+    //    player->midiFileChooser->setCurrentFile(File::nonexistent, false, false);
+    midiFileChooser->setCurrentFile(file, true, true);
+  }
+
+  void MidiFilePlayer::filenameComponentChanged (FilenameComponent* comp)
+  {
+    // this is called when the user changes the file in the chooser
+    if (!comp->getCurrentFile().existsAsFile())
+      return;
+    loadMidiFile(comp->getCurrentFile()) ;
+  }
+
+  void changeListenerCallback (ChangeBroadcaster* source)
+  {
+  }
+
+  bool keyPressed (const KeyPress& key)
+  {
+    return true;
+  }
+
+  void comboBoxChanged (ComboBox* combobox)
+  {
+    int index=combobox->getSelectedItemIndex();
+    pbthread->setPlaybackPort(0);
+    deleteAndZero(midiPort);
+    midiPort=MidiOutput::openDevice(index);
+    if (midiPort)
+      pbthread->setPlaybackPort(midiPort);      
+  }
+};
+
+class MidiFilePlayerWindow : public DocumentWindow 
+{
+
+  MidiFilePlayer* player;
+
+public:
+  
+  MidiFilePlayerWindow ()
+    : DocumentWindow(T("Midi File Player"), Colour(0xffe5e5e5), DocumentWindow::allButtons, true),
+      player (0)
+  {
+    player=new MidiFilePlayer();
+    player->setVisible(true);
+    setContentComponent(player);
+    player->setWantsKeyboardFocus(true);
+    setWantsKeyboardFocus(false);
+    setResizable(true, true); 
+    setUsingNativeTitleBar(true);
+    setDropShadowEnabled(true);
+    centreWithSize(450, 150);
+    setVisible(true);
+    //    player->setFileToPlay(File("/Users/hkt/aatest/aapbtest.mid"));
+  }
+  
+  ~MidiFilePlayerWindow()
+  {
+    // MidiFilePlayer component iautomatically deleted by the window
+  }
+ 
+  void closeButtonPressed()
+  {
+    delete this;
+  }
+  
+};
+
+void MidiOutPort::openMidiFilePlayer()
+{
+  new MidiFilePlayerWindow();
 }
 
 #endif

@@ -756,19 +756,19 @@ ExportCsoundDialog::ExportCsoundDialog ()
   consoletoggle->setButtonText (T("Console"));
   consoletoggle->setRadioGroupId (1);
   consoletoggle->setToggleState (true, false);
-  consoletoggle->addButtonListener (this);
+  consoletoggle->addListener (this);
 
   clipboardtoggle = new ToggleButton (String::empty);
   addAndMakeVisible (clipboardtoggle);
   clipboardtoggle->setButtonText (T("Clipboard"));
   clipboardtoggle->setRadioGroupId (1);
-  clipboardtoggle->addButtonListener (this);
+  clipboardtoggle->addListener (this);
   
   filetoggle = new ToggleButton (String::empty);
   addAndMakeVisible (filetoggle);
   filetoggle->setButtonText (T("File:"));
   filetoggle->setRadioGroupId (1);
-  filetoggle->addButtonListener (this);
+  filetoggle->addListener (this);
   
   itoggle = new ToggleButton (String::empty);
   addAndMakeVisible (itoggle);
@@ -782,7 +782,7 @@ ExportCsoundDialog::ExportCsoundDialog ()
   
   exportbutton = new TextButton (T("Export"));
   addAndMakeVisible (exportbutton);
-  exportbutton->addButtonListener (this);
+  exportbutton->addListener (this);
   
   filechooser = new FilenameComponent(T("File"), 
 				      File::getSpecialLocation(File::userHomeDirectory).getChildFile(T("test.sco")),

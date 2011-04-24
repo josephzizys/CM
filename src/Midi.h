@@ -248,6 +248,7 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   void sendInstruments();
   void resetInstruments();
   void openInstrumentsDialog();
+  void openMidiFilePlayer();
 
   // CLEAN THIS UP!!!!!
 

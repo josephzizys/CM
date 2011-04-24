@@ -184,8 +184,7 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   menu.addCommandItem(comm, CommandIDs::SndLibInsDialog);
   menu.addCommandItem(comm, CommandIDs::SndLibInsRestore);
   menu.addSeparator();
-  menu.addCommandItem(comm, CommandIDs::AudioOpenFilePlayer);
-  menu.addCommandItem(comm, CommandIDs::MidiPlotPlayer);
+  menu.addCommandItem(comm, CommandIDs::AudioFilePlayer);
   menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);
   menu.addCommandItem(comm, CommandIDs::MidiInImportFile);
   menu.addSeparator();

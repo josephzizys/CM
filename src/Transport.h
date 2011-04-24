@@ -3,102 +3,339 @@
 
 #include "juce.h"
 
-class Transport
+class Transport : public AsyncUpdater,
+  public ButtonListener,
+  public SliderListener
+
 {
-  //--------------------------------------//
-  //All you need to know is in these lines//
-  //--------------------------------------//
  public:
+
+  enum 
+  {
+    RewindButton=1, BackButton, PlayPauseButton, ForwardButton, GoToEndButton,
+    PlayButton, StopButton, SliderButton,
+    SetPlaying, SetPausing, SetSliderPosition
+  };
+
   //The following need to be overridden in a subclass.
+
   virtual void play(double position) = 0;
   virtual void pause(void) = 0;
   virtual void positionChanged(double position, bool isPlaying) = 0;
   
-  enum {RewindButton=1, BackButton, PlayFromBeginningButton, PlayPauseButton, 
-	StopButton, ForwardButton, PlayRepeatsButton};
+ Transport()
+   : buttonRewind(0), buttonBack(0), buttonPlayPause(0), buttonForward(0), buttonGoToEnd(0),
+    sliderPosition(0), playing(false)
+  {
+    buttonColor = Colour(90,90,120);
+    toggleColor = Colour(60,60,180);
+	
+    int connectLeft = Button::ConnectedOnLeft;
+    int connectBoth = Button::ConnectedOnLeft | Button::ConnectedOnRight;
+    int connectRight = Button::ConnectedOnRight;
+      
+    DrawableButton::ButtonStyle buttonStyle = DrawableButton::ImageOnButtonBackground;
+      
+    buttonRewind = new DrawableButton(String("Rewind"), buttonStyle);
+    buttonRewind->setBackgroundColours(buttonColor, toggleColor);
+    buttonRewind->setConnectedEdges(connectRight);
+    drawRewind(buttonRewind);
+    buttonRewind->addListener(this);
+	
+    buttonBack = new DrawableButton(String("Back"), buttonStyle);
+    buttonBack->setBackgroundColours(buttonColor, toggleColor);
+    buttonBack->setConnectedEdges(connectBoth);
+    drawBack(buttonBack);
+    buttonBack->addListener(this);
+	
+    buttonPlayPause = new DrawableButton(String("PlayPause"), buttonStyle);
+    buttonPlayPause->setBackgroundColours(buttonColor, toggleColor);
+    buttonPlayPause->setConnectedEdges(connectBoth);
+    drawPlay(buttonPlayPause);
+    buttonPlayPause->addListener(this);
+	
+    buttonForward = new DrawableButton(String("Forward"), buttonStyle);
+    buttonForward->setBackgroundColours(buttonColor, toggleColor);
+    buttonForward->setConnectedEdges(connectBoth);
+    drawForward(buttonForward);
+    buttonForward->addListener(this);
 
-  void pushButton(int buttonId)
+    buttonGoToEnd = new DrawableButton(String("GoToEnd"), buttonStyle);
+    buttonGoToEnd->setBackgroundColours(buttonColor, toggleColor);
+    buttonGoToEnd->setConnectedEdges(connectLeft);
+    drawGoToEnd(buttonGoToEnd);
+    buttonGoToEnd->addListener(this);
+	
+    sliderPosition = new Slider(String("Position"));
+    sliderPosition->setSliderStyle(Slider::LinearHorizontal);
+    sliderPosition->setTextBoxStyle(Slider::NoTextBox, false, 0, 0);
+    sliderPosition->setColour(Slider::thumbColourId,buttonColor);
+    sliderPosition->addListener(this);
+  }
+  
+  ~Transport()
+  {
+    delete buttonRewind;
+    delete buttonBack;
+    delete buttonPlayPause;
+    delete buttonForward;
+    delete buttonGoToEnd;
+    delete sliderPosition;
+  }
+
+  /** push tranport buttons using code. this method is not thread
+      safe, use Transport::sendMessage() for that.
+   **/
+
+  void pushButton(int buttonId, double data=0.0)
   {
     switch (buttonId)
-      {
-      case RewindButton :
-	buttonRewind->triggerClick();
-	break;
-      case BackButton :
-	buttonBack->triggerClick();
-	break;
-      case PlayFromBeginningButton :
-	buttonPlayFromBeginning->triggerClick();
-	break;
-      case PlayPauseButton :
-	buttonPlayPause->triggerClick();
-	break;
-      case StopButton :
-	buttonStop->triggerClick();
-	break;
-      case ForwardButton :
-	buttonForward->triggerClick();
-	break;
-      case PlayRepeatsButton :
-	buttonPlayRepeats->triggerClick();
-	break;
-      default:
-	break;
-      }
+    {
+    case RewindButton :
+      buttonRewind->triggerClick();
+      break;
+    case BackButton :
+      buttonBack->triggerClick();
+      break;
+    case PlayPauseButton : // toggles PlayPauseButton
+      buttonPlayPause->triggerClick();
+      break;
+    case PlayButton :      // sets PlayPauseButton to play
+      setPlaying(true);
+      break;
+    case StopButton :      // sets PlayPause Button to pause
+      setPausing(true);
+      break;
+    case ForwardButton :
+      buttonForward->triggerClick();
+      break;
+    case GoToEndButton :
+      buttonGoToEnd->triggerClick();
+      break;
+    case SetSliderPosition :
+      setSliderPosition(data,true);
+      break;
+    default:
+      break;
+    }
   }
-  //----------------------------------------//
-  //You can ignore the rest of the internals//
-  //----------------------------------------//
- private:
-  Slider*         sliderPosition; //Ignore this...
- public:
-  //Sets the position of the slider on a scale 0.0 to 1.0
-  //(does not trigger positionChanged to be called).
-  void setPosition(double position)
+
+  /** Posts an asynchronous message to control the transport from
+      another thread. Typ is one of the button enums defined at the
+      top of this file. The rest af the args are any data you need to
+      pass. **/ 
+
+  void sendMessage(int typ, double d=0.0, int i=0, bool b=false)
   {
-	  const MessageManagerLock mmLock;
-	  sliderPosition->setValue(position,false,false);
+    ScopedLock mylock(messages.getLock());
+    messages.add(new TransportMessage(typ, d, i, b));
+    triggerAsyncUpdate();
   }
-  //Gets the position of the slider on a scale 0.0 to 1.0.
-  double getPosition(void){return sliderPosition->getValue();}
- public:
-  //Forward declarations for subclasses...
-  class Listener;
-  class PlaybackListener;
+
+  /** Returns true if the transport thinks it is playing otherwiswe
+      false. This method is not thread safe. **/
+
+  bool isPlaying()
+  {
+    return playing;
+  }
+
+  /** Sets the position of the slider on a scale 0.0 to 1.0. If
+      triggerAction is true then the positionChanged() method will be
+      called (via setValue) with the position and a boolean flag
+      indicating if the transport is currently playing or not. This
+      method is not thread safe, use sendMessage() for that. **/
+
+  void setSliderPosition(double position, bool triggerAction=true)
+  {
+    sliderPosition->setValue(position, triggerAction, false);
+  }
+
+  /** Gets the position of the slider on a scale 0.0 to 1.0. this is
+      not thread safe **/
+
+  double getPosition(void)
+  {
+    return sliderPosition->getValue();
+  }
+
+  /** Marks transport as playing, displays the "pause" icon for the
+      user and calls the play() method if triggerAction is true and
+      the transport is not currently playing. This method is not
+      thread safe, use sendMessage() for that. **/
+
+  void setPlaying(bool triggerAction=true)
+  {
+    //std::cout << "in setPlaying, trigger action is " << triggerAction << " playing status was " << playing << "\n";
+    bool toggled=(playing==false);
+    playing=true;
+    drawPause(buttonPlayPause);
+    if (triggerAction && toggled)
+    {
+      //      std::cout << "triggering play...\n";
+      play(getPosition());
+    }
+  }
+  
+  /** Marks transport as pausing, displays the "play" icon for the
+      user and calls the pause() method if triggerAction is true and
+      the transport is currently playing. This method is not thread
+      safe, use sendMessage() for that. **/
+
+  void setPausing(bool triggerAction=true)
+  { 
+    //std::cout << "in setPausing, trigger action is " << triggerAction << " playing status was " << playing << "\n";
+    bool toggled=(playing==true);
+    playing=false;
+    drawPlay(buttonPlayPause);
+    if (triggerAction && toggled)
+    {
+      //      std::cout << "triggering pause...\n";
+      pause();
+    }
+  }
+
+  /** Positions the transport buttons. **/
+
+  void setPositions(int x, int y, int buttonWidth, int height)
+  {
+    int buttonLeft = x;
+    buttonRewind->setBounds(buttonLeft, y, buttonWidth, height);      
+    buttonBack->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);      
+    buttonPlayPause->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);
+    buttonForward->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);
+    buttonGoToEnd->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);    
+    sliderPosition->setBounds(x, y + height, (buttonLeft += buttonWidth) - x, height);
+    sliderPosition->setRange(0, 1.0);
+  }
+  
+  void addAndMakeVisible(Component* parent)
+  {
+    parent->addAndMakeVisible(buttonRewind);
+    parent->addAndMakeVisible(buttonBack);
+    parent->addAndMakeVisible(buttonPlayPause);
+    parent->addAndMakeVisible(buttonForward);
+    parent->addAndMakeVisible(buttonGoToEnd);
+    parent->addAndMakeVisible(sliderPosition);
+  }
+
  private:
+
+  bool playing;
+  DrawableButton* buttonPlayPause;
   DrawableButton* buttonRewind;
   DrawableButton* buttonBack;
-  DrawableButton* buttonPlayFromBeginning;
-  DrawableButton* buttonPlayPause;
-  DrawableButton* buttonStop;
   DrawableButton* buttonForward;
-  DrawableButton* buttonPlayRepeats;
-
-  Listener* buttonListener;
-  PlaybackListener* playbackListener;
-  
+  DrawableButton* buttonGoToEnd;
+  Slider*         sliderPosition;
   Colour buttonColor;
   Colour toggleColor;
+
+  /** Support for async messaging from other threads **/
+
+  class TransportMessage
+  {
+  public:
+    int type;
+    double double1;
+    int int1;
+    bool bool1;
+    TransportMessage (int typ, double d1, int i1, bool b1)
+      : type(typ), double1 (d1), int1 (i1), bool1 (b1)
+    {} 
+    ~TransportMessage()
+    {}
+  };
+
+  OwnedArray<TransportMessage, CriticalSection> messages;
+
+  void handleAsyncUpdate ()
+  {
+    ScopedLock mylock(messages.getLock());
+    int size=messages.size();
+    for (int i=0; i<size; i++)
+    {
+      TransportMessage* msg=messages.getUnchecked(i);
+      switch (msg->type)
+      {
+      case SetPausing:
+        //std::cout << "TransportMessage: SetPausing\n";
+        setPausing(msg->bool1); // false means dont trigger action
+        break;
+      case SetPlaying:
+        //std::cout << "TransportMessage: SetPlaying\n";
+        setPlaying(msg->bool1); // false means dont trigger action
+        break;
+      case SetSliderPosition:
+        //std::cout << "TransportMessage: SetPosition pos=" << msg->double1 << "\n";
+        setSliderPosition(msg->double1, msg->bool1);
+        break;
+      default:
+        break;
+      }
+    }
+    if (size>0)
+      messages.clear();
+  }
+
+  virtual void buttonClicked(Button* button)
+  {
+    static bool isShowingPlayNotPause = true;
+    
+    if(button->getName() == String("PlayPause"))
+    {
+      //Toggle the play/pause button.
+      isShowingPlayNotPause = !isShowingPlayNotPause;
+      
+      if(isPlaying())
+      {
+        setPausing();
+      }
+      else
+      {
+        setPlaying();
+      }
+    }
+    else if(button->getName() == String("Rewind"))
+    {
+      sliderPosition->setValue(0);
+    }
+    else if(button->getName() == String("Back"))
+    {
+      sliderPosition->setValue(sliderPosition->getValue() - 0.10);
+    }
+    else if(button->getName() == String("Forward"))
+    {
+      sliderPosition->setValue(sliderPosition->getValue() + 0.10);
+    }
+    else if(button->getName() == String("GoToEnd"))
+    {
+      sliderPosition->setValue(1);
+    }
+  }
   
+  virtual void sliderValueChanged(Slider *slider)
+  {
+    //'percentage' will be a value from 0 to 1.0, so you just have to
+    //multiply it by the length of whatever you have to get the sample.
+    double percentage = slider->getValue();
+    
+    if(slider->getName() == String("Position"))
+      positionChanged(percentage, isPlaying());
+  }
+ 
   void drawRewind(DrawableButton* b)
   {
     DrawablePath imageRewind;
     Path pathRewind;
     pathRewind.addRectangle(-1.8f,0,0.3f,2.0f);
-    pathRewind.addTriangle(0,0,0,2.0f,-1.2f,1.0f);
+    pathRewind.addTriangle(0,0, 0,2.0f, -1.2f,1.0f);
     imageRewind.setPath(pathRewind);
-#if ( JUCE_MINOR_VERSION < 50 )
-    imageRewind.setSolidFill(Colours::white);
-#else
-    {
-      //    imageRewind.setFillColour(Colours::white);
     FillType ft (Colours::white);
     imageRewind.setFill(ft);
-    }
-#endif
     b->setImages(&imageRewind);
   }
-  
+
   void drawBack(DrawableButton* b)
   {
     DrawablePath imageBack;
@@ -106,37 +343,9 @@ class Transport
     pathBack.addTriangle(0,0,0,2.0f,-1.2f,1.0f);
     pathBack.addTriangle(1.2f,0,1.2f,2.0f,0,1.0f);
     imageBack.setPath(pathBack);
-#if ( JUCE_MINOR_VERSION < 50 )
-    imageBack.setSolidFill(Colours::white);
-#else
-    {
-      //    imageBack.setFillColour(Colours::white);
     FillType ft (Colours::white);
     imageBack.setFill(ft);
-    }
-#endif
-
     b->setImages(&imageBack);
-  }
-  
-  void drawPlayFromBeginning(DrawableButton* b)
-  {
-    DrawablePath imagePlayFromBeginning;
-    Path pathPlayFromBeginning;
-    pathPlayFromBeginning.addTriangle(0,0,0,2.0f,1.2f,1.0f);
-    pathPlayFromBeginning.addRectangle(-0.6f,0,0.3f,2.0f);
-    imagePlayFromBeginning.setPath(pathPlayFromBeginning);
-#if ( JUCE_MINOR_VERSION < 50 )
-    imagePlayFromBeginning.setSolidFill(Colours::white);
-#else
-    {
-    FillType ft (Colours::white);
-    //    imagePlayFromBeginning.setFillColour(Colours::white);
-    imagePlayFromBeginning.setFill(ft);
-    }
-#endif
-
-    b->setImages(&imagePlayFromBeginning);
   }
   
   void drawPlay(DrawableButton* b)
@@ -145,16 +354,8 @@ class Transport
     Path pathPlay;
     pathPlay.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     imagePlay.setPath(pathPlay);
-#if ( JUCE_MINOR_VERSION < 50 )
-    imagePlay.setSolidFill(Colours::white);
-#else
-    {
     FillType ft (Colours::white);
-    //    imagePlay.setFillColour(Colours::white);
     imagePlay.setFill(ft);
-    }
-#endif
-
     b->setImages(&imagePlay);
   }
   
@@ -165,34 +366,9 @@ class Transport
     pathPause.addRectangle(0,0,0.3f,1.0f);
     pathPause.addRectangle(0.6f,0,0.3f,1.0f);
     imagePause.setPath(pathPause);
-#if ( JUCE_MINOR_VERSION < 50 )
-    imagePause.setSolidFill(Colours::white);
-#else
-    {
     FillType ft (Colours::white);
-    //    imagePause.setFillColour(Colours::white);
     imagePause.setFill(ft);
-    }
-#endif
     b->setImages(&imagePause);
-  }
-  
-  void drawStop(DrawableButton* b)
-  {
-    DrawablePath imageStop;
-    Path pathStop;
-    pathStop.addRectangle(0,0,1.0f,1.0f);
-    imageStop.setPath(pathStop);
-#if ( JUCE_MINOR_VERSION < 50 )
-    imageStop.setSolidFill(Colours::white);
-#else
-    {
-    FillType ft (Colours::white);
-    //    imageStop.setFillColour(Colours::white);
-    imageStop.setFill(ft);
-    }
-#endif
-    b->setImages(&imageStop);
   }
   
   void drawForward(DrawableButton* b)
@@ -202,237 +378,38 @@ class Transport
     pathForward.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     pathForward.addTriangle(-1.2f,0,-1.2f,2.0f,0,1.0f);
     imageForward.setPath(pathForward);
-#if ( JUCE_MINOR_VERSION < 50 )
-    imageForward.setSolidFill(Colours::white);
-#else
-    {
     FillType ft (Colours::white);
-    //    imageForward.setFillColour(Colours::white);
     imageForward.setFill(ft);
-    }
-#endif
     b->setImages(&imageForward);
   }
-  
-  void drawPlayRepeats(DrawableButton* b)
+    
+  void drawGoToEnd(DrawableButton* b)
   {
-    DrawablePath imagePlayRepeats;
-    Path pathPlayRepeats;
-    pathPlayRepeats.addRectangle(0,0,0.1f,1.0f);
-    pathPlayRepeats.addRectangle(0.2f,0,0.2f,1.0f);
-    pathPlayRepeats.addEllipse(-0.4f,0.25f,0.2f,0.2f);
-    pathPlayRepeats.addEllipse(-0.4f,0.75f,0.2f,0.2f);
-    imagePlayRepeats.setPath(pathPlayRepeats);
-#if ( JUCE_MINOR_VERSION < 50 )
-    imagePlayRepeats.setSolidFill(Colours::white);
-#else
-    {
+    DrawablePath imageGoToEnd;
+    Path pathGoToEnd;
+    pathGoToEnd.addTriangle(-1.4f,0, -1.4f,2.0f, -0.2,1.0f);
+    pathGoToEnd.addRectangle(0.1f,0, 0.3f,2.0f);
+    imageGoToEnd.setPath(pathGoToEnd);
     FillType ft (Colours::white);
-    //    imagePlayRepeats.setFillColour(Colours::white);
-    imagePlayRepeats.setFill(ft);
-    }
-#endif
-    b->setImages(&imagePlayRepeats);
+    imageGoToEnd.setFill(ft);
+    b->setImages(&imageGoToEnd);
   }
-  
- public:
-  
-  void setPositions(int x, int y, int buttonWidth, int height)
-  {
-    int buttonLeft = x;
-    buttonRewind->setBounds(buttonLeft, y, buttonWidth, height);      
-    buttonBack->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);      
-    buttonPlayFromBeginning->setBounds(buttonLeft += buttonWidth, y, 
-				       buttonWidth, height);      
-    buttonPlayPause->setBounds(buttonLeft += buttonWidth, y, buttonWidth,
-			       height);
-    buttonStop->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);
-    buttonForward->setBounds(buttonLeft += buttonWidth, y, buttonWidth,
-			     height);
-    
-    sliderPosition->setBounds(x, y + height, (buttonLeft += buttonWidth) - x, 
-			      height);
-    sliderPosition->setRange(0, 1.0);
-  }
-  
-  void addAndMakeVisible(Component* parent)
-  {
-    parent->addAndMakeVisible(buttonRewind);
-    parent->addAndMakeVisible(buttonBack);
-    parent->addAndMakeVisible(buttonPlayFromBeginning);
-    parent->addAndMakeVisible(buttonPlayPause);
-    parent->addAndMakeVisible(buttonStop);
-    parent->addAndMakeVisible(buttonForward);
-    parent->addAndMakeVisible(buttonPlayRepeats);
-    parent->addAndMakeVisible(sliderPosition);
-  }
-  
- Transport() : buttonRewind(0), buttonBack(0), buttonPlayFromBeginning(0), 
-    buttonPlayPause(0), buttonStop(0), buttonForward(0), buttonPlayRepeats(0), 
-    sliderPosition(0)
-      {
-	buttonListener = new Listener(this);
-	playbackListener = new PlaybackListener(this);
-	
-	buttonColor = Colour(90,90,120);
-	toggleColor = Colour(60,60,180);
-	
-	int connectLeft = Button::ConnectedOnLeft;
-	int connectBoth = Button::ConnectedOnLeft | 
-	  Button::ConnectedOnRight;
-	int connectRight = Button::ConnectedOnRight;
-	
-	DrawableButton::ButtonStyle buttonStyle = 
-	  DrawableButton::ImageOnButtonBackground;
-	
-	buttonRewind = new DrawableButton(String("Rewind"), buttonStyle);
-	buttonRewind->setBackgroundColours(buttonColor, toggleColor);
-	buttonRewind->setConnectedEdges(connectRight);
-	drawRewind(buttonRewind);
-	buttonRewind->addButtonListener(buttonListener);
-	
-	buttonBack = new DrawableButton(String("Back"), buttonStyle);
-	buttonBack->setBackgroundColours(buttonColor, toggleColor);
-	buttonBack->setConnectedEdges(connectBoth);
-	drawBack(buttonBack);
-	buttonBack->addButtonListener(buttonListener);
-	
-	buttonPlayFromBeginning = new DrawableButton(String("PlayFromBeginning"),
-						     buttonStyle);
-	buttonPlayFromBeginning->setBackgroundColours(buttonColor, toggleColor);
-	buttonPlayFromBeginning->setConnectedEdges(connectBoth);
-	drawPlayFromBeginning(buttonPlayFromBeginning);
-	buttonPlayFromBeginning->addButtonListener(buttonListener);
-	
-	buttonPlayPause = new DrawableButton(String("PlayPause"), buttonStyle);
-	buttonPlayPause->setBackgroundColours(buttonColor, toggleColor);
-	buttonPlayPause->setConnectedEdges(connectBoth);
-	drawPlay(buttonPlayPause);
-	buttonPlayPause->addButtonListener(buttonListener);
-	
-	buttonStop = new DrawableButton(String("Stop"), buttonStyle);
-	buttonStop->setBackgroundColours(buttonColor, toggleColor);
-	buttonStop->setConnectedEdges(connectBoth);
-	drawStop(buttonStop);
-	buttonStop->addButtonListener(buttonListener);
-	
-	buttonForward = new DrawableButton(String("Forward"), buttonStyle);
-	buttonForward->setBackgroundColours(buttonColor, toggleColor);
-	buttonForward->setConnectedEdges(connectLeft);
-	drawForward(buttonForward);
-	buttonForward->addButtonListener(buttonListener);
-	
-	sliderPosition = new Slider(String("Position"));
-	sliderPosition->setSliderStyle(Slider::LinearHorizontal);
-	sliderPosition->setTextBoxStyle(Slider::NoTextBox, false, 0, 0);
-	sliderPosition->setColour(Slider::thumbColourId,buttonColor);
-	sliderPosition->addListener(playbackListener);
-      }
-  
-  ~Transport()
-    {
-      delete buttonListener;
-      delete playbackListener;
-      
-      delete buttonRewind;
-      delete buttonBack;
-      delete buttonPlayFromBeginning;
-      delete buttonPlayPause;
-      delete buttonStop;
-      delete buttonForward;
-      delete buttonPlayRepeats;
-      delete sliderPosition;
-    }
 
-  friend class PlaybackListener;
-  class PlaybackListener : public SliderListener
+  // unused
+  void drawStop(DrawableButton* b)
   {
-    Transport* transport;
-  public:
-  PlaybackListener(Transport* parent) : transport(parent) {}
-    
-    virtual void sliderValueChanged(Slider *slider)
+    DrawablePath imageStop;
+    Path pathStop;
+    pathStop.addRectangle(0,0,1.0f,1.0f);
+    imageStop.setPath(pathStop);
     {
-      //'percentage' will be a value from 0 to 1.0, so you just have to
-      //multiply it by the length of whatever you have to get the sample.
-      double percentage = slider->getValue();
-      
-      if(slider->getName() == String("Position"))
-	transport->positionChanged(percentage,
-				   transport->buttonListener->isPlaying());
+      FillType ft (Colours::white);
+      imageStop.setFill(ft);
     }
-  };
-  
-  friend class Listener;
-  class Listener : public ButtonListener
-  {
-    Transport* transport;
-    bool playing;
-  public:
-  Listener(Transport* parent) : transport(parent), playing(false) {}
-    virtual void buttonStateChanged(Button *button) {}
-    bool isPlaying(void) {return playing;}
-    
-    virtual void buttonClicked(Button* button)
-    {
-      static bool isShowingPlayNotPause = true;
-      
-      if(button->getName() == String("PlayPause"))
-        {
-          //Toggle the play/pause button.
-          isShowingPlayNotPause = !isShowingPlayNotPause;
-	  
-          if(isShowingPlayNotPause)
-	    {
-	      //Change the graphic to a play button.
-	      transport->drawPlay(transport->buttonPlayPause);
-	      playing=false; // hkt: isPlaying() => false
-	      //Trigger pause event.
-	      transport->pause();
-	    }
-          else
-	    {
-	      //Change the graphic to a pause button.
-	      transport->drawPause(transport->buttonPlayPause);
-	      playing=true; // hkt: isPlaying() => true
-	      //Trigger play event.
-	      transport->play(transport->getPosition());
-	    }
-        }
-      else if(button->getName() == String("Stop"))
-        {
-          //Instead of repeating logic/graphics code, just call the button click
-          //events to get the desired result.
-          if(!isShowingPlayNotPause)
-            transport->buttonPlayPause->triggerClick(); //Pause playback.
-          if(transport->sliderPosition->getValue() != 0)
-            transport->buttonRewind->triggerClick(); //Rewind.
-        }
-      else if(button->getName() == String("Rewind"))
-        {
-          transport->sliderPosition->setValue(0);
-        }
-      else if(button->getName() == String("Back"))
-        {
-          transport->sliderPosition->setValue(
-					      transport->sliderPosition->getValue() - 0.05);
-        }
-      else if(button->getName() == String("Forward"))
-        {
-          transport->sliderPosition->setValue(
-					      transport->sliderPosition->getValue() + 0.05);
-        }
-      else if(button->getName() == String("PlayFromBeginning"))
-        {
-          //Instead of repeating logic/graphics code, just call the button click
-          //events to get the desired result.
-          if(transport->sliderPosition->getValue() != 0)
-            transport->buttonRewind->triggerClick(); //Rewind.
-          if(isShowingPlayNotPause)
-            transport->buttonPlayPause->triggerClick(); //Resume playback.
-        }
-    }
-  };
+    b->setImages(&imageStop);
+  }
+
 };
+
 
 #endif

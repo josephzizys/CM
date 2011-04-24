@@ -62,7 +62,7 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     {
     case TextIDs::Text: syntax=TextSyntax::getInstance(); break;
     case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
-    case TextIDs::Sal: syntax=SalSyntax::getInstance(); break;
+    case TextIDs::Sal1: syntax=SalSyntax::getInstance(); break;
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
 #ifdef WITHFOMUS
     case TextIDs::Fomus:
@@ -195,7 +195,7 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
 
       CommandIDs::EditorSyntax + TextIDs::Text,    // Options menu
       CommandIDs::EditorSyntax + TextIDs::Lisp,
-      CommandIDs::EditorSyntax + TextIDs::Sal,
+      //      CommandIDs::EditorSyntax + TextIDs::Sal,
       CommandIDs::EditorSyntax + TextIDs::Sal2,
       CommandIDs::EditorSyntax + TextIDs::Fomus,
       CommandIDs::EditorFontSize + 10,
@@ -707,7 +707,7 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
       PopupMenu sub1, sub2, sub3;
       sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Text);
       sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Lisp);
-      sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal);
+      //      sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal);
       sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal2);
       sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Fomus);
       sub1.addSeparator();
@@ -827,7 +827,7 @@ void CodeEditorWindow::switchBufferSyntax(int newtype)
     {
     case TextIDs::Text: syntax=TextSyntax::getInstance(); break;
     case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
-    case TextIDs::Sal: syntax=SalSyntax::getInstance(); break;
+    case TextIDs::Sal1: syntax=SalSyntax::getInstance(); break;
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
 #ifdef WITHFOMUS
     case TextIDs::Fomus: syntax=FomusSyntax::getInstance(); break;
@@ -1189,27 +1189,27 @@ FindAndReplaceDialog::FindAndReplaceDialog ()
   addAndMakeVisible (textButton1 = new TextButton (String::empty));
   textButton1->setButtonText (T("Replace All"));
   textButton1->setConnectedEdges (Button::ConnectedOnRight);
-  textButton1->addButtonListener (this);
+  textButton1->addListener (this);
   
   addAndMakeVisible (textButton2 = new TextButton (String::empty));
   textButton2->setButtonText (T("Replace"));
   textButton2->setConnectedEdges (Button::ConnectedOnLeft | Button::ConnectedOnRight);
-  textButton2->addButtonListener (this);
+  textButton2->addListener (this);
   
   addAndMakeVisible (textButton3 = new TextButton (String::empty));
   textButton3->setButtonText (T("Replace & Find"));
   textButton3->setConnectedEdges (Button::ConnectedOnLeft | Button::ConnectedOnRight);
-  textButton3->addButtonListener (this);
+  textButton3->addListener (this);
   
   addAndMakeVisible (textButton4 = new TextButton (String::empty));
   textButton4->setButtonText (T("Previous"));
   textButton4->setConnectedEdges (Button::ConnectedOnLeft | Button::ConnectedOnRight);
-  textButton4->addButtonListener (this);
+  textButton4->addListener (this);
   
   addAndMakeVisible (textButton5 = new TextButton (String::empty));
   textButton5->setButtonText (T("Next"));
   textButton5->setConnectedEdges (Button::ConnectedOnLeft);
-  textButton5->addButtonListener (this);
+  textButton5->addListener (this);
   
   setSize (414, 104);
 }
@@ -2166,7 +2166,7 @@ void CodeBuffer::lookupHelpAtPoint()
 
   switch (getTextType())
     {
-    case TextIDs::Sal:
+    case TextIDs::Sal1:
       helppath=T("Sal:CM");
       break;
     case TextIDs::Sal2:

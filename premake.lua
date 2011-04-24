@@ -150,6 +150,7 @@ for i = 1,numtargets do
    end
 
    add( mypackage.config["Debug"].defines, "DEBUG=1")
+   add( mypackage.config["Release"].defines, "NDEBUG=1")
 
 ------------------------------------------
 --           CM

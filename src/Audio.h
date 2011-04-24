@@ -95,7 +95,7 @@ public:
   void sliderValueChanged (Slider* slider);
   //  void mouseWheelMove (const MouseEvent& e, float wheelIncrementX, float wheelIncrementY);
   void filenameComponentChanged (FilenameComponent*);
-  void changeListenerCallback (void*);
+  void changeListenerCallback (ChangeBroadcaster* source);
   bool keyPressed (const KeyPress& key);
 
 };

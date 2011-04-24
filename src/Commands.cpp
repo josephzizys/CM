@@ -194,7 +194,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::MidiInThrough,
 
     // Audio
-    CommandIDs::AudioOpenFilePlayer,
+    CommandIDs::AudioFilePlayer,
     CommandIDs::MidiFilePlayer,
     CommandIDs::MidiPlotPlayer,
     CommandIDs::AudioSettings,
@@ -797,12 +797,12 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       //
       // Audio Settings
       //
-    case CommandIDs::AudioOpenFilePlayer:
+    case CommandIDs::AudioFilePlayer:
       info.shortName=T("Play Audio File...");
       break;
     case CommandIDs::MidiFilePlayer:
       info.shortName=T("Play Midi File...");
-      info.setActive(false);
+      info.setActive(true);
       break;
     case CommandIDs::MidiPlotPlayer:
       info.shortName=T("Play Plot...");
@@ -1033,10 +1033,11 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       break;
 
       /** AUDIO COMMANDS **/
-    case CommandIDs::AudioOpenFilePlayer:
+    case CommandIDs::AudioFilePlayer:
       AudioManager::getInstance()->openAudioFilePlayer();
       break;
     case CommandIDs::MidiFilePlayer:
+      MidiOutPort::getInstance()->openMidiFilePlayer();
       break;
     case CommandIDs::MidiPlotPlayer:
       {
@@ -1051,7 +1052,6 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       break;
 
     case CommandIDs::AudioHush:
-      std::cout << "AUDIO HUSH!\n";
       // Stop all scheme processes
       SchemeThread::getInstance()->stop(-1);
       // Flush midi output queue

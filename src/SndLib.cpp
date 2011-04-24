@@ -735,8 +735,7 @@ InstrumentTable::InstrumentTable(bool xporting)
 			    75); 
       // column width is data width max heading width
       int columnwidth = jmax( getColumnAutoSizeWidth(columnid), width);
-      table->getHeader()->
-	addColumn(columnXml->getStringAttribute(T("Name")),
+      table->getHeader().addColumn(columnXml->getStringAttribute(T("Name")),
 		  columnXml->getIntAttribute(T("Id")),
 		  columnwidth, 50, 400,
 		  TableHeaderComponent::defaultFlags);
@@ -744,13 +743,13 @@ InstrumentTable::InstrumentTable(bool xporting)
       columnid++;
     }
   // sort forward by the ID column
-  table->getHeader()->setSortColumnId (1, true);
+  table->getHeader().setSortColumnId (1, true);
 
   addAndMakeVisible (loadButton = new TextButton (String::empty));
-  loadButton->addButtonListener (this);
+  loadButton->addListener (this);
   loadButton->setEnabled(false);
   addAndMakeVisible (openButton = new TextButton (String::empty));
-  openButton->addButtonListener (this);
+  openButton->addListener (this);
   openButton->setEnabled(false);
   if (!exporting)
     {
@@ -759,10 +758,10 @@ InstrumentTable::InstrumentTable(bool xporting)
       addAndMakeVisible (examplesButton = new TextButton (String::empty));
       examplesButton->setEnabled(false);
       examplesButton->setButtonText (T("Open Examples"));
-      examplesButton->addButtonListener (this);
+      examplesButton->addListener (this);
       addAndMakeVisible (autoButton = new TextButton (String::empty));
       autoButton->setButtonText (T("Auto Load"));
-      autoButton->addButtonListener (this);
+      autoButton->addListener (this);
     }
   else
     {

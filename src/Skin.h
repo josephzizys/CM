@@ -113,10 +113,8 @@ public:
 
       if(image != 0)
       {
-        g.drawImageWithin(image,
-          2, 1, leftBorder - 4, height - 2,
-          RectanglePlacement::centred | RectanglePlacement::onlyReduceInSize,
-          false);
+        RectanglePlacement r (RectanglePlacement::centred | RectanglePlacement::onlyReduceInSize);
+        g.drawImageWithin(*image, 2, 1, leftBorder - 4, height - 2, r, false);
       }
       else if(isTicked)
       {

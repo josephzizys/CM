@@ -152,7 +152,7 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
   ////  console->postAsyncMessage(CommandIDs::ConsoleIsEvaling, 1, true);
   st->setSchemeInterrupt(false);
   s7_set_begin_hook(sc, cm_begin_hook);
-  if (vers==TextIDs::Sal)
+  if (vers==TextIDs::Sal1)
     {
       // sal only side effects so we never process return values
       retn=s7_call(sc, s7_name_to_value(sc, "sal"), data);
@@ -622,6 +622,7 @@ SchemeThread::SchemeThread()
 
 SchemeThread::~SchemeThread()
 {
+  stopThread(100);
   schemeNodes.clear();
   midiHooks.clear();
   oscHooks.clear();

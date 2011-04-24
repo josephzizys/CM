@@ -18,7 +18,7 @@ class SysInfo
                                 Versioning
    *======================================================================*/
 
-  static const int CM_VERSION = 372;
+  static const int CM_VERSION = 380;
   static const int GRACE_VERSION = CM_VERSION;
 
   /*======================================================================*
@@ -176,7 +176,7 @@ class TextIDs
   static const TextID Empty=0;
   static const TextID Text=1;
   static const TextID Lisp=2;
-  static const TextID Sal=3;
+  static const TextID Sal1=3;
   static const TextID Sal2=4;
   static const TextID Fomus=5;
   static const TextID Csound=6;
@@ -185,9 +185,9 @@ class TextIDs
   {
     if (id.equalsIgnoreCase(T("text"))) return Text;
     if (id.equalsIgnoreCase(T("lisp"))) return Lisp;
-    if (id.equalsIgnoreCase(T("sal1"))) return Sal;
     if (id.equalsIgnoreCase(T("sal"))) return Sal2;
     if (id.equalsIgnoreCase(T("sal2"))) return Sal2;
+    if (id.equalsIgnoreCase(T("sal1"))) return Sal1;
     if (id.equalsIgnoreCase(T("fomus"))) return Fomus;
     if (id.equalsIgnoreCase(T("csound"))) return Csound;
     if (id.equalsIgnoreCase(T("xml"))) return Xml;
@@ -201,10 +201,10 @@ class TextIDs
 	return T("Text");
       case Lisp:
 	return T("Lisp");
-      case Sal:
-	return T("Sal1");
       case Sal2:
-	return T("Sal2");
+	return T("Sal");
+      case Sal1:
+	return T("Sal1");
       case Fomus:
 	return T("Fomus");
       case Csound:
@@ -219,12 +219,12 @@ class TextIDs
   {
     if (String(T(".lisp.lsp.scm.cm.clm.cmn.ins")).contains(ext))
       return Lisp;
-    else if (ext.equalsIgnoreCase(T(".sal2")))
-      return Sal2;
     else if (ext.equalsIgnoreCase(T(".sal"))) 
       return Sal2;
+    else if (ext.equalsIgnoreCase(T(".sal2")))
+      return Sal2;
     else if (ext.equalsIgnoreCase(T(".sal1"))) 
-      return Sal;
+      return Sal1;
     else if (ext.equalsIgnoreCase(T(".fms"))) 
       return Fomus;
     else if (ext.equalsIgnoreCase(T(".sco")))
@@ -238,12 +238,12 @@ class TextIDs
 
   static const bool canExecute(const int ttyp)
   {
-    return ((ttyp==Lisp) || (ttyp==Sal2) || (ttyp==Sal) || (ttyp==Fomus));
+    return ((ttyp==Lisp) || (ttyp==Sal2) || (ttyp==Sal1) || (ttyp==Fomus));
   }
 
   static const bool canExpand(const int ttyp)
   {
-    return ((ttyp==Lisp) || (ttyp==Sal2) || (ttyp==Sal));
+    return ((ttyp==Lisp) || (ttyp==Sal2) || (ttyp==Sal1));
   }
 };
 
@@ -807,7 +807,7 @@ class CommandIDs
   static const CommandID FomusSaveScoreAs = COMID(Fomus, 12);
 
   // Audio Menu
-  static const CommandID AudioOpenFilePlayer = COMID(Audio, 1);
+  static const CommandID AudioFilePlayer = COMID(Audio, 1);
   static const CommandID MidiFilePlayer = COMID(Audio, 2);
   static const CommandID MidiPlotPlayer = COMID(Audio, 3);
   static const CommandID AudioSettings = COMID(Audio, 4);

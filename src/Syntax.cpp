@@ -961,7 +961,7 @@ SalSyntax::SalSyntax (bool ini)
 
 void SalSyntax::init()
 {
-  type=TextIDs::Sal;
+  type=TextIDs::Sal1;
 
   setCharSyntax(T("~!@$%^&*-_=+|:<.>/?"), ScanIDs::SYN_SYMBOL);
   setCharSyntax(T(";"), ScanIDs::SYN_COMMENT);
@@ -1386,7 +1386,7 @@ int SalSyntax::getIndentation(CodeDocument& document, int line)
       col-=2;
       if (trace) std::cout << "cursor is looking at end or else\n";
     }
-  else if (getTextType()==TextIDs::Sal && lookingAt(bol, T("define"), true, true) )
+  else if (getTextType()==TextIDs::Sal1 && lookingAt(bol, T("define"), true, true) )
     {
       // looking at define in sal1 keep column wherever it is
       col=bol.getIndexInLine(); 

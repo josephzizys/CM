@@ -208,7 +208,7 @@ void cm_load(char *path)
 {
   String name (path);
   File file=completeFile(name);
-  if (file.hasFileExtension(T(".sal")) || file.hasFileExtension(T(".sal2")))
+  if (file.hasFileExtension(T(".sal")) || file.hasFileExtension(T(".sal2")) || file.hasFileExtension(T(".sal1")))
     {
       sal_load(path);
     }
@@ -1082,7 +1082,7 @@ s7_pointer sal_load(char* path)
       //return SchemeThread::getInstance()->schemeFalse;
     }
   int type=TextIDs::fromFileType(file.getFileExtension());
-  if (type==TextIDs::Sal)
+  if (type==TextIDs::Sal1)
     {
       // for a .sal file we have to check if custom comment has syntax
       String firstline=text.upToFirstOccurrenceOf(T("\n"), false, false);
@@ -1102,7 +1102,7 @@ s7_pointer sal_eval(String text, int type)
   OwnedArray<Syntax::SynTok> tokens;
   s7_scheme* sc=SchemeThread::getInstance()->scheme;
   s7_pointer func;
-  if (type==TextIDs::Sal)
+  if (type==TextIDs::Sal1)
     {
       std::cout << "load type=sal\n";
       if (!SalSyntax::getInstance()->tokenize(text, tokens))

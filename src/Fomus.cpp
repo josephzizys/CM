@@ -1073,11 +1073,11 @@ FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(fomusinfo* inf, FOMUSListBoxM
     
     addAndMakeVisible (DefaultButton = new ToggleButton (T("Default Button")));
     DefaultButton->setButtonText (T("Default"));
-    DefaultButton->addButtonListener (this);
+    DefaultButton->addListener (this);
   } else {
     addAndMakeVisible (DelButton = new TextButton (T("Delete Button")));
     DelButton->setButtonText (T("Remove"));
-    DelButton->addButtonListener (this);    
+    DelButton->addListener (this);    
   }
   
   addAndMakeVisible (ValueLabel = new Label (T("Value Label"),
@@ -1313,30 +1313,30 @@ FOMUSSettings::FOMUSSettings(fomusinfocont& infos)
     addAndMakeVisible (BeginnerButton = new ToggleButton (T("Beginner Button")));
     BeginnerButton->setButtonText (T("Beginner"));
     BeginnerButton->setRadioGroupId (1);
-    BeginnerButton->addButtonListener (this);
+    BeginnerButton->addListener (this);
     BeginnerButton->setToggleState (true, false);
     
     addAndMakeVisible(IntermediateButton = new ToggleButton (T("Intermediate Button")));
     IntermediateButton->setButtonText (T("Intermediate"));
     IntermediateButton->setRadioGroupId (1);
-    IntermediateButton->addButtonListener (this);
+    IntermediateButton->addListener (this);
     
     addAndMakeVisible (AdvancedButton = new ToggleButton (T("Advanced Button")));
     AdvancedButton->setButtonText (T("Advanced"));
     AdvancedButton->setRadioGroupId (1);
-    AdvancedButton->addButtonListener (this);
+    AdvancedButton->addListener (this);
     
     addAndMakeVisible (GuruButton = new ToggleButton (T("Guru Button")));
     GuruButton->setButtonText (T("Guru"));
     GuruButton->setRadioGroupId (1);
-    GuruButton->addButtonListener (this);
+    GuruButton->addListener (this);
   } else {
     addAndMakeVisible (AddButton = new TextButton (T("New Button")));
     AddButton->setButtonText (T("New"));
-    AddButton->addButtonListener (this);    
+    AddButton->addListener (this);    
     addAndMakeVisible (RefreshButton = new TextButton (T("Refresh Button")));
     RefreshButton->setButtonText (T("Refresh"));
-    RefreshButton->addButtonListener (this);    
+    RefreshButton->addListener (this);    
   }
   //setSize (640 + 32, 400);
 }
@@ -1591,23 +1591,23 @@ FOMUSSetsView::FOMUSSetsView(TextEditor& textEditor, int& thebut)
   addAndMakeVisible (BegButton = new ToggleButton (T("Beginner Button")));
   BegButton->setButtonText (T("Beginner"));
   BegButton->setRadioGroupId (2);
-  BegButton->addButtonListener (this);
+  BegButton->addListener (this);
   BegButton->setToggleState (true, false);
   
   addAndMakeVisible (MedButton = new ToggleButton (T("Intermediate Button")));
   MedButton->setButtonText (T("Intermediate"));
   MedButton->setRadioGroupId (2);
-  MedButton->addButtonListener (this);
+  MedButton->addListener (this);
   
   addAndMakeVisible (AdvButton = new ToggleButton (T("Advanced Button")));
   AdvButton->setButtonText (T("Advanced"));
   AdvButton->setRadioGroupId (2);
-  AdvButton->addButtonListener (this);
+  AdvButton->addListener (this);
   
   addAndMakeVisible (GuruButton = new ToggleButton (T("Guru Button")));
   GuruButton->setButtonText (T("Guru"));
   GuruButton->setRadioGroupId (2);
-  GuruButton->addButtonListener (this);
+  GuruButton->addListener (this);
   
   addAndMakeVisible (viewport = new Viewport (T("Viewport")));
   viewport->setViewedComponent(new FOMUSViewComponent(T("View Component")));
@@ -1859,13 +1859,13 @@ FOMUSDocTabs::FOMUSDocTabs()
   addAndMakeVisible (SearchName = new ToggleButton (T("Search Name")));
   SearchName->setButtonText (T("Name"));
   SearchName->setRadioGroupId (1);
-  SearchName->addButtonListener (this);
+  SearchName->addListener (this);
   SearchName->setToggleState (true, false);
   
   addAndMakeVisible (SearchDoc = new ToggleButton (T("Search Doc")));
   SearchDoc->setButtonText (T("Doc Text"));
   SearchDoc->setRadioGroupId (1);
-  SearchDoc->addButtonListener (this);
+  SearchDoc->addListener (this);
   
   setSize (900, 600);
 }

@@ -228,6 +228,75 @@
 		      (if (> low high) (- low high) (- high low))
 		      args)))))
 
+;; lists
+
+(define (intersection list1 list2 . args)
+  (with-optkeys (args (test equal?) (key (lambda (x) x)))
+    (let* ((results (list #f))
+           (backend results))
+      (do ((tail1 list1 (cdr tail1)))
+          ((null? tail1) (cdr results))
+        (do ((item1 (key (car tail1)))
+             (item2 #f)
+             (tail2 list2 (cdr tail2)))
+            ((null? tail2)
+             )
+          (set! item2 (key (car tail2)))
+          (if (test item1 item2)
+              (begin (set-cdr! backend (list (car tail2)))
+                     (set! backend (cdr backend)))))))))
+
+(define (list-difference list1 list2 . args)
+ (with-optkeys (args (test equal?) (key (lambda (x) x)))
+   (let* ((results (list #f))
+          (backend results)
+          (diffadd (lambda (lista listb)
+                     ;; add items in lista if they are not in listb
+                     (do ((tail1 lista (cdr tail1))
+                          (dupl? #f #f))
+                         ((null? tail1) 
+                          )
+                       (do ((item1 (key (car tail1)))
+                            (item2 #f)
+                            (tail2 listb (cdr tail2)))
+                           ((or (null? tail2) dupl?)
+                            )
+                         (set! item2 (key (car tail2)))
+                         (set! dupl? (test item1 item2)) )
+                       (if (not dupl?)
+                           (begin (set-cdr! backend (list (car tail1)))
+                                  (set! backend (cdr backend))))))))
+     (diffadd list1 list2)
+     (diffadd list2 list1)
+     (cdr results))))
+          
+; (list-difference '() '())
+; (list-difference '(1) '(1))
+; (list-difference '(1) '())
+; (list-difference '() '(1))
+; (list-difference '(1 2) '(3 4))
+; (list-difference '(0 1 2 3 4) '(2 3 4 5 6))
+         
+(define (remove-duplicates listtocheck . args)
+  (with-optkeys (args (test equal?) (key (lambda (x) x)))
+    (let* ((results (list #f))
+           (backend results))
+      (do ((tail1 listtocheck (cdr tail1))
+           (dupl? #f #f))
+          ((null? tail1) (cdr results))
+        (do ((item1 (key (car tail1)))
+             (item2 #f)
+             (tail2 (cdr results) (cdr tail2)))
+            ((or (null? tail2) dupl?)
+             )
+          (set! item2 (key (car tail2)))
+          (set! dupl? (test item1 item2)))
+        (if (not dupl?)
+            (begin (set-cdr! backend (list (car tail1)))
+                   (set! backend (cdr backend)))))
+      )))
+
+
 ;; transformations
 
 (define (fit num lb ub . mode)
@@ -484,7 +553,29 @@
 (define ranbrown ffi_ranbrown)
 
 (define ranpink ffi_ranpink)
-  
+
+(define (random-series num low high . args )
+  (with-optkeys (args (series (list)) (reject #f) (order #f) (choose random))
+    (cond ((and (list? series) (every? number? series))
+           )
+          ((number? series)
+           (set! series (list series)))
+          (else
+           (error "random-series: series is not a list of numbers: ~S" series)))
+    (if (not reject) (set! reject (lambda (x l) #f)))
+    (do ((count (length series))
+         (limit 0)
+         (rnum (+ low (choose (- high low ))) 
+               (+ low (choose (- high low )))))
+        ((or (not (< count num)) (not (< limit 100)))
+         (if (not order) series  (sort series order)))
+      (if (not (reject rnum series))
+          (begin (set! series (cons rnum series))
+                 (set! count (+ count 1))
+                 (set! limit 0))
+          (begin (set! limit (+ limit 1)))))))
+
+
 ;*************************************************************************
 
 (define *notes* (make-equal-hash-table))
