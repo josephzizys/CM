@@ -179,8 +179,7 @@ void cm_play(char* str)
     }
   else
     {
-      Console::getInstance()->postAsyncMessage(CommandIDs::AudioOpenFilePlayer,
-					       path, true);
+      Console::getInstance()->postAsyncMessage(CommandIDs::AudioFilePlayer, path, true);
     }
 }
   

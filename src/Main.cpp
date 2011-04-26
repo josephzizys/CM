@@ -17,6 +17,8 @@
 #include "CommonLisp.h"
 #endif
 #include "Syntax.h"
+#include "CodeEditor.h"
+#include "Plot.h"
 #ifdef LIBLO
 #include "Osc.h"
 #endif
@@ -55,7 +57,8 @@ const String Grace::getApplicationVersion(void)
 
 bool Grace::moreThanOneInstanceAllowed(void)
 {
-  return SysInfo::isMac();
+  //  return SysInfo::isMac();
+  return false;
 }
 
 void Grace::anotherInstanceStarted(const juce::String& commandLine)
@@ -138,7 +141,80 @@ void Grace::initialise(const juce::String& commandLine)
 
 void Grace::systemRequestedQuit()
 {
-  quit();
+  int flag=-1; 
+  int unsaved=getNumUnsavedWindows();
+  //  std::cout << "system requested quit!\n";
+  if (unsaved>0)
+  {
+    String m=T("You have ");
+    m << String(unsaved) << " document";
+    if (unsaved>1) m << T("s");
+    m << T(" with unsaved changes. Do you want to review these changes before quitting?");
+    flag=AlertWindow::showYesNoCancelBox(AlertWindow::WarningIcon,
+                                         T("Quit Grace"),
+                                         m,
+                                         T("Discard Changes"),
+                                         T("Review Changes..."),
+                                         T("Cancel")
+                                         );
+  }
+  // flag: -1=quit (no changes), 0=cancel, 1=discard and quit, 2=review changes
+  std::cout << "flag=" << flag << "\n";
+  if (flag==-1 || flag==1 || (flag==2 && queryUnsavedWindows()))
+    quit();
+}
+
+int Grace::getNumUnsavedWindows()
+{
+  int n=0;
+  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
+  {
+    TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+    if (WindowTypes::isWindowType(w, WindowTypes::CodeEditor))
+    {
+      CodeEditorWindow* e=(CodeEditorWindow*)w;
+      if (e->hasUnsavedChanges())
+        n++;
+    }
+    else if (WindowTypes::isWindowType(w, WindowTypes::PlotWindow))
+    {
+      PlotterWindow* p=(PlotterWindow*)w;
+      if (p->hasUnsavedChanges())
+        n++;
+    }
+  }
+  return n;
+}
+
+bool Grace::queryUnsavedWindows()
+{
+  for (int i=0;i<TopLevelWindow::getNumTopLevelWindows();i++)
+  {
+    TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+    if (!(WindowTypes::isWindowType(w, WindowTypes::CodeEditor) ||
+          (WindowTypes::isWindowType(w, WindowTypes::PlotWindow))))
+      continue;
+    String m = T("Do you want to save the changes you made in the document ");
+    m << T("\"") << w->getName() << T("\"?");
+    int flag=AlertWindow::showYesNoCancelBox(AlertWindow::QuestionIcon,
+                                             String::empty,
+                                             m,
+                                             T("Don't Save"),
+                                             T("Save"),
+                                             T("Cancel"));
+    if (flag==0) return false;
+    if (flag==1) continue; 
+    if (WindowTypes::isWindowType(w, WindowTypes::CodeEditor))
+    {
+      w->toFront(false);
+      CodeEditorWindow* c=(CodeEditorWindow*)w;
+      c->saveFile(false);
+    }
+    else if (WindowTypes::isWindowType(w, WindowTypes::PlotWindow))
+    {
+    }
+  }
+  return true;
 }
 
 void Grace::shutdown()

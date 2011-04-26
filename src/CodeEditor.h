@@ -201,6 +201,7 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   void isEmacsMode(bool mode);
   bool isEmacsMode();
 
+  bool hasUnsavedChanges();
   void saveFile(bool saveas);
   void saveFileAs();
   void saveFileVersion();

@@ -1121,6 +1121,7 @@ Plotter::Plotter (XmlElement* plot)
     viewport (NULL),
     plotview (NULL),
     backview (NULL),
+    changed (false),
     flags (0)
 {
   createPlottingComponents();
@@ -1177,6 +1178,10 @@ Plotter::Plotter (XmlElement* plot)
       newLayer(xmlplots[i]);
   else
     newLayer(NULL);
+  //  bool haspoints=false;
+  //  for (int i=0; i<numLayers(); i++)
+  //    if (getLayer(i)->isChanged())
+
   autosizeAxes();
   xmlfields.clear(false);
   xmlplots.clear(false);
@@ -1191,6 +1196,7 @@ Plotter::Plotter(MidiFile& midifile)
     viewport (NULL),
     plotview (NULL),
     backview (NULL),
+    changed(false),
     flags (0)
 {
   createPlottingComponents();
@@ -1331,6 +1337,23 @@ Plotter::~Plotter()
   //actions.clear();
   layers.clear();
   fields.clear();
+}
+
+bool Plotter::hasUnsavedChanges()
+{
+  if (changed) return true;
+  for (int i=0; i<numLayers(); i++)
+    if (getLayer(i)->hasUnsavedChanges())
+      return true;
+  return false;
+}
+
+void Plotter::setUnsavedChanges(bool isChanged)
+{
+  changed=isChanged;
+  if (!isChanged)
+    for (int i=0; i<numLayers(); i++)
+      getLayer(i)->setUnsavedChanges(false);
 }
 
 void Plotter::autosizeAxes()
@@ -1550,6 +1573,7 @@ void Layer::addXmlPoints(XmlElement* points)
 {
   StringArray pts;
   int ind=0;
+  int cur=_points.size();
   forEachXmlChildElement(*points, p)
     {
       LayerPoint* f=new LayerPoint(arity);
@@ -1566,8 +1590,11 @@ void Layer::addXmlPoints(XmlElement* points)
       for (int i=pts.size(); i<arity; i++) 
 	f->setVal(i, 0.0);
       _points.addSorted(*this,f);
+      cur++;
       pts.clear();
     }
+  if (cur > _points.size())
+    changed=true;
 }
 
 Layer* Plotter::newLayer(XmlElement* points)
@@ -1612,12 +1639,14 @@ Layer* Plotter::newLayer(XmlElement* points)
 
 void Plotter::addLayer(Layer* layer)
 {
+  changed=true;
   layers.add(layer);
   setFocusLayer(layer);
 }
 
 void Plotter::removeLayer(Layer* layer) 
 {
+
   // THIS CHECK SHOULDNT BE NECESSARY (MENU CHECKS)
   if ( numLayers() < 2 ) return;
   // if removing focus layer then switch focus to other layer.
@@ -1633,8 +1662,8 @@ void Plotter::removeLayer(Layer* layer)
 	    }
 	}
     }
-
   layers.removeObject(layer,false);
+  changed=true;
 }
 
 void Plotter::selectAll() 
@@ -1805,6 +1834,11 @@ PlotterWindow* PlotterWindow::getPlotWindow(String title)
   return (PlotterWindow*)NULL;
 }
 
+bool PlotterWindow::hasUnsavedChanges()
+{
+  return plotter->hasUnsavedChanges();
+}
+
 void PlotterWindow::openWindowFromXml(void* ptr) //(String str)
 {
   //std::cout << str.toUTF8() << "\n";
@@ -1914,24 +1948,29 @@ bool PlotterWindow::save(bool saveas)
       Console::getInstance()->printError(text);
       return false;
     }
+  plotter->setUnsavedChanges(false);
   return true;
 }
 
 void PlotterWindow::closeButtonPressed () //{this->~PlotterWindow();}
 {
-  int x=Alerts::showYesNoCancelBox(AlertWindow::QuestionIcon,
-					T("Close"),
-					T("Save changes before closing?"),
+  int x=2;
+  if (hasUnsavedChanges())
+  {
+    x=Alerts::showYesNoCancelBox(AlertWindow::QuestionIcon,
+                                 T("Close"),
+                                 T("Save changes before closing?"),
 #ifdef WINDOWS
-					T("Yes"),
-					T("No"),
-				        T("Cancel"));
+                                 T("Yes"),
+                                 T("No"),
+                                 T("Cancel")
 #else
-					T("Save"),
-					T("Don't Save"),
-					T("Cancel"));
+                                 T("Save"),
+                                 T("Don't Save"),
+                                 T("Cancel")
 #endif
-
+                                 );
+  }
   if (x==0)
     return;
   if (x==2 || save())

@@ -190,7 +190,8 @@ class Layer
   /* layer points kept in X sorted order. */
   
   OwnedArray <LayerPoint> _points;
-  
+  bool changed;
+
   /* A preallocated point holding default field values that new points
      will be merged with to produce a fully specfifed point. */
   
@@ -216,6 +217,7 @@ class Layer
     _x (0),
     _y (1),
     _z (2),
+    changed (false),
     _defaults (NULL)
     {
       static int layerid=1;
@@ -233,6 +235,8 @@ class Layer
 	delete _defaults;
     };
 
+  bool hasUnsavedChanges() {return changed;}
+  void setUnsavedChanges(bool isChanged) {changed=isChanged;}
   int getLayerArity() {return arity;}
   void setLayerArity(int a) {arity=a;}
   int getLayerID(){return id;}
@@ -253,6 +257,7 @@ class Layer
   void sortPoints () {_points.sort(*this);}
   int addPoint(double x, double y) 
   {
+    changed=true;
     LayerPoint* p =  new LayerPoint(arity);
     initPoint(p);
     p->setVal(_x,x);
@@ -283,75 +288,85 @@ class Layer
   double getPointZ(int i) {return _points[i]->getVal(_z);} 
   double getPointZ(LayerPoint* p) {return p->getVal(_z);}
 
-  void setPointX(int i, double f) {_points[i]->setVal(_x, f);}
-  void setPointX(LayerPoint* p, double f) {p->setVal(_x, f);}
-  void setPointY(int i, double f) {_points[i]->setVal(_y, f);}
-  void setPointY(LayerPoint* p, double f) {p->setVal(_y, f);}
-  void setPointZ(int i, double f) {_points[i]->setVal(_z, f);}
-  void setPointZ(LayerPoint* p, double f) {p->setVal(_z, f);}
+  void setPointX(int i, double f) {changed=true; _points[i]->setVal(_x, f);}
+  void setPointX(LayerPoint* p, double f) {changed=true; p->setVal(_x, f);}
+  void setPointY(int i, double f) {changed=true; _points[i]->setVal(_y, f);}
+  void setPointY(LayerPoint* p, double f) {changed=true; p->setVal(_y, f);}
+  void setPointZ(int i, double f) {changed=true; _points[i]->setVal(_z, f);}
+  void setPointZ(LayerPoint* p, double f) {changed=true; p->setVal(_z, f);}
 
-  void incPointX(int i, double f) {_points[i]->incVal(_x, f);}
-  void incPointX(LayerPoint* p, double f) {p->incVal(_x, f);}
-  void incPointY(int i, double f) {_points[i]->incVal(_y, f);}
-  void incPointY(LayerPoint* p, double f) {p->incVal(_y, f);}
-  void incPointZ(int i, double f) {_points[i]->incVal(_z, f);}
-  void incPointZ(LayerPoint* p, double f) {p->incVal(_z, f);}
+  void incPointX(int i, double f) {changed=true; _points[i]->incVal(_x, f);}
+  void incPointX(LayerPoint* p, double f) {changed=true; p->incVal(_x, f);}
+  void incPointY(int i, double f) {changed=true; _points[i]->incVal(_y, f);}
+  void incPointY(LayerPoint* p, double f) {changed=true; p->incVal(_y, f);}
+  void incPointZ(int i, double f) {changed=true; _points[i]->incVal(_z, f);}
+  void incPointZ(LayerPoint* p, double f) {changed=true; p->incVal(_z, f);}
 
-  void mulPointX(int i, double f) {_points[i]->mulVal(_x, f);}
-  void mulPointX(LayerPoint* p, double f) {p->mulVal(_x, f);}
-  void mulPointY(int i, double f) {_points[i]->mulVal(_y, f);}
-  void mulPointY(LayerPoint* p, double f) {p->mulVal(_y, f);}
-  void mulPointZ(int i, double f) {_points[i]->mulVal(_z, f);}
-  void mulPointZ(LayerPoint* p, double f) {p->mulVal(_z, f);}
+  void mulPointX(int i, double f) {changed=true; _points[i]->mulVal(_x, f);}
+  void mulPointX(LayerPoint* p, double f) {changed=true; p->mulVal(_x, f);}
+  void mulPointY(int i, double f) {changed=true; _points[i]->mulVal(_y, f);}
+  void mulPointY(LayerPoint* p, double f) {changed=true; p->mulVal(_y, f);}
+  void mulPointZ(int i, double f) {changed=true; _points[i]->mulVal(_z, f);}
+  void mulPointZ(LayerPoint* p, double f) {changed=true; p->mulVal(_z, f);}
 
   void setPoint(int i, double x, double y) 
   {
+    changed=true; 
     _points[i]->setVal(_x, x);
     _points[i]->setVal(_y, y);
   }
   void setPoint(LayerPoint* p, double x, double y)
   {
+    changed=true; 
     p->setVal(_x, x);
     p->setVal(_y, y);
   }
   
   void incPoint(int i, double x, double y) 
   {
+    changed=true; 
     _points[i]->incVal(_x, x);
     _points[i]->incVal(_y, y);
   }
   void incPoint(LayerPoint* p, double x, double y) 
   {
+    changed=true; 
     p->incVal(_x, x);
     p->incVal(_y, y);
   }
   
   void mulPoint(int i, double x, double y)
   {
+    changed=true; 
     _points[i]->mulVal(_x, x);
     _points[i]->mulVal(_y, y);
   }
   void mulPoint(LayerPoint* p, double x, double y)
   {
+    changed=true; 
     p->mulVal(_x, x);
     p->mulVal(_y, y);
   }
   
   void removePoint(int i)
   {
+    changed=true; 
     _points.remove(i, false);
   }
   void removePoint(LayerPoint* p)
   {
+    changed=true; 
     _points.removeObject(p, false);
   }
   
   void deletePoint(int i) 
   {
+    changed=true; 
     _points.remove(i, true);
   }
   void deletePoint(LayerPoint* p) 
   {
+    changed=true; 
     _points.removeObject(p, true);
   }
   int getXField() {return _x;}
@@ -552,11 +567,14 @@ class Plotter  : public Component, public ScrollBarListener
   double ppp;  // point size (pixels per point)
   int flags;
   PlotID plottype;
+  bool changed;
 
   Plotter (int pt) ;
   Plotter (XmlElement* plot) ;
   Plotter (MidiFile& midifile);
   ~Plotter () ;
+  bool hasUnsavedChanges ();
+  void setUnsavedChanges(bool isUnsaved);
   void createPlottingComponents();
   void setPlottingFields(int xax, int yax);
 
@@ -688,6 +706,7 @@ class PlotterWindow : public DocumentWindow,
   static void openMidiFile(File file);
   void addXmlPoints(String xml);
   bool save(bool saveas=false);
+  bool hasUnsavedChanges();
   String toXmlString();
   String getPlotTitle() {return getName();}
   void setPlotTitle(String titl){setName(titl);}

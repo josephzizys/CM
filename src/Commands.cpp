@@ -895,8 +895,8 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
   switch (comm)
     {
     case CommandIDs::AppQuit:
-      ((ConsoleWindow *)Console::getInstance()->getTopLevelComponent())->
-	closeButtonPressed();
+      //((ConsoleWindow *)Console::getInstance()->getTopLevelComponent())->closeButtonPressed();
+      JUCEApplication::getInstance()->systemRequestedQuit();
       break;
 
       //

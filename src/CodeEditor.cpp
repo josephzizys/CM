@@ -112,6 +112,11 @@ CodeEditorWindow::~CodeEditorWindow ()
   comp->deleteCodeBuffer();
 }
 
+bool CodeEditorWindow::hasUnsavedChanges()
+{
+  return getCodeBuffer()->isChanged();
+}
+
 void CodeEditorWindow::closeButtonPressed ()
 {
   if (getCodeBuffer()->isChanged())

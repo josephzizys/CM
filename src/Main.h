@@ -38,7 +38,8 @@ public:
   void getCommandInfo(CommandID id, ApplicationCommandInfo& info);
   bool perform(const ApplicationCommandTarget::InvocationInfo& info);
   void openFile(File file=File::nonexistent);
-
+  int getNumUnsavedWindows();
+  bool queryUnsavedWindows();
 };
 
 class CommandArg

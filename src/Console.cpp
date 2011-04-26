@@ -283,7 +283,7 @@ void Console::handleAsyncUpdate()
         display(prompt, getConsoleColor(ConsoleTheme::errorColor));
       break;
 #ifdef GRACE
-    case CommandIDs::AudioOpenFilePlayer :
+    case CommandIDs::AudioFilePlayer :
       {
         String path=msg->text;
         File file;
@@ -523,23 +523,43 @@ bool Console::isInterestedInFileDrag(const StringArray &files)
 
 void Console::filesDropped(const StringArray &files, int x, int y)
 {
+  //std::cout << "filesDropped()\n";
   for (int i=0; i<files.size(); i++)
+  {
+    File file (files[i]);
+    // this check probably not needed
+    if (!isSupportedFileType(file)) continue; 
+    String type=file.getFileExtension();
+    if (type==T(".xml"))
+      PlotterWindow::openXmlFile(file);
+    else if (type==T(".mid"))
+      PlotterWindow::openMidiFile(file);
+    else
     {
-      File file (files[i]);
-      // this check probably not needed
-      if (!isSupportedFileType(file)) continue; 
-      String type=file.getFileExtension();
-      if (type==T(".xml"))
-	PlotterWindow::openXmlFile(file);
-      else if (type==T(".mid"))
-	PlotterWindow::openMidiFile(file);
-      else
+      CodeEditorWindow* e=0;
+      // cycle through open editor windows, if the file is already
+      // open then re-focus that window else open the file in a
+      // new editor window
+      for (int j=0; j<TopLevelWindow::getNumTopLevelWindows(); j++)
+      {
+        TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(j);
+        if (WindowTypes::isWindowType(w, WindowTypes::CodeEditor))
         {
-          //          new TextEditorWindow(file);
-          CodeEditorWindow::openFile(file);
-          Preferences::getInstance()->recentlyOpened.addFile(file);
+          e=(CodeEditorWindow*)w;
+          if (e->sourcefile == file)
+            break;
         }
+        e=0;
+      }
+      if (e)
+        e->toFront(false);
+      else
+      {
+        CodeEditorWindow::openFile(file);
+        Preferences::getInstance()->recentlyOpened.addFile(file);
+      }
     }
+  }
 }
 
 void Console::paint(Graphics& g)
@@ -617,7 +637,9 @@ ConsoleWindow::~ConsoleWindow ()
 void ConsoleWindow::closeButtonPressed ()
 {
   
-  if (Alerts::showOkCancelBox
+      JUCEApplication::getInstance()->systemRequestedQuit();
+
+  /*if (Alerts::showOkCancelBox
       (AlertWindow::QuestionIcon,
        T("Quit"),
        T("Quit Grace? Any unsaved work will be lost."),
@@ -631,6 +653,7 @@ void ConsoleWindow::closeButtonPressed ()
     {
       JUCEApplication::getInstance()->quit();
     }
+  */
 }
 
 #endif
