@@ -3268,12 +3268,12 @@ public:
   {
     setName(T("Midi File Player"));
     // create label for midi file chooser
-    addAndMakeVisible(midiFileLabel = new Label(String::empty, T("Midi File:")));
+    //    addAndMakeVisible(midiFileLabel = new Label(String::empty, T("Midi File:")));
     midiFileChooser=new FilenameComponent(String::empty, File::nonexistent, true, false, false, 
                                           T("*.mid;*.midi"), String::empty, T(""));
     addAndMakeVisible(midiFileChooser);
     midiFileChooser->addListener(this);
-    midiFileChooser->setBrowseButtonText(T("Open..."));
+    midiFileChooser->setBrowseButtonText(T("File..."));
     transport=new MidiTransport();
     transport->addAndMakeVisible(this);
     transport->player=this;
@@ -3284,7 +3284,7 @@ public:
     pbthread->startThread();
 
     // create label for midi output menu
-    addAndMakeVisible(midiPortLabel = new Label(String::empty, T("Midi Port:")));
+    addAndMakeVisible(midiPortLabel = new Label(String::empty, T("Playback device:")));
 
     // create menu of midi output devices. this must be done after the
     // thread exists because it sets up the thread's output port
@@ -3497,10 +3497,11 @@ public:
   int x=margin, y=margin;
   int width=getWidth();
   int height=getHeight();
-  int labwid = jmax(midiFileLabel->getFont().getStringWidthFloat(midiFileLabel->getText())+10,
-                    midiPortLabel->getFont().getStringWidthFloat(midiPortLabel->getText())+10);
-  midiFileLabel->setBounds(x, y, labwid, lineheight);
-  x=midiFileLabel->getRight()+8;
+  int labwid = midiPortLabel->getFont().getStringWidthFloat(midiPortLabel->getText())+10;
+  //  int labwid = jmax(midiFileLabel->getFont().getStringWidthFloat(midiFileLabel->getText())+10,
+  //                    midiPortLabel->getFont().getStringWidthFloat(midiPortLabel->getText())+10);
+  //  midiFileLabel->setBounds(x, y, labwid, lineheight);
+  //  x=midiFileLabel->getRight()+8;
   midiFileChooser->setBounds(x, y, width-margin-x, lineheight);
   y=y+lineheight+margin;
   x=margin;
