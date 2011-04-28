@@ -3522,13 +3522,13 @@ public:
   {
   }
 
-  void MidiFilePlayer::setFileToPlay (File file)
+  void setFileToPlay (File file)
   {
     //    player->midiFileChooser->setCurrentFile(File::nonexistent, false, false);
     midiFileChooser->setCurrentFile(file, true, true);
   }
 
-  void MidiFilePlayer::filenameComponentChanged (FilenameComponent* comp)
+  void filenameComponentChanged (FilenameComponent* comp)
   {
     // this is called when the user changes the file in the chooser
     if (!comp->getCurrentFile().existsAsFile())
