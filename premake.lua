@@ -55,6 +55,9 @@ if not (options["clean"] or options["help"] or options["version"]) then
 if amalgamated then
    juce_library = newpackage() 
    juce_library.includepaths = { "src" }
+   add( juce_library.config["Debug"].defines, "DEBUG=1")
+   add( juce_library.config["Release"].defines, "NDEBUG=1")
+
    juce_library.name = "juce"
    juce_library.target = "obj/juce/juce"
    juce_library.language = "c++"
@@ -62,7 +65,8 @@ if amalgamated then
    juce_library.objdir = "obj/juce"
    juce_library.buildflags = {"static-runtime"}
    juce_library.files = {"src/juce.h", "src/juce_amalgamated.cpp", "src/juce_amalgamated.h"}
-   juce_library.defines = juce_config
+   --juce_library.defines = juce_config
+   add(juce_library.defines, juce_config)
    if macosx then
       juce_library.buildoptions = {"-x objective-c++", "-w"}
    elseif linux then
@@ -245,6 +249,7 @@ for i = 1,numtargets do
       end
       mypackage.config["Release"].links = { juce_lib }
       mypackage.config["Debug"].links = { juce_debug_lib }
+
 
    elseif not amalgamated then
       error("CM requires juce, add --juce to your premake options")
