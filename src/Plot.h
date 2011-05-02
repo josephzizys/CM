@@ -427,7 +427,8 @@ class AxisView : public Component
   Axis * axis;
   double _spread; // expansion factor for "zooming" space on axis
   double _ppi;    // pixels per increment (distance between labels)
-  double _offset; // pixel position of axis origin
+  double pad;     // pixel margin on either side of axis line
+  double _offset; // pixel position for start of axis line
   int orient;     // orientation (horizontal, vertical)
   PlotViewport * viewport;  // back pointer to viewport
   double _sweep;
@@ -437,6 +438,7 @@ class AxisView : public Component
     _offset (0.0),
     viewport (0),
     axis (0),
+    pad (8.0),
     _sweep (0.0)
     {
       viewport=vp;
@@ -449,6 +451,21 @@ class AxisView : public Component
   int getOrientation(){return orient;}
   double getSpread() {return _spread;}
   void setSpread(double v) {_spread=v; }
+
+
+  /** getPad returns the pixel margin that exists on either side of
+      axis line so that points at the start or end of end of the are
+      not clipped. so for a horizonal axis the pixel width of the view
+      is pad+axisextent+pad **/
+
+  double getPad() {return pad;}
+  void setPad(double val) {pad=val;}
+
+  /** getOrigin returns the pixel position of the start of the axis line in the
+      view. for horizontal axis the offset is the pad, for a vertical
+      axis its the height of the view minus the pad (because the
+      origin of the axis is at the bottom). **/
+
   double getOrigin() {return _offset;}
   void setOrigin(double v) {_offset=v; }  
   
@@ -459,6 +476,8 @@ class AxisView : public Component
   double axisMinimum() {return axis->getMinimum();}
   double axisMaximum() {return axis->getMaximum();}
   int numTicks(){return axis->getTicks();}
+  double getPPI() {return _ppi;}
+  void setPPI(double val) {_ppi=val;}
   
   double incrementSize () 
   {
@@ -472,12 +491,31 @@ class AxisView : public Component
     return incrementSize() / axis->getTicks();
   }
   
+  /** returns the length (horizontal width for a horiztonal axis and
+      vertical height for a vertical axis) of the axis line in pixels
+      at the current spread. this is not the same as the size of the
+      view and does not include any padding. **/
+  
   double extent () 
   {
     // size of axis in pixels at current spread. may not be integer
     return incrementSize() * axis->getIncrements();
   }
   
+  /** setSpreadToFit sets the axis spread factor such that the axis
+      maximally fits in the window without any scrollbars. size is the
+      view width for horizonal axis, and height for vertical axis **/
+
+  void setSpreadToFit(double size)
+  {
+    // get the normalized length of the axis line when spread equals 1
+    double nonspreadsize = getPPI() * axis->getIncrements();
+    // the available room for the axis line is the width of the view
+    // minus the padding before and after axis line
+    double availablesize = size - (getPad()*2);
+    setSpread(availablesize/nonspreadsize);
+  }
+
   double toValue (double pix) 
   {
     // convert pixel position to value in axis coords
@@ -567,6 +605,7 @@ class Plotter  : public Component, public ScrollBarListener
   double ppp;  // point size (pixels per point)
   int flags;
   PlotID plottype;
+  bool scrolling; 
   bool changed;
 
   Plotter (int pt) ;
@@ -615,6 +654,16 @@ class Plotter  : public Component, public ScrollBarListener
   void redrawBackView();
   void redrawHorizontalAxisView();
   void redrawVerticalAxisView();
+
+  bool isScrolling()
+  {
+    return scrolling;
+  }
+
+  void setScrolling(bool scroll)
+  {
+    scrolling=scroll;
+  }
 
   BGStyle getBackViewStyle();
   void setBackViewStyle(BGStyle style);

@@ -876,6 +876,13 @@ class CommandIDs
   static const CommandID PlotterShiftPoints = COMID(Plotter, 23);
   static const CommandID PlotterRescalePoints = COMID(Plotter, 24);
   static const CommandID PlotterAddXmlPoints = COMID(Plotter, 25);
+  static const CommandID PlotterZoomInX = COMID(Plotter, 26);
+  static const CommandID PlotterZoomOutX = COMID(Plotter, 27 );
+  static const CommandID PlotterZoomInY = COMID(Plotter, 28);
+  static const CommandID PlotterZoomOutY = COMID(Plotter, 29);
+  static const CommandID PlotterZoomToFit = COMID(Plotter, 30);
+  static const CommandID PlotterZoomReset = COMID(Plotter, 31);
+
 
   static const CommandID StateWindowSetCells = COMID(Cells, 1);
   static const CommandID StateWindowSetCell = COMID(Cells, 2);

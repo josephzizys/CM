@@ -379,6 +379,8 @@ void AxisView::mouseDrag(const MouseEvent &e)
 	repaint();
     }
   //std::cout << "mousedrag=" << c << "\n";
+  viewport->plotter->setScrolling(true);
+
 }
 
 void AxisView::mouseUp(const MouseEvent &e)
@@ -1122,6 +1124,7 @@ Plotter::Plotter (XmlElement* plot)
     plotview (NULL),
     backview (NULL),
     changed (false),
+    scrolling (false),
     flags (0)
 {
   createPlottingComponents();
@@ -1186,6 +1189,7 @@ Plotter::Plotter (XmlElement* plot)
   xmlfields.clear(false);
   xmlplots.clear(false);
   plotview->resizeForDrawing();  // calc plots width/height
+  setUnsavedChanges(false);
 }
 
 Plotter::Plotter(MidiFile& midifile)
@@ -1197,6 +1201,7 @@ Plotter::Plotter(MidiFile& midifile)
     plotview (NULL),
     backview (NULL),
     changed(false),
+    scrolling (false),
     flags (0)
 {
   createPlottingComponents();
@@ -1271,6 +1276,7 @@ Plotter::Plotter(MidiFile& midifile)
     addLayer(midilayers[i]);
   midilayers.clear(false);
   plotview->resizeForDrawing();  // calc plots width/height
+  setUnsavedChanges(false);
 }
 
 void Plotter::createPlottingComponents()
@@ -1341,10 +1347,17 @@ Plotter::~Plotter()
 
 bool Plotter::hasUnsavedChanges()
 {
-  if (changed) return true;
+  if (changed)
+  {
+    std::cout << "plotter has unsaved changes\n";
+    return true;
+  }
   for (int i=0; i<numLayers(); i++)
     if (getLayer(i)->hasUnsavedChanges())
+    {
+      std::cout << "layer " << i << " has unsaved changes\n";
       return true;
+    }
   return false;
 }
 
@@ -1693,13 +1706,25 @@ void Plotter::deleteSelection(bool cut)
 
 void Plotter::resized () 
 {
-  //viewport->setBounds(60, 60, getWidth()-100, getHeight()-150);
-  //vaxview->setBounds(30, 60, 26, viewport->getViewHeight());
-  //haxview->setBounds(60, 30, viewport->getViewWidth(), 26); 
   viewport->setBounds(70, 50, getWidth()-80, getHeight()-60);
-  vaxview->setBounds(2, 50, 64, viewport->getViewHeight());
-  haxview->setBounds(70, 20, viewport->getViewWidth(), 26); 
-  //std::cout << "width=" << getWidth() << " height=" << getHeight() << "\n";
+
+  std::cout << "plotter: x=" << getX() << ", y=" << getY() << ", w=" << getWidth() << " h=" << getHeight() << "\n";
+  //std::cout << "viewport: x=" << viewport->getX() << ", y=" << viewport->getY() << ", w=" << viewport->getWidth() << " h=" << viewport->getHeight() << ", vw=" << viewport->getViewWidth() << " vh=" << viewport->getViewHeight() << "\n";
+
+  if (!isScrolling()) // fit in window
+  {
+    vaxview->setBounds(2, 50, 64, viewport->getViewHeight());
+    haxview->setBounds(70, 20, viewport->getWidth(), 26); 
+    haxview->setSpreadToFit(viewport->getWidth());
+    vaxview->setBounds(2, 50, 64, viewport->getHeight());
+    vaxview->setSpreadToFit(viewport->getHeight());
+    resizeForSpread();
+  }
+  else
+  {
+    haxview->setBounds(70, 20, viewport->getViewWidth(), 26); 
+    vaxview->setBounds(2, 50, 64, viewport->getViewHeight());
+  }
 }
 
 void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
@@ -1811,7 +1836,7 @@ void PlotterWindow::init()
   menubar = new MenuBarComponent(this);
   setMenuBar(this);
   setUsingNativeTitleBar(true);    
-  plotter->setSize(500, 500);
+  plotter->setSize(500, 524); // extra 24 in veritical because of menu
   plotter->setVisible(true);
   setContentComponent(plotter,true,true);
   centreWithSize (plotter->getWidth(), plotter->getHeight());
@@ -1839,6 +1864,10 @@ bool PlotterWindow::hasUnsavedChanges()
   return plotter->hasUnsavedChanges();
 }
 
+// This is called from Scheme to open a new plot window.
+// in this case we want to set it to changed if there
+// are any points at all
+
 void PlotterWindow::openWindowFromXml(void* ptr) //(String str)
 {
   //std::cout << str.toUTF8() << "\n";
@@ -1846,22 +1875,23 @@ void PlotterWindow::openWindowFromXml(void* ptr) //(String str)
   XmlElement* xml = doc.getDocumentElement();
   if (xml && xml->getChildByName(T("fields")) &&
       xml->getChildByName(T("layers")))
+  {
+    PlotterWindow* w = new PlotterWindow(xml);
+    w->plotter->setUnsavedChanges(true);
+    delete xml;
+  }
+  else
+  {
+    String err=T(">>> Error ");
+    if (!xml)
+      err << doc.getLastParseError() << T("\n");
+    else
     {
-      new PlotterWindow(xml);
+      err << T("invalid xml plot data\n");
       delete xml;
     }
-  else
-    {
-      String err=T(">>> Error ");
-      if (!xml)
-	err << doc.getLastParseError() << T("\n");
-      else
-	{
-	  err << T("invalid xml plot data\n");
-	  delete xml;
-	}
-      Console::getInstance()->printError(err);
-    }
+    Console::getInstance()->printError(err);
+  }
 }
 
 void PlotterWindow::browseForFileToOpen(int type)
@@ -1890,24 +1920,24 @@ void PlotterWindow::openXmlFile(File file)
   XmlElement* xml = doc.getDocumentElement();
   if (xml && xml->getChildByName(T("fields")) &&
       xml->getChildByName(T("layers")))
+  {
+    PlotterWindow* w=new PlotterWindow(xml);
+    w->setPlotFile(file);
+    delete xml;
+  }
+  else
+  {
+    String err=T(">>> Error: ");
+    if (!xml)
+      err << doc.getLastParseError() << T("\n");
+    else
     {
-      PlotterWindow* w=new PlotterWindow(xml);
-      w->setPlotFile(file);
+      err << file.getFullPathName() 
+          << T(" is not a valid plot (xml) file.\n");
       delete xml;
     }
-  else
-    {
-      String err=T(">>> Error: ");
-      if (!xml)
-	err << doc.getLastParseError() << T("\n");
-      else
-	{
-	err << file.getFullPathName() 
-	    << T(" is not a valid plot (xml) file.\n");
-	delete xml;
-	}
-      Console::getInstance()->printError(err);
-    }
+    Console::getInstance()->printError(err);
+  }
 }
 
 void PlotterWindow::openMidiFile(File file)
@@ -1916,14 +1946,16 @@ void PlotterWindow::openMidiFile(File file)
   FileInputStream* input=file.createInputStream();
   MidiFile midifile;
   if (midifile.readFrom(*input))
-    new PlotterWindow(title, midifile);
+  {
+    PlotterWindow* w=new PlotterWindow(title, midifile);
+  }
   else
-    {
-      String err=T(">>> Error: ");
-      err << file.getFullPathName() 
-	  << T(" is not a valid midi file.");
-      Console::getInstance()->printError(err);
-    }
+  {
+    String err=T(">>> Error: ");
+    err << file.getFullPathName() 
+        << T(" is not a valid midi file.");
+    Console::getInstance()->printError(err);
+  }
 }
 
 bool PlotterWindow::save(bool saveas)
@@ -1960,15 +1992,9 @@ void PlotterWindow::closeButtonPressed () //{this->~PlotterWindow();}
     x=Alerts::showYesNoCancelBox(AlertWindow::QuestionIcon,
                                  T("Close"),
                                  T("Save changes before closing?"),
-#ifdef WINDOWS
-                                 T("Yes"),
-                                 T("No"),
-                                 T("Cancel")
-#else
                                  T("Save"),
                                  T("Don't Save"),
                                  T("Cancel")
-#endif
                                  );
   }
   if (x==0)
@@ -2047,76 +2073,55 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
       menu.addItem(CommandIDs::PlotterRescalePoints, T("Rescale Points"),
 		   (sel>1));
     }
-
   else if (name==T("View"))
-    {
-      Layer* layer=plotter->getFocusLayer();
-      val=layer->getLayerStyle();
-      // add these with focus colored items to make it clear that the
-      // styling change only affects the focus plot
-      menu.addItem(CommandIDs::PlotterStyle + Layer::line, 
-		   T("Line"), true,
-		   (val==Layer::line));
-      menu.addItem(CommandIDs::PlotterStyle + Layer::point,
-		   T("Point"), true,
-		   (val==Layer::point));
-      menu.addItem(CommandIDs::PlotterStyle + Layer::lineandpoint,
-		   T("Envelope"), true,
-		   (val==Layer::lineandpoint));
-      menu.addItem(CommandIDs::PlotterStyle + Layer::hbox, 
-		   T("Horizontal Box"),
-		   (arity > 2), 
-		   (val==Layer::hbox));
-      menu.addItem(CommandIDs::PlotterStyle + Layer::vbox,
-		   T("Vertical Box"),
-		   (arity > 2), 
-		   (val==Layer::vbox));
-      menu.addItem(CommandIDs::PlotterStyle + Layer::impulse, 
-		   T("Impulse"),
-		   true, (val==Layer::impulse));
-      menu.addItem(CommandIDs::PlotterStyle + Layer::histogram, 
-		   T("Histogram"),
-		   true, 
-		   (val==Layer::histogram));
-      menu.addItem(CommandIDs::PlotterStyle + Layer::vbar, 
-		   T("Vertical Bar"),
-		   false,
-		   (val==Layer::vbar));
-      /*	menu.addSeparator(); 
-		// 0'th field is hardwired to x axis.
-		for (int i=1; i<layer->getLayerArity(); i++)
-		sub2.addItem(CommandIDs::PlotterVertical + i,
-		layer->getFieldName(i),
-		true,
-		(layer->getYField()==i));
-		menu.addSubMenu(T("Vertical Display"), sub2, true);
-      */
-      menu.addSeparator();
-      val=plotter->getBackViewStyle();
-      sub1.addItem(CommandIDs::PlotterBgStyle + Plotter::bgGrid,
-		   T("Grid"),
-		   true, 
-		   (val==Plotter::bgGrid));
-      sub1.addItem(CommandIDs::PlotterBgStyle + Plotter::bgTiled,
-		   T("Tiled"),
-		   true, 
-		   (val==Plotter::bgTiled));
-      sub1.addItem(CommandIDs::PlotterBgStyle + Plotter::bgSolid,
-		   T("Solid"),
-		   true, 
-		   (val==Plotter::bgSolid));
-      sub1.addSeparator();
-      sub1.addItem(CommandIDs::PlotterBgColor,
-		   T("Colors..."), 
-		   false);
-      sub1.addSeparator();
-      sub1.addItem(CommandIDs::PlotterBgPlotting,
-		   T("Show All Layers"), 
-		   true, 
-		   plotter->isBackViewPlotting() );
-      menu.addSubMenu(T("Background"), sub1, true);    
-      menu.addSeparator();
-    }
+  {
+    Layer* layer=plotter->getFocusLayer();
+    val=layer->getLayerStyle();
+    // add these with focus colored items to make it clear that the
+    // styling change only affects the focus plot
+    sub1.addItem(CommandIDs::PlotterStyle + Layer::line, 
+                 T("Line"), true, (val==Layer::line));
+    sub1.addItem(CommandIDs::PlotterStyle + Layer::point,
+                 T("Point"), true, (val==Layer::point));
+    sub1.addItem(CommandIDs::PlotterStyle + Layer::lineandpoint,
+                 T("Envelope"), true, (val==Layer::lineandpoint));
+    sub1.addItem(CommandIDs::PlotterStyle + Layer::hbox, 
+                 T("Horizontal Box"),
+                 (arity > 2), (val==Layer::hbox));
+    sub1.addItem(CommandIDs::PlotterStyle + Layer::vbox,
+                 T("Vertical Box"),
+                 (arity > 2), (val==Layer::vbox));
+    sub1.addItem(CommandIDs::PlotterStyle + Layer::impulse, 
+                 T("Impulse"), true, (val==Layer::impulse));
+    sub1.addItem(CommandIDs::PlotterStyle + Layer::histogram, 
+                 T("Histogram"), true, (val==Layer::histogram));
+    sub1.addItem(CommandIDs::PlotterStyle + Layer::vbar, 
+                 T("Vertical Bar"), false, (val==Layer::vbar));
+    menu.addSubMenu(T("Point Style"), sub1, true);
+    menu.addSeparator();
+    val=plotter->getBackViewStyle();
+    sub2.addItem(CommandIDs::PlotterBgStyle + Plotter::bgGrid,
+                 T("Grid"), true, (val==Plotter::bgGrid));
+    sub2.addItem(CommandIDs::PlotterBgStyle + Plotter::bgTiled,
+                 T("Tiled"), true, (val==Plotter::bgTiled));
+    sub2.addItem(CommandIDs::PlotterBgStyle + Plotter::bgSolid,
+                 T("Solid"), true, (val==Plotter::bgSolid));
+    sub2.addSeparator();
+    sub2.addItem(CommandIDs::PlotterBgColor, T("Colors..."), false);
+    sub2.addSeparator();
+    sub2.addItem(CommandIDs::PlotterBgPlotting,
+                 T("Show All Layers"), 
+                 true, 
+                 plotter->isBackViewPlotting() );
+    menu.addSubMenu(T("Background"), sub2, true);
+    menu.addSeparator();
+    menu.addItem(CommandIDs::PlotterZoomInX, T("Zoom In X"));
+    menu.addItem(CommandIDs::PlotterZoomOutX, T("Zoom Out X"));
+    menu.addItem(CommandIDs::PlotterZoomInY, T("Zoom In Y"));
+    menu.addItem(CommandIDs::PlotterZoomOutY, T("Zoom Out Y"));
+    menu.addItem(CommandIDs::PlotterZoomToFit, T("Fit in Window"), true, !plotter->isScrolling() );
+    menu.addItem(CommandIDs::PlotterZoomReset, T("Reset Zoom"));
+  }
   else if (name==T("Audio"))
     menu=CommandMenus::getAudioMenu(false);
   else if (name==T("Window"))
@@ -2133,100 +2138,125 @@ void PlotterWindow::menuItemSelected (int id, int idx)
   int type = CommandIDs::getCommandType(id);  
   
   switch (cmd)
+  {
+  case CommandIDs::PlotterNew :
+    new PlotterWindow((XmlElement*)NULL);
+    break;
+  case CommandIDs::PlotterOpen :
+  case CommandIDs::PlotterOpenMidiFile :
+    browseForFileToOpen(cmd);
+    break;
+  case CommandIDs::PlotterSave :
+    save();
+    break;
+  case CommandIDs::PlotterSaveAs :
+    save(true);
+    break;
+  case CommandIDs::PlotterRename :
     {
-    case CommandIDs::PlotterNew :
-      new PlotterWindow((XmlElement*)NULL);
-      break;
-    case CommandIDs::PlotterOpen :
-    case CommandIDs::PlotterOpenMidiFile :
-      browseForFileToOpen(cmd);
-      break;
-    case CommandIDs::PlotterSave :
-      save();
-      break;
-    case CommandIDs::PlotterSaveAs :
-      save(true);
-      break;
-    case CommandIDs::PlotterRename :
-      {
-	AlertWindow w (T("Rename Plot"), String::empty, 
-		       AlertWindow::NoIcon);
-	w.addTextEditor(T("rename"), getName(), String::empty);
-	w.addButton(T("Cancel"), 0, KeyPress(KeyPress::escapeKey, 0, 0));
-	w.addButton(T("Rename"), 1, KeyPress(KeyPress::returnKey, 0, 0));
-	if (w.runModalLoop() != 0) // picked 'ok'
-	  setName(w.getTextEditorContents(T("rename")));
-      }
-      break;
-    case CommandIDs::PlotterExport :
-      openExportDialog();
-      break;
-    case CommandIDs::PlotterClose :
-      closeButtonPressed();
-      break;
-    case CommandIDs::EditorUndo :
-      plotter->actions.undo();
-      break;
-    case CommandIDs::EditorRedo :
-      plotter->actions.redo();
-      break;
-    case CommandIDs::EditorCut :
-      plotter->deleteSelection(true);
-      break;
-    case CommandIDs::EditorSelectAll :
-      plotter->selectAll();
-      break;
-    case CommandIDs::EditorUnselectAll :
-      plotter->deselectAll();
-      break;
-    case CommandIDs::PlotterEditPoints :
-      openEditPointsDialog();
-      break;
-   case CommandIDs::PlotterShiftPoints :
-      openRescalePointsDialog(cmd);
-      break;
-   case CommandIDs::PlotterRescalePoints :
-      openRescalePointsDialog(cmd);
-      break;    
-    case CommandIDs::PlotterLayerAdd :
-      plotter->newLayer(NULL);
-      plotter->redrawBackView();
-      plotter->redrawHorizontalAxisView();
-      plotter->redrawVerticalAxisView();
-      break;
-    case CommandIDs::PlotterLayerDelete :
-      plotter->actions.perform
-	(new DeleteLayerAction(plotter,
-			       plotter->getFocusLayer()),
-	 T("Delete Layer"));
-      break;
-    case CommandIDs::PlotterLayerSelect :
-      plotter->setFocusLayer(plotter->findLayer(data));
-      plotter->redrawBackView();
-      plotter->redrawPlotView();
-      plotter->redrawHorizontalAxisView();
-      plotter->redrawVerticalAxisView();
-      break;
-    case CommandIDs::PlotterStyle :
-      plotter->getFocusLayer()->setLayerStyle(data);
-      plotter->redrawPlotView();
-      break;
-    case CommandIDs::PlotterVertical :
-      plotter->setFocusVerticalField(data);
-      break;
-    case CommandIDs::PlotterBgStyle :
-      plotter->setBackViewStyle( (Plotter::BGStyle)data);
-      plotter->redrawBackView();
-      break;
-    case CommandIDs::PlotterBgColor :
-      break;
-    case CommandIDs::PlotterBgPlotting :
-      plotter->setBackViewPlotting( ! plotter->isBackViewPlotting()); 
-      plotter->redrawBackView();
-      break;
-    default :
-      break;
+      AlertWindow w (T("Rename Plot"), String::empty, 
+                     AlertWindow::NoIcon);
+      w.addTextEditor(T("rename"), getName(), String::empty);
+      w.addButton(T("Cancel"), 0, KeyPress(KeyPress::escapeKey, 0, 0));
+      w.addButton(T("Rename"), 1, KeyPress(KeyPress::returnKey, 0, 0));
+      if (w.runModalLoop() != 0) // picked 'ok'
+        setName(w.getTextEditorContents(T("rename")));
     }
+    break;
+  case CommandIDs::PlotterExport :
+    openExportDialog();
+    break;
+  case CommandIDs::PlotterClose :
+    closeButtonPressed();
+    break;
+  case CommandIDs::EditorUndo :
+    plotter->actions.undo();
+    break;
+  case CommandIDs::EditorRedo :
+    plotter->actions.redo();
+    break;
+  case CommandIDs::EditorCut :
+    plotter->deleteSelection(true);
+    break;
+  case CommandIDs::EditorSelectAll :
+    plotter->selectAll();
+    break;
+  case CommandIDs::EditorUnselectAll :
+    plotter->deselectAll();
+    break;
+  case CommandIDs::PlotterEditPoints :
+    openEditPointsDialog();
+    break;
+  case CommandIDs::PlotterShiftPoints :
+    openRescalePointsDialog(cmd);
+    break;
+  case CommandIDs::PlotterRescalePoints :
+    openRescalePointsDialog(cmd);
+    break;    
+  case CommandIDs::PlotterLayerAdd :
+    plotter->newLayer(NULL);
+    plotter->redrawBackView();
+    plotter->redrawHorizontalAxisView();
+    plotter->redrawVerticalAxisView();
+    break;
+  case CommandIDs::PlotterLayerDelete :
+    plotter->actions.perform
+      (new DeleteLayerAction(plotter,
+                             plotter->getFocusLayer()),
+       T("Delete Layer"));
+    break;
+  case CommandIDs::PlotterLayerSelect :
+    plotter->setFocusLayer(plotter->findLayer(data));
+    plotter->redrawBackView();
+    plotter->redrawPlotView();
+    plotter->redrawHorizontalAxisView();
+    plotter->redrawVerticalAxisView();
+    break;
+  case CommandIDs::PlotterStyle :
+    plotter->getFocusLayer()->setLayerStyle(data);
+    plotter->redrawPlotView();
+    break;
+  case CommandIDs::PlotterVertical :
+    plotter->setFocusVerticalField(data);
+    break;
+  case CommandIDs::PlotterBgStyle :
+    plotter->setBackViewStyle( (Plotter::BGStyle)data);
+    plotter->redrawBackView();
+    break;
+  case CommandIDs::PlotterBgColor :
+    break;
+  case CommandIDs::PlotterBgPlotting :
+    plotter->setBackViewPlotting( ! plotter->isBackViewPlotting()); 
+    plotter->redrawBackView();
+    break;
+
+  case CommandIDs::PlotterZoomInX:
+  case CommandIDs::PlotterZoomOutX:
+  case CommandIDs::PlotterZoomInY:
+  case CommandIDs::PlotterZoomOutY:
+    break;
+
+  case CommandIDs::PlotterZoomReset:
+    plotter->getHorizontalAxisView()->setSpread(1.0);
+    plotter->getVerticalAxisView()->setSpread(1.0);
+    plotter->setScrolling(true);
+    plotter->resizeForSpread();
+    plotter->repaint();
+    plotter->redrawHorizontalAxisView();
+    plotter->redrawVerticalAxisView();
+    plotter->redrawBackView();
+    plotter->redrawPlotView();
+    break;
+
+  case CommandIDs::PlotterZoomToFit:
+    std::cout << "plotterZoomToFit\n";
+    plotter->setScrolling(!plotter->isScrolling());
+    plotter->repaint();
+    break;
+
+  default :
+    break;
+  }
 }
 
 void PlotterWindow::PlotterWindowListener::handleMessage(const Message &m)

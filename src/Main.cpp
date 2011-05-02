@@ -137,6 +137,7 @@ void Grace::initialise(const juce::String& commandLine)
   str=Preferences::getInstance()->getStringProp("LispInitFile");
   if (str!=String::empty)
     scm->load(File(str),false);
+  //Console::getInstance()->getTopLevelComponent()->toFront(true);
 }
 
 void Grace::systemRequestedQuit()
