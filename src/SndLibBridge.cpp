@@ -1667,6 +1667,22 @@ s7_pointer ffi_osc_is_hook (s7_scheme *s7, s7_pointer args)
   return (s7, p0);
 }
 
+s7_pointer ffi_sdif_import (s7_scheme *s7, s7_pointer args)
+{
+  char* s0;
+  s7_pointer p0, p1;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sdif_import", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sdif_import", 2, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  p0=sdif_import(s0, p1);
+  return (s7, p0);
+}
+
 
 
 // record definitions
@@ -3280,5 +3296,6 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_osc_send_bundle", ffi_osc_send_bundle, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_set_hook", ffi_osc_set_hook, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_is_hook", ffi_osc_is_hook, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sdif_import", ffi_sdif_import, 2, 0, false, "ffi function");
   cm_init_randomness(s7);
 }

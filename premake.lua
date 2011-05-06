@@ -8,8 +8,7 @@ addoption("sndlib", "Location of SNDLIB source directory or install prefix")
 addoption("liblo", "Optional LIBLO directory or install prefix")
 addoption("fomus", "Optional FOMUS install prefix")
 addoption("svnversion", "Optional SVN version number")
-addoption("gracecl", "Optional build gracecl application")
---addoption("juce", "Optional JUCE directory or install prefix")
+addoption("sdif", "Optional SDIF install prefix")
 
 if options["juce"] then
    amalgamated = false
@@ -18,6 +17,7 @@ end
 sndlib = nil
 fomus = nil
 liblo = nil
+sdif = nil
 svnvers = nil
 juce_config = {"JUCE_OPENGL=0", "JUCE_CHECK_MEMORY_LEAKS=0"}
 if linux then
@@ -101,14 +101,10 @@ if amalgamated then
 end
 
 numtargets=2
-if options["gracecl"] then
-   numtargets = 3
-end
 
 for i = 1,numtargets do   
    cm = i == 1
    grace = i == 2
-   gracecl = i == 3
 
 ------------------------------------------
 --           Global
@@ -168,26 +164,15 @@ for i = 1,numtargets do
    end
 
 ------------------------------------------
---           Grace and GraceCL
+--           Grace
 ------------------------------------------
 
-   if (grace or gracecl) then
-      if (grace) then
-	 mypackage.name = "grace"
-	 mypackage.target = "Grace"
-	 mypackage.kind = "winexe"
-	 mypackage.objdir = "obj/grace"
-	 add(mypackage.defines, "GRACE=1")
-      else
-	 mypackage.name = "gracecl"
-	 mypackage.target = "GraceCL"
-	 mypackage.kind = "winexe"
-	 mypackage.objdir = "obj/gracecl"
-	 add(mypackage.defines, "GRACE=1")
-	 add(mypackage.defines, "GRACECL=1")
-      add(mypackage.files, "src/CommonLisp.cpp")
-      add(mypackage.files, "src/CommonLisp.h")
-      end
+   if (grace) then
+      mypackage.name = "grace"
+      mypackage.target = "Grace"
+      mypackage.kind = "winexe"
+      mypackage.objdir = "obj/grace"
+      add(mypackage.defines, "GRACE=1")
       add(mypackage.files, "src/Fonts.cpp") 
       add(mypackage.files, "src/Fonts.h")
       add(mypackage.files, "src/Help.cpp")
@@ -315,6 +300,25 @@ for i = 1,numtargets do
       end
    end
 
+------------------------------------------
+--           SDIF
+------------------------------------------
+
+   if options["sdif"] then
+      sdif = insure_slash(options["sdif"])
+      add(mypackage.defines, "WITH_SDIF=1")
+      if os.fileexists(sdif .. "include/sdif.h") then
+         add(mypackage.includepaths, sdif .. "include")
+      else
+         error("--sdif: can't find sdif.h in " .. sdif .. "include/")
+      end
+      if os.fileexists(sdif .. "lib/libsdif.a") then
+         add(mypackage.linkoptions, sdif .. "lib/libsdif.a")
+      else
+         error("--sdif: can't find libsdif.a in " .. sdif .. "lib/")
+      end
+   end
+
 -----------------------------------------
 --           LIBLO
 ------------------------------------------
@@ -376,7 +380,7 @@ for i = 1,numtargets do
       add(mypackage.linkoptions, "-framework DiscRecording")
       add(mypackage.linkoptions, "-framework WebKit")
       add(mypackage.linkoptions, "-framework IOKIT")
-      if (grace or gracecl) then
+      if (grace) then
 	 mypackage.postbuildcommands = 
 	    {"cp res/etc/" .. mypackage.target .. ".plist bin/" .. mypackage.target .. ".app/Contents/Info.plist",
 	     "mkdir -p bin/" .. mypackage.target ..  ".app/Contents/Resources",

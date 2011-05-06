@@ -98,3 +98,70 @@
 
 (define sort sort!)
 
+;; destructive sort for both lists and vectors.
+;; http://www.math.grin.edu/~stone/events/scheme-workshop/quicksort.html
+
+(define (qsort! vec . opt)
+  (let* ((precedes? (if (null? opt) < (car opt)))
+         (getter #f)
+         (swapper #f)
+         (sizeof #f))
+    (cond ((vector? vec)
+           (set! getter vector-ref)
+           (set! swapper (lambda (s i j)
+                           (let ((x (vector-ref s i)))
+                             (vector-set! s i (vector-ref s j))
+                             (vector-set! s j x))))
+           (set! sizeof vector-length)
+           )
+          ((pair? vec)
+           (set! getter list-ref)
+           (set! swapper (lambda (s i j)
+                           (let ((x (list-ref s i)))
+                             (list-set! s i (list-ref s j))
+                             (list-set! s j x))))
+           (set! sizeof length))
+          (else
+           (error "qsort!: argument not a vector or list: ~S" vec)))
+    (let* ((partition!
+            (lambda (start stop pivot)
+              (letrec ((rightwards
+                        (lambda (current)
+                          (if (and (< current stop)
+                                   (precedes? (getter vec current)
+                                              pivot))
+                              (rightwards (+ current 1))
+                              current)))
+                       (leftwards
+                        (lambda (current)
+                          (if (or (< current start)
+                                  (precedes? (getter vec current)
+                                             pivot))
+                              current
+                              (leftwards (- current 1))))))
+
+                (let lupe ((left-pointer (rightwards start))
+                           (right-pointer (leftwards (- stop 1))))
+                  (if (< left-pointer right-pointer)
+                      (begin
+                        (swapper vec left-pointer right-pointer)
+                        (lupe (rightwards (+ left-pointer 1))
+                              (leftwards (- right-pointer 1))))
+                      left-pointer))))))
+
+      (let qs ((start 0)
+               (stop (- (sizeof vec) 1)))
+        (if (< start stop)
+            (let* ((pivot (getter vec stop))
+                   (break (partition! start stop pivot)))
+              (swapper vec break stop)
+              (if (<= (- break start)
+                      (- stop break))
+                  (begin
+                    (qs start (- break 1))
+                    (qs (+ break 1) stop))
+                  (begin
+                    (qs (+ break 1) stop)
+                    (qs start (- break 1)))))))
+      vec)))
+

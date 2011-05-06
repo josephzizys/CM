@@ -5,6 +5,10 @@
   of this agreement is available at http://www.cliki.net/LLGPL
  *=======================================================================*/
 
+// sdif header has to come before juce.h or i get an error :(
+#ifdef WITH_SDIF
+#include "sdif.h"
+#endif
 #include "juce.h"
 #include "Enumerations.h"
 #include "CmSupport.h"
@@ -13,9 +17,6 @@
 #include "Midi.h"
 #include "Main.h"
 #include "Audio.h"
-#ifdef GRACECL
-#include "CommonLisp.h"
-#endif
 #include "Syntax.h"
 #include "CodeEditor.h"
 #include "Plot.h"
@@ -103,22 +104,15 @@ void Grace::initialise(const juce::String& commandLine)
       << T("\n");
   con->printOutput(str);
 
-  // don't initialize anything if we are GraceCL
-
-#ifdef GRACECL
-  const String msg=
-    T("\nWelcome to GraceCL, a version of Grace that supports the Common Lisp branch (CM2) of Common Music. Your Common Lisp environment is not configured yet. Use Configure Lisp... in the Console Window's file menu to specify the full pathname to your Common Lisp program (SBCL or CLisp) and your Common Music source directory. GraceCL requires version 2.12.0 or later from the CM2 branch, available on the web at http://commonmusic.sf.net or via the svn shell command (all one line):\n\nsvn co http://commonmusic.svn.sf.net/svnroot/commonmusic/branches/cm2 cm2\n\nHappy hacking!\n");
-  if (!CommonLisp::getInstance()->isLispStartable())
-    Console::getInstance()->printOutput(msg);
-  else if (CommonLisp::getInstance()->getLispLaunchAtStartup())
-    CommonLisp::getInstance()->startLisp();
-  return;
-#endif
-
 #ifdef WITHFOMUS  
   // Initialize fomus
   initfomus();
 #endif  
+
+#ifdef WITH_SDIF
+  SdifGenInit("");
+#endif
+
   SchemeThread* scm=SchemeThread::getInstance();
   scm->setPriority(10);
   scm->startThread();
@@ -237,10 +231,6 @@ void Grace::shutdown()
   Preferences::getInstance()->getProps().saveIfNeeded();
   std::cout << "Deleting Scheme\n";
   SchemeThread::deleteInstance();
-#ifdef GRACECL
-  std::cout << "Deleting CommonLisp\n";
-  CommonLisp::deleteInstance();
-#endif
   std::cout << "Deleting MidiOut\n";
   MidiOutPort::deleteInstance();
   std::cout << "Deleting MidiIn\n";
@@ -252,6 +242,11 @@ void Grace::shutdown()
   std::cout << "Deleting Fomus\n";
   Fomus::deleteInstance();
 #endif
+#ifdef WITH_SDIF
+  std::cout << "Deleting SDIF\n";
+  SdifGenKill();
+#endif
+
   std::cout << "Deleting AudioManager\n";
   AudioManager::deleteInstance();
   std::cout << "Deleting Console Window\n";
@@ -307,19 +302,16 @@ START_JUCE_APPLICATION(Grace)
 void cm_cleanup()
 {
   if (SchemeThread::getInstance()->isThreadRunning())
-    {
-//    Console::getInstance()->printOutput(T("Killing Scheme thread...\n"));
-      SchemeThread::getInstance()->stopThread(2000);
-    }
+    SchemeThread::getInstance()->stopThread(2000);
   if (MidiOutPort::getInstance()->isThreadRunning())
-    {
-//    Console::getInstance()->printOutput(T("Killing Midi thread...\n"));
-      MidiOutPort::getInstance()->stopThread(2000);
-    }
+    MidiOutPort::getInstance()->stopThread(2000);
   SchemeThread::deleteInstance();
   delete Console::getInstance();
   MidiOutPort::deleteInstance();
   MidiInPort::deleteInstance();
+#ifdef WITH_SDIF
+  SdifGenKill();
+#endif
   shutdownJuce_NonGUI();
   std::cout << "Bye!\n";
 }
@@ -375,6 +367,9 @@ int main(int argc, const char* argv[])
   MidiOutPort* mid=MidiOutPort::getInstance();
   mid->setPriority(9);
   mid->startThread();
+#ifdef WITH_SDIF
+  SdifGenInit("");
+#endif
 
   // COMMAND ARG PROCESSING
   

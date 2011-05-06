@@ -211,5 +211,8 @@ s7_pointer osc_is_hook(char* oscpath);
 void osc_send_message(char* oscpath, s7_pointer list);
 void osc_send_bundle(double time, s7_pointer list);
 
+// SDIF
+
+s7_pointer sdif_import(char* file,  s7_pointer args);
 #endif
 

@@ -177,20 +177,19 @@ muck around after that. The Parncutt book is also very good.
                           (cons (car orig) final)
                           pool))))
               
-; (intersection '() '())
-; (intersection '(1.0) '())
-; (intersection '(0.0 1.0 2.0) '(0.0 1.0 2.0))
-; (intersection '(1.0 2.0) '(0.0 1.0 2.0))
-; (intersection '(1.0 2.0 4.0) '(0.0 1.0 2.0))
-; (intersection '(1.0 2.0 4.0) '(0.1 1.0 2.1))
-; (intersection '((1.0 a b) (2.0 a b) (4.0 a b)) '((0.1 a b) (1.0 a b) (2.1 a b)) :key car)
-; (intersection '((1.0 a b)) '(()))
-; (intersection '((0.0 a b) (1.0 a b) (2.0 a b)) '((0.0 a b) (1.0 a b) (2.0 a b)))
-; (intersection '((1.0 a b) (2.0 a b)) '((0.0 a b) (1.0 a b) (2.0 a b)))
-; (intersection '((1.0 a b) (2.0 a b) (4.0 a b)) '((0.0 a b) (1.0 a b) (2.0 a b)))
-; (intersection '((1.0 a b) (2.0 a b) (4.0 a b)) '((0.1 a b) (1.0 a b) (2.1 a b)) :key car)
-
-; (intersection '( (60 . 1) (72 . 1/2) (79 . 1/3) (84 . 1/4) (88 . 1/5) (91 . 1/6) (94 . 1/7) (96 . 1/8) (98 . 1/9) (100 . 1/10)) '( (61 . 1) (73 . 1/2) (80 . 1/3) (85 . 1/4) (89 . 1/5) (92 . 1/6) (95 . 1/7) (97 . 1/8) (99 . 1/9) (101 . 1/10)) )
+; (list-intersection '() '())
+; (list-intersection '(1.0) '())
+; (list-intersection '(0.0 1.0 2.0) '(0.0 1.0 2.0))
+; (list-intersection '(1.0 2.0) '(0.0 1.0 2.0))
+; (list-intersection '(1.0 2.0 4.0) '(0.0 1.0 2.0))
+; (list-intersection '(1.0 2.0 4.0) '(0.1 1.0 2.1))
+; (list-intersection '((1.0 a b) (2.0 a b) (4.0 a b)) '((0.1 a b) (1.0 a b) (2.1 a b)) :key car)
+; (list-intersection '((1.0 a b)) '(()))
+; (list-intersection '((0.0 a b) (1.0 a b) (2.0 a b)) '((0.0 a b) (1.0 a b) (2.0 a b)))
+; (list-intersection '((1.0 a b) (2.0 a b)) '((0.0 a b) (1.0 a b) (2.0 a b)))
+; (list-intersection '((1.0 a b) (2.0 a b) (4.0 a b)) '((0.0 a b) (1.0 a b) (2.0 a b)))
+; (list-intersection '((1.0 a b) (2.0 a b) (4.0 a b)) '((0.1 a b) (1.0 a b) (2.1 a b)) :getter car)
+; (list-intersection '( (60 . 1) (72 . 1/2) (79 . 1/3) (84 . 1/4) (88 . 1/5) (91 . 1/6) (94 . 1/7) (96 . 1/8) (98 . 1/9) (100 . 1/10)) '( (61 . 1) (73 . 1/2) (80 . 1/3) (85 . 1/4) (89 . 1/5) (92 . 1/6) (95 . 1/7) (97 . 1/8) (99 . 1/9) (101 . 1/10)) )
 
 ;;This isn't that efficient, but it isn't really called very often.
 (define (merge-spectrums fund-pitch1 . pitches)
@@ -205,7 +204,7 @@ muck around after that. The Parncutt book is also very good.
         (letrec ((rec1 (lambda (final current pchs)
                          (let* ((spect+amps (get-harm-amps (harmonic-series-pitch current)))
                                 (overlaps (map car 
-                                               (intersection final spect+amps car)))
+                                               (list-intersection final spect+amps :getter car)))
                                 (overlap+amps (get-amps-of-overlaps overlaps final spect+amps))
                                 (merged-spects+amps (append final spect+amps))
                                 (gapped-spects+amps (remove-overlaps merged-spects+amps
@@ -285,17 +284,17 @@ muck around after that. The Parncutt book is also very good.
       (set! result (append interim-list result))))
   )
 
-(define (intersection list1 list2 . getter)
-  (set! getter (if (null? getter) #f (car getter)))
-  (if (not getter)
-      (apply append (loop for x in list1
-                          collect (loop for y in list2 if (equal? x y) collect y)))
-      (let ((xx #f)
-            (yy #f))
-        (apply append
-               (loop for x in list1
-                     do (set! xx (getter x))
-                     collect (loop for y in list2 do (set! yy (getter y)) if (equal? xx yy) collect y))))))
+;(define (intersection list1 list2 . getter)
+;  (set! getter (if (null? getter) #f (car getter)))
+;  (if (not getter)
+;      (apply append (loop for x in list1
+;                          collect (loop for y in list2 if (equal? x y) collect y)))
+;      (let ((xx #f)
+;            (yy #f))
+;        (apply append
+;               (loop for x in list1
+;                     do (set! xx (getter x))
+;                     collect (loop for y in list2 do (set! yy (getter y)) if (equal? xx yy) collect y))))))
 
 (define (acoustic-sort chords . cons-to-diss)
   (set! cons-to-diss
@@ -303,8 +302,6 @@ muck around after that. The Parncutt book is also very good.
             > <))
   (let ((rank (map (lambda (x) (cons (acoustic-dissonance x) x)) chords)))
     (map cdr (sort rank (lambda (a b) (cons-to-diss (car a) (car b)))))))
-
-
 
 
 

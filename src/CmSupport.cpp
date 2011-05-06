@@ -8,6 +8,10 @@
 #include <iostream>
 #include <string>
 #include <math.h>
+// sdif header has to come before juce.h or i get an error :(
+#ifdef WITH_SDIF
+#include "sdif.h"
+#endif
 #include "juce.h"
 #include "Enumerations.h"
 #include "CmSupport.h"
@@ -2479,3 +2483,137 @@ void osc_send_bundle(double time, s7_pointer list){SchemeThread::getInstance()->
 #endif
 
 
+/*=======================================================================*
+                                    SDIF
+(ffi_sdif_import "/Users/hkt/log-drum-1.sdif" "1TRC")
+1TRC or 1HRM
+( (SIG TIME (SIG (a b c d) (a b c d) ...) ...) ...)
+ *=======================================================================*/
+
+#ifdef WITH_SDIF
+s7_pointer sdif_import(char* path,  s7_pointer sig)
+{  
+  SchemeThread* st=SchemeThread::getInstance();
+  String filename=completeFile(String(path)).getFullPathName();
+  // check if its a valid SDIF file and contains frames we can handle
+  if (!SdifCheckFileFormat(filename.toUTF8()))
+    st->signalSchemeError(T("sdif-import: not a valid SDIF file: " + filename));
+  // optional frame type to match
+  SdifSignature sigmatch=eEmptySignature;
+  if (s7_is_symbol(sig) || s7_is_string(sig)) // string, symbol or keyword
+  {
+    const char* name = (s7_is_symbol(sig)) ? s7_symbol_name(sig) : s7_string(sig);
+    String test(name);
+    if (test.length()==4)
+      sigmatch=SdifSignatureConst(name[0],name[1],name[2],name[3]);
+    else if (test.length()==5 && test[0] == T(':'))
+      sigmatch=SdifSignatureConst(name[1],name[2],name[3],name[4]);
+  }
+
+  // now process file
+  size_t bytesread = 0;
+  int endoffile = 0;
+  SdifErrorTagET sdiferror=eNoError; 
+  SdifFileT* sdiffile = SdifFOpen(filename.toUTF8(), eReadFile);
+  SdifFReadGeneralHeader(sdiffile); // Read file header
+  SdifFReadAllASCIIChunks(sdiffile);  // Read ASCII header info, such as name-value tables
+
+  // rhead is the list of frames to return, each frame is:
+  // (<fsig> <ftime> (<msig> (<v1> <v2> ...) (<v1> <v2> ...) ...) ...)
+  s7_pointer rhead = st->schemeNil;
+  s7_pointer rtail = rhead;
+
+  while (!endoffile && SdifFLastError(sdiffile) == NULL)
+  {
+    bytesread += SdifFReadFrameHeader(sdiffile);
+    // optionally skip frames that dont match what we want
+    if (sigmatch==eEmptySignature || SdifFCurrSignature(sdiffile) == sigmatch)
+    {
+      SdifFloat8 frametime = SdifFCurrTime(sdiffile);
+      SdifUInt4 numarrays  = SdifFCurrNbMatrix(sdiffile);
+      char* sigstring = SdifSignatureToString(SdifFCurrSignature(sdiffile));
+      //      std::cout << "frame " << sigstring << ", time=" << frametime << ", arrays=" << numarrays << "\n";
+      // frame = (<type> )
+      s7_pointer fhead = s7_cons(st->scheme, s7_make_symbol(st->scheme, sigstring), st->schemeNil);
+      s7_pointer ftail = fhead;
+      // frame = (<type> <time>)
+      s7_set_cdr(ftail, s7_cons(st->scheme, s7_make_real(st->scheme, frametime), st->schemeNil));
+      ftail=s7_cdr(ftail);
+
+      for (int m = 0; m < numarrays; m++)
+      {
+        bytesread += SdifFReadMatrixHeader(sdiffile);
+        SdifSignature arraysig  = SdifFCurrMatrixSignature (sdiffile);
+        SdifInt4 numrows = SdifFCurrNbRow (sdiffile);
+        SdifInt4 numcols = SdifFCurrNbCol (sdiffile);
+        SdifDataTypeET datatype  = SdifFCurrDataType (sdiffile);
+        // mhead is the pointer to a matrix list (<sig> (row...) (row...))
+        s7_pointer mhead = s7_cons(st->scheme, s7_make_symbol(st->scheme, SdifSignatureToString(arraysig)), st->schemeNil);
+        s7_pointer mtail = mhead;
+        // std::cout << "matrix " << SdifSignatureToString(arraysig) << ", rows=" << numrows << ", cols=" << numcols << "\n";
+        for (int r=0; r < numrows; r++)
+        {
+          s7_pointer rhead = 0;
+          s7_pointer rtail = 0;
+          bytesread += SdifFReadOneRow(sdiffile);
+          for (int c=1; c <= numcols; c++)
+          {
+            SdifFloat8 value = SdifFCurrOneRowCol(sdiffile, c);
+            if (rhead==0)
+            {
+              // rhead is the pointer to a row list (val1 val2 ...)
+              rhead=s7_cons(st->scheme, s7_make_real(st->scheme, value), st->schemeNil);
+              rtail=rhead;
+            }
+            else
+            {
+              // add another value to end of row
+              s7_set_cdr(rtail, s7_cons(st->scheme, s7_make_real(st->scheme, value), st->schemeNil));
+              rtail=s7_cdr(rtail);
+            }
+          }
+          // add this row to end of matrix
+          s7_set_cdr(mtail, s7_cons(st->scheme, rhead, st->schemeNil));
+          mtail=s7_cdr(mtail);
+        }
+        // add this matrix to end of frame
+        s7_set_cdr(ftail, s7_cons(st->scheme, mhead, st->schemeNil));
+        ftail=s7_cdr(ftail);
+      }
+      // add this frame to end of results
+      if (rhead==st->schemeNil)
+      {
+        rhead = s7_cons(st->scheme, fhead, st->schemeNil);
+        rtail = rhead;
+      }
+      else
+      {
+        s7_set_cdr(rtail, s7_cons(st->scheme, fhead, st->schemeNil));
+        rtail=s7_cdr(rtail);
+      }
+    }
+    else
+    {
+      bytesread += SdifFSkipFrameData(sdiffile);
+    }
+    endoffile = (SdifFGetSignature(sdiffile, &bytesread) == eEof);
+  }
+  
+  // close file and check for errors
+  if (SdifFLastError(sdiffile))  
+  {
+    sdiferror=SdifFLastErrorTag(sdiffile);
+  }
+  SdifFClose(sdiffile);
+  
+  if (sdiferror != eNoError)
+    SchemeThread::getInstance()->signalSchemeError(T("sdif-import: SDIF error: #") + String(sdiferror));
+  
+  return rhead;
+}
+#else
+s7_pointer sdif_import(char* file,  s7_pointer args)
+{
+  SchemeThread::getInstance()->signalSchemeError(T("SDIF not available in this version of Grace."));
+}
+#endif

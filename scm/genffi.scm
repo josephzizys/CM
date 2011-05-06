@@ -172,6 +172,7 @@
     (ffi_osc_set_hook s7_pointer "osc_set_hook" c-string s7_pointer)
     (ffi_osc_is_hook s7_pointer "osc_is_hook" c-string)
 
+    (ffi_sdif_import s7_pointer "sdif_import" c-string s7_pointer)
     ))
 
 (define (foreign-lambda-scheme-name decl) 

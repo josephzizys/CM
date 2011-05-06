@@ -5,6 +5,9 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
+#ifdef WITH_SDIF
+#include "sdif.h"
+#endif
 #include "Enumerations.h"
 #include "Scheme.h"
 #include "Console.h"
@@ -772,6 +775,12 @@ void SchemeThread::printBanner()
   if (fomus_exists) 
     banner << Fomus::getFomusVersion() 
            << T("\n");
+#endif
+#ifdef WITH_SDIF
+  banner << T("SDIF ") 
+         << String(SDIF_VERSION_STRING) << T(" ")
+         << SysInfo::getCopyright(T("IRCAM-Centre Georges Pompidou, Paris, France"))
+         << T("\n");
 #endif
   banner << SysInfo::getCMLogo() 
          << T("\n" );

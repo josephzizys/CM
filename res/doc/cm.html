@@ -694,13 +694,13 @@ Returns the tail (last cdr) of <var>list</var>.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<!--
 <table class="entry" id="unique">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">unique</span>
       (<var class="arg">list</var>)
     </td>
-    <!-- td class="label">Function</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; list</td></tr>
 </table>
@@ -709,6 +709,7 @@ Returns the tail (last cdr) of <var>list</var>.
 Return a copy of <var>list</var> with duplicate elements removed.
 </p>
 </blockquote>
+-->
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
@@ -748,7 +749,6 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
 </blockquote>
 <!-- END DEFINITION -->
 
-
 <!-- DEFINITION -->
 <table class="entry" id="list-intersection">
   <tr class="entry">
@@ -756,7 +756,7 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
       <span class="funcname">list-intersection</span>
       (<var class="arg">list1</var>, <var class="arg">list2</var>
       <a href="#optkey">&amp;optkey</a>
-      <var class="arg">test</var> <var class="optval"> = equal?</var>, <var class="arg">key</var> <var class="optval"> = #f</var>)
+      <var class="arg">test</var> <var class="optval"> = equal?</var>, <var class="arg">getter</var> <var class="optval"> = #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -765,27 +765,89 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
 
 <blockquote>
 <p>
-Returns the elements in <var>list1</var> that are also in <var>list2</var>.
+Returns the elements in <var>list1</var> that are also in <var>list2</var>. If <var>test</var> is specified it should be a function of two arguments. It is passed two elements and returns true if the values are considered the same otherwise false. If <var>getter</var> is specified it should be a function of one argument. It is passed list elements and returns the objects that the <var>test</var> function will compare.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="list-union">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">list-union</span>
+      (<var class="arg">list1</var>, <var class="arg">list2</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">test</var> <var class="optval"> = equal?</var>, <var class="arg">getter</var> <var class="optval"> = #f</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+
+<blockquote>
+<p>
+Returns elements that are in either <var>list1</var> or <var>list2</var> and with duplicate elements appearing only once. See <a href="#list-intersection">list-intersection</a> for an explanation of <var>test</var> and <var>getter</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
 
-
 <!-- DEFINITION -->
-<table class="entry" id="sort">
+<table class="entry" id="list-difference">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">sort</span>
-      (<var class="arg">list</var>  <a href="#opt">&amp;opt</a> <var class="arg">comparator</var> = <code>less?</code>)
+      <span class="funcname">list-difference</span>
+      (<var class="arg">list1</var>, <var class="arg">list2</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">test</var> <var class="optval"> = equal?</var>, <var class="arg">getter</var> <var class="optval"> = #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
   <tr><td class="retval" colspan="2">&rarr; list</td></tr>
 </table>
+
 <blockquote>
 <p>
-Returns a sorted copy of <var>list</var> given a pairwise <var>comparator</var> function that is passed two arguments and returns true if the value in its first argument should appear before the value in the second argument in the sorted results, otherwise false. The default comparator is <a href="#less_qm"><code>less?</code></a>.  
+Returns the elements that are in either but not both of <var>list1</var> and <var>list2</var>. See <a href="#list-intersection">list-intersection</a> for an explanation of <var>test</var> and <var>getter</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="remove-duplicates">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">remove-duplicates</span>
+      (<var class="arg">list1</var>
+      <a href="#optkey">&amp;optkey</a>
+      <var class="arg">test</var> <var class="optval"> = equal?</var>, <var class="arg">getter</var> <var class="optval"> = #f</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+
+<blockquote>
+<p>
+Returns the elements of <var>list1</var> with none repeated. See <a href="#list-intersection">list-intersection</a> for an explanation of <var>test</var> and <var>getter</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="qsort_">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">qsort!</span>
+      (<var class="arg">sequence</var>  <a href="#opt">&amp;opt</a> <var class="arg">comparator</var> = <code>less?</code>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; sequence</td></tr>
+</table>
+<blockquote>
+<p>
+Sorts and returns <var>sequence</var> (a list or vector) given a pairwise <var>comparator</var> function. The comparator is passed pairs of values from the list and should return true if the first value is to be placed before the second value in the sorted results, otherwise false. The default compator sorts the list in ascending order. Sorting is done "in place", that is, the sequence you pass in is destructively modified to contain the sorted results and also returned as the value of the function.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -1425,13 +1487,6 @@ Like <a href="#shuffle"><code>shuffle</code></a> except that <var>list</var> is 
 </blockquote>
 <!-- END DEFINITION -->
 
-
-
-
-
-
-
-
 <!-- DEFINITION -->
 <table class="entry" id="tendency">
   <tr class="entry">
@@ -1452,6 +1507,35 @@ Returns a random lying between the values of <var>x</var> in the <var>low</var> 
 </blockquote>
 <!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="random-series">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">random-series</span>
+      (<var class="arg">num</var>, <var class="arg">low</var>, <var class="arg">high</var>
+      <a href="#opt">&amp;optkey</a>
+      <var class="arg">series</var> <var class="optval"> = {}</var>,
+      <var class="arg">reject</var> <var class="optval"> = #f</var>,
+      <var class="arg">order</var> <var class="optval"> = #f</var>,
+      <var class="arg">chooser</var> <var class="optval"> = random</var>
+      )
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+
+Returns a list of <var>num</var> random values between <var>low</var> and <var>high</var> (exclusive).
+If <var>series</var> is specified it is the initial contents of the series to be returned by the function.
+By default values  between <var>low</var> and <var>high</var> are randomly chosen and added to the series.
+If a <var>reject</var> function is specified it is passed candidate values and the series so far and if it returns true the value will not be added to the series (else it will be added).
+If a <var>sorter</var> function is specified it is passed two values and it returns true if the first value should appear before the second in the series returned by the function.
+If a <var>chooser</var> function is specified it is used as the random number generator. It is passed the range <var>high-low</var> and should return a number between 0 and <var>range-1</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 
 <h4>Nonuniform Distributions</h4>
@@ -1942,7 +2026,7 @@ generated. The <var>repeat</var> initialization causes the
   <tr class="entry">
     <td class="formals">
       <span class="funcname">next</span>
-      (<var class="arg">pattern</var>, <a href="#opt">&amp;opt</a>  <var class="arg">chunk</var> <var class="optval">= #f</var>)
+      (<var class="arg">pattern</var> <a href="#opt">&amp;opt</a>  <var class="arg">chunk</var> <var class="optval">= #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2079,10 +2163,42 @@ Returns a spectrum generated by <a href="http://en.wikipedia.org/wiki/Ring_modul
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="import-spear-frames">
+<table class="entry" id="sdif-import">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">import-spear-frames</span>
+      <span class="funcname">sdif-import</span>
+      (<var class="arg">file</var>
+      <a href="#opt">&amp;opt</a>  <var class="arg">type</var> <var class="optval"> = #f</var>
+      )
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Imports <a href="http://sdif.sourceforge.net/">SDIF</a> <var>file</var> as a list of frame data. If <var>type</var> is not specified all frames in the file will be imported, otherwise <var>type</var> should be a valid SDIF frame type (a four character string, symbol or keyword, e.g. <span class="string">"1TCR"</span>) in which case only frames of that type will be imported.
+The data returned is a list of frames, where each frame contains an SDIF type, time and one or more matrixes:
+</p>
+<blockquote><code>(<var>type</var> <var>time</var> <var>matrix</var>...)</code></blockquote>
+<p>
+and each matrix in a frame is a list containing a matix type and one or more rows of data:
+</p>
+<blockquote><code>(<var>type</var> <var>row</var>...)</code></blockquote>
+<p>
+and each row in a matrix is a list of one or more values:
+</p>
+<blockquote><code>(val...)</code></blockquote>
+
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="sdif-import-spectra">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">sdif-import-spectra</span>
       (<var class="arg">file</var>)
     </td>
     <!-- td class="label">Function</td -->
@@ -2091,16 +2207,35 @@ Returns a spectrum generated by <a href="http://en.wikipedia.org/wiki/Ring_modul
 </table>
 <blockquote>
 <p>
-Imports <a href="http://www.klingbeil.com/spear/">SPEAR</a> frame data in <var>file</var> as a list of spectrum objects.
+Imports <a href="http://sdif.sourceforge.net/standard/sdif-standard.html">SDIF</a> "1TCR" frame data in <var>file</var> as a list of <a href="#spectrum">spectrum</a> objects.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="spear-import-spectra">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spear-import-spectra</span>
+      (<var class="arg">file</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Imports <a href="http://www.klingbeil.com/spear/">SPEAR</a> frame data in <var>file</var> as a list of <a href="#spectrum">spectrum</a> objects.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="export-spear-frames">
+<table class="entry" id="spear-export-spectra">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">export-spear-frames</span>
+      <span class="funcname">spear-export-spectra</span>
       (<var class="arg">spectra</var>, <var class="arg">file</var>)
     </td>
     <!-- td class="label">Function</td -->
@@ -2133,7 +2268,7 @@ Returns a copy of <var>spectrum</var>.
 </blockquote>
 <!-- END DEFINITION -->
 
-<h4>Accessing Spectral Information</h4>
+<h4 id="spectrum">Accessing Spectral Information</h4>
 
 <!-- DEFINITION -->
 <table class="entry" id="spectrum-size">
@@ -5505,7 +5640,7 @@ follow <var>arg</var>.
 
 <h4>e</h4>
 <p>
-<a href="#elapsed">elapsed</a>, <a href="#eod_">eod?</a>, <a href="#eop_">eop?</a>, <a href="#export-spear-frames">export-spear-frames</a>
+<a href="#elapsed">elapsed</a>, <a href="#eod_">eod?</a>, <a href="#eop_">eop?</a>
 </p>
 
 <h4>f</h4>
@@ -5525,7 +5660,7 @@ follow <var>arg</var>.
 
 <h4>i</h4>
 <p>
-<a href="#import-spear-frames">import-spear-frames</a>, <a href="#in-tempo">in-tempo</a>, <a href="#int">int</a>, <a href="#interp">interp</a>, <a href="#invert">invert</a>
+<a href="#in-tempo">in-tempo</a>, <a href="#int">int</a>, <a href="#interp">interp</a>, <a href="#invert">invert</a>
 </p>
 
 <h4>k</h4>
@@ -5535,7 +5670,7 @@ follow <var>arg</var>.
 
 <h4>l</h4>
 <p>
-<a href="#last">last</a>, <a href="#less_eqm">less=?</a>, <a href="#less_qm">less?</a>, <a href="#list-set_">list-set!</a>, <a href="#load">load</a>, <a href="#log10">log10</a>, <a href="#log2">log2</a>
+<a href="#last">last</a>, <a href="#less_eqm">less=?</a>, <a href="#less_qm">less?</a>, <a href="#list-difference">list-difference</a>, <a href="#list-intersection">list-intersection</a>, <a href="#list-set_">list-set!</a>, <a href="#list-union">list-union</a>, <a href="#load">load</a>, <a href="#log10">log10</a>, <a href="#log2">log2</a>
 </p>
 
 <h4>m</h4>
@@ -5561,16 +5696,17 @@ follow <var>arg</var>.
 <h4>q</h4>
 <p>
 <a href="#quantize">quantize</a>
+<a href="#qsort_">qsort!</a>
 </p>
 
 <h4>r</h4>
 <p>
-<a href="#ran">ran</a>, <a href="#ranbeta">ranbeta</a>, <a href="#ranbrown">ranbrown</a>, <a href="#rancauchy">rancauchy</a>, <a href="#random-seed">random-seed</a>, <a href="#ranexp">ranexp</a>, <a href="#rangamma">rangamma</a>, <a href="#rangauss">rangauss</a>, <a href="#ranhigh">ranhigh</a>, <a href="#ranlow">ranlow</a>, <a href="#ranmiddle">ranmiddle</a>, <a href="#ranpink">ranpink</a>, <a href="#ranpoisson">ranpoisson</a>, <a href="#ratio-_cents">ratio-&gt;cents</a>, <a href="#ratio-_steps">ratio-&gt;steps</a>, <a href="#rescale">rescale</a>, <a href="#rest">rest</a>, <a href="#rest_qm">rest?</a>, <a href="#retrograde">retrograde</a>, <a href="#rhythm">rhythm</a>, <a href="#rm-spectrum">rm-spectrum</a>
+<a href="#ran">ran</a>, <a href="#ranbeta">ranbeta</a>, <a href="#ranbrown">ranbrown</a>, <a href="#rancauchy">rancauchy</a>, <a href="#random-seed">random-seed</a>, <a href="#random-series">random-series</a>, <a href="#ranexp">ranexp</a>, <a href="#rangamma">rangamma</a>, <a href="#rangauss">rangauss</a>, <a href="#ranhigh">ranhigh</a>, <a href="#ranlow">ranlow</a>, <a href="#ranmiddle">ranmiddle</a>, <a href="#ranpink">ranpink</a>, <a href="#ranpoisson">ranpoisson</a>, <a href="#ratio-_cents">ratio-&gt;cents</a>, <a href="#ratio-_steps">ratio-&gt;steps</a>, <a href="#rescale">rescale</a>, <a href="#remove-duplicates">remove-duplicates</a>, <a href="#rest">rest</a>, <a href="#rest_qm">rest?</a>, <a href="#retrograde">retrograde</a>, <a href="#rhythm">rhythm</a>, <a href="#rm-spectrum">rm-spectrum</a>
 </p>
 
 <h4>s</h4>
 <p>
-<a href="#scale">scale</a>, <a href="#scale-order">scale-order</a>, <a href="#segs">segs</a>, <a href="#send">send</a>, <a href="#shell">shell</a>, <a href="#shuffle">shuffle</a>, <a href="#shuffle_">shuffle!</a>, <a href="#sort">sort</a>, <a href="#sort_">sort!</a>, <a href="#spectrum-add_">spectrum-add!</a>, <a href="#spectrum-amps">spectrum-amps</a>, <a href="#spectrum-copy">spectrum-copy</a>, <a href="#spectrum-flip_">spectrum-flip!</a>, <a href="#spectrum-freqs">spectrum-freqs</a>, <a href="#spectrum-invert_">spectrum-invert!</a>, <a href="#spectrum-keys">spectrum-keys</a>, <a href="#spectrum-maxamp">spectrum-maxamp</a>, <a href="#spectrum-maxfreq">spectrum-maxfreq</a>, <a href="#spectrum-minamp">spectrum-minamp</a>, <a href="#spectrum-minfreq">spectrum-minfreq</a>, <a href="#spectrum-pairs">spectrum-pairs</a>, <a href="#spectrum-rescale_">spectrum-rescale!</a>, <a href="#spectrum-size">spectrum-size</a>, <a href="#spectrum-time">spectrum-time</a>, <a href="#sprout">sprout</a>, <a href="#sprout-hook">sprout-hook</a>, <a href="#state">state</a>, <a href="#stop">stop</a>
+<a href="#scale">scale</a>, <a href="#scale-order">scale-order</a>, <a href="#sdif-import">sdif-import</a>, <a href="#sdif-import-spectra">sdif-import-spectra</a>, <a href="#segs">segs</a>, <a href="#send">send</a>, <a href="#shell">shell</a>, <a href="#shuffle">shuffle</a>, <a href="#shuffle_">shuffle!</a>, <a href="#spear-export-spectra">spear-export-spectra</a>, <a href="#spear-import-spectra">spear-import-spectra</a>, <a href="#spectrum-add_">spectrum-add!</a>, <a href="#spectrum-amps">spectrum-amps</a>, <a href="#spectrum-copy">spectrum-copy</a>, <a href="#spectrum-flip_">spectrum-flip!</a>, <a href="#spectrum-freqs">spectrum-freqs</a>, <a href="#spectrum-invert_">spectrum-invert!</a>, <a href="#spectrum-keys">spectrum-keys</a>, <a href="#spectrum-maxamp">spectrum-maxamp</a>, <a href="#spectrum-maxfreq">spectrum-maxfreq</a>, <a href="#spectrum-minamp">spectrum-minamp</a>, <a href="#spectrum-minfreq">spectrum-minfreq</a>, <a href="#spectrum-pairs">spectrum-pairs</a>, <a href="#spectrum-rescale_">spectrum-rescale!</a>, <a href="#spectrum-size">spectrum-size</a>, <a href="#spectrum-time">spectrum-time</a>, <a href="#sprout">sprout</a>, <a href="#sprout-hook">sprout-hook</a>, <a href="#state">state</a>, <a href="#stop">stop</a>
 </p>
 
 <h4>t</h4>
@@ -5578,10 +5714,12 @@ follow <var>arg</var>.
 <a href="#tail">tail</a>, <a href="#tendency">tendency</a>, <a href="#times">times</a>, <a href="#transpose">transpose</a>
 </p>
 
+<!--
 <h4>u</h4>
 <p>
 <a href="#unique">unique</a>
 </p>
+-->
 
 <h4>v</h4>
 <p>
