@@ -617,7 +617,7 @@
   (spear-import-spectra file)
   )
 
-(define spear-import-spectra file)
+(define (spear-import-spectra file)
   (with-input-from-file file
     (lambda ()
       (let ((port (current-input-port)))
