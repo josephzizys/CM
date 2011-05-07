@@ -305,6 +305,12 @@ for i = 1,numtargets do
 ------------------------------------------
 
    if options["sdif"] then
+      if (windows) then
+	 sdiflibname="sdif.lib";
+      else
+	 sdiflibname="libsdif.a";
+      end
+
       sdif = insure_slash(options["sdif"])
       add(mypackage.defines, "WITH_SDIF=1")
       if os.fileexists(sdif .. "include/sdif.h") then
@@ -312,10 +318,10 @@ for i = 1,numtargets do
       else
          error("--sdif: can't find sdif.h in " .. sdif .. "include/")
       end
-      if os.fileexists(sdif .. "lib/libsdif.a") then
-         add(mypackage.linkoptions, sdif .. "lib/libsdif.a")
+      if os.fileexists(sdif .. "lib/" .. sdiflibname) then
+         add(mypackage.linkoptions, sdif .. "lib/" .. sdiflibname)
       else
-         error("--sdif: can't find libsdif.a in " .. sdif .. "lib/")
+         error("--sdif: can't find " .. sdiflibname .. " in " .. sdif .. "lib/")
       end
    end
 

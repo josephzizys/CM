@@ -1951,7 +1951,7 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
 	      ev->message.isMidiChannelMetaEvent() &&
 	      (ev->message.getMetaEventLength()>0))
 	    {
-	      line << ev->message.getMetaEventData()[0];
+	      line << (int)(ev->message.getMetaEventData()[0]);
 	    }
 	  else if (ev->message.isTextMetaEvent() ||
 		   ev->message.isTrackNameEvent() )

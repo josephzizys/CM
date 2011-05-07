@@ -2615,5 +2615,6 @@ s7_pointer sdif_import(char* path,  s7_pointer sig)
 s7_pointer sdif_import(char* file,  s7_pointer args)
 {
   SchemeThread::getInstance()->signalSchemeError(T("SDIF not available in this version of Grace."));
+  return SchemeThread::getInstance()->schemeNil;
 }
 #endif

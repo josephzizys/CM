@@ -262,7 +262,7 @@ void Console::handleAsyncUpdate()
       display(msg->text, getConsoleColor(ConsoleTheme::outputColor));
       break;
     case CommandIDs::ConsoleIsEvaling :
-      setEvaling(dat);
+      setEvaling(dat != 0);
       break;
     case CommandIDs::ConsolePrintValues :
       display(msg->text, getConsoleColor(ConsoleTheme::valuesColor));
