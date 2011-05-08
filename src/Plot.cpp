@@ -192,8 +192,8 @@ void AxisView::paint (Graphics& g)
   #define majortick 12
   #define minortick 6
   g.fillAll (Colours::white); 
-  // lightly shade lower half to match pretty scrollbars
-  //  g.setColour(Colour(0xf7, 0xf7, 0xf7));
+  //  g.fillAll(Colours::lightyellow); // **showregion
+
   if (!hasAxis() ) return;
   int w=getWidth();
   int h=getHeight();
@@ -353,6 +353,7 @@ void AxisView::mouseDown(const MouseEvent &e)
 void AxisView::mouseDrag(const MouseEvent &e)
 {
   double a,b;
+  viewport->plotter->setScrolling(true); // drag cancels fit in windows
   if (isHorizontal())
     {
       a=e.getDistanceFromDragStartX();
@@ -841,7 +842,8 @@ void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview,
 
 void PlotView::paint (Graphics& g) 
 {
-  // erase with white
+  //g.fillAll(Colours::lightseagreen);  // **showregion
+
   drawLayer(g, focuslayer,
 	    plotter->getHorizontalAxisView(),
 	    plotter->getVerticalAxisView(),
@@ -1704,6 +1706,11 @@ void Plotter::deleteSelection(bool cut)
   getPlotView()->deleteSelection(cut);
 }
 
+void Plotter::paint(Graphics& g) 
+{
+  //  g.fillAll(Colours::lightcoral);  // **showregion
+}
+
 void Plotter::resized () 
 {
   viewport->setBounds(70, 50, getWidth()-80, getHeight()-60);
@@ -1713,10 +1720,11 @@ void Plotter::resized ()
 
   if (!isScrolling()) // fit in window
   {
-    vaxview->setBounds(2, 50, 64, viewport->getViewHeight());
-    haxview->setBounds(70, 20, viewport->getWidth(), 26); 
-    haxview->setSpreadToFit(viewport->getWidth());
+    // set axis views to full extent of viewport so that there are no scrollers
+    haxview->setBounds(70, 20, viewport->getWidth(), 26);
     vaxview->setBounds(2, 50, 64, viewport->getHeight());
+    // calculate spead factors for axis to use all the available space
+    haxview->setSpreadToFit(viewport->getWidth());
     vaxview->setSpreadToFit(viewport->getHeight());
     resizeForSpread();
   }
@@ -2119,6 +2127,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
     menu.addItem(CommandIDs::PlotterZoomOutX, T("Zoom Out X"));
     menu.addItem(CommandIDs::PlotterZoomInY, T("Zoom In Y"));
     menu.addItem(CommandIDs::PlotterZoomOutY, T("Zoom Out Y"));
+    menu.addSeparator();
     menu.addItem(CommandIDs::PlotterZoomToFit, T("Fit in Window"), true, !plotter->isScrolling() );
     menu.addItem(CommandIDs::PlotterZoomReset, T("Reset Zoom"));
   }

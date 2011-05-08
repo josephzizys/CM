@@ -707,8 +707,8 @@ class Plotter  : public Component, public ScrollBarListener
     Component* window=getTopLevelComponent(); // plotter window
     return (window) ? window->getName() : String::empty;
   } 
+  void paint(Graphics& g); 
 
-  //  void handleMessage (const Message &message);
 };
 
 ///
