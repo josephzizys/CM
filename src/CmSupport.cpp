@@ -28,7 +28,7 @@
 #endif
 
 #ifdef GRACE
-#include "Plot.h"
+#include "Plotter.h"
 #include "Cells.h"
 #endif
 
@@ -1918,14 +1918,14 @@ void plot_xml(char* text)
   // is still valid.
   MessageManager::getInstance()->
     callFunctionOnMessageThread((MessageCallbackFunction*)
-				&PlotterWindow::openWindowFromXml,
+				&PlotWindow::openWindowFromXml,
 				(void*)text);
 } 
 
 void plot_add_xml_points(char* title, char* points)
 {
   String wtitle (title);
-  PlotterWindow* w=PlotterWindow::getPlotWindow(wtitle);
+  PlotWindow* w=PlotWindow::getPlotWindow(wtitle);
   if (w)
     {
       // copy string to avoid Lisp gc'ing before message is processed
@@ -1944,7 +1944,7 @@ char* plot_data(char* title, int all)
 {
   String text=String::empty;
   String wtitle (title);
-  PlotterWindow* w=PlotterWindow::getPlotWindow(wtitle);
+  PlotWindow* w=PlotWindow::getPlotWindow(wtitle);
   if (w!=NULL)
     {
       int nlayer=w->plotter->numLayers();

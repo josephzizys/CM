@@ -14,7 +14,7 @@
 #include "Commands.h"
 #include "Audio.h"
 #include "Images.h"
-#include "Plot.h"
+#include "Plotter.h"
 //#include "TextEditor.h"
 #include "CodeEditor.h"
 #include "Alerts.h"
@@ -531,9 +531,9 @@ void Console::filesDropped(const StringArray &files, int x, int y)
     if (!isSupportedFileType(file)) continue; 
     String type=file.getFileExtension();
     if (type==T(".xml"))
-      PlotterWindow::openXmlFile(file);
+      PlotWindow::openXmlFile(file);
     else if (type==T(".mid"))
-      PlotterWindow::openMidiFile(file);
+      PlotWindow::openMidiFile(file);
     else
     {
       CodeEditorWindow* e=0;

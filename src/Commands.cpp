@@ -16,7 +16,7 @@
 #include "Preferences.h"
 #include "Audio.h"
 #include "Csound.h"
-#include "Plot.h"
+#include "Plotter.h"
 #include "CodeEditor.h"
 
 #include "Cells.h"
@@ -27,7 +27,7 @@
 
 #ifdef WITHFOMUS
 #include "Fomus.h"
-#include "Plot.h"
+//#include "Plot.h"
 #endif
 
 #ifdef LIBLO
@@ -1043,7 +1043,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       {
 	TopLevelWindow* w=TopLevelWindow::getActiveTopLevelWindow();
 	if (WindowTypes::isWindowType(w,WindowTypes::PlotWindow))
-	  ((PlotterWindow*)w)->openPlayPlotDialog();
+	  ((PlotWindow*)w)->openPlayPlotDialog();
       }
       break;
 
@@ -1211,11 +1211,11 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       //
 
     case CommandIDs::PlotterNew:
-      new PlotterWindow(NULL);
+      new PlotWindow(NULL);
       break;
     case CommandIDs::PlotterOpen:
     case CommandIDs::PlotterOpenMidiFile:
-      PlotterWindow::browseForFileToOpen(comm);
+      PlotWindow::browseForFileToOpen(comm);
       break;
 
       //

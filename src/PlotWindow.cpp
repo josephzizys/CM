@@ -1,1750 +1,273 @@
 /*=======================================================================*
-  Copyright (c) 2008 Rick Taube.                                        
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the Lisp Lesser Gnu Public License. The text
-  of this agreement is available at http://www.cliki.net/LLGPL
+  Copyright (c) 2011 Rick Taube.                                        
+  This program is free software; you can redistribute it and/or modify  
+  it under the terms of the Lisp Lesser Gnu Public License. The text of 
+  this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
 #include "Enumerations.h"
 #include "Menus.h"
 #include "Console.h"
 #include "CodeEditor.h"
-#include "Plot.h"
+#include "Plotter.h"
+#include "PlotTabs.h"
 #include "Midi.h"
 #include "Scheme.h"
 #include <limits>
 #include "CmSupport.h"
 #include "Alerts.h"
-//#include <cmath>
 #include <iostream>
 
 /*=======================================================================*
-                                    Axis
+           PlotWindowComponent: window's content component that
+           contains the plotter and the tabview
  *=======================================================================*/
 
-Axis::Axis (AxisType t) 
+class PlotWindowComponent : public Component
 {
-  type=t;
-  init(t);
-}
-
-Axis::Axis (AxisType t, double f, double e) 
-{
-  type=t;
-  init(t);
-  from=f;
-  to=e;
-}
-
-Axis::Axis (XmlElement* ax) 
-  : name (String::empty),
-    decimals (2),
-    type (unspecified),
-    from (0),
-    to (1.0),
-    by (.25),
-    ticks (5)
-{
-  StringArray range;
-  String str=(ax) ? ax->getStringAttribute(T("axis")) : String::empty;
-  range.addTokens(str,false);
-  if (range.size()>0)
-    {
-      int arg=1;
-      if (range[0]==T("percent") || range[0]==T("percentage") || range[0]==T("pct"))
-        init(percentage);
-      else if (range[0]==T("keynum") || range[0]==T("notes"))
-        init(keynum);
-      else if (range[0]==T("seconds"))
-        init(seconds);
-      else if (range[0]==T("hertz")) 
-        init(hertz);
-      else if (range[0]==T("unitcircle") || range[0]==T("circle"))
-        init(circle);
-      else if (range[0]==T("ordinal"))
-        init(ordinal);
-      else if (range[0]==T("unit") || range[0]==T("normalized") || 
-               range[0]==T("normal"))
-        init(normalized);
-      else if (range[0]==T("midi"))
-        init(midi);
-      else if (('0' <= str[0]) && ( str[0] <= '9')) // is number
-        arg--;
-      // parse out optional <from> <to> <by> <ticks> these can
-      // appear with or without axis type specifier
-      int num=range.size()-arg;
-      if (num>=2)
-        {
-          double f, t, b, k;
-          if (num==2)
-            {
-              f=range[arg].getFloatValue();
-              t=range[arg+1].getFloatValue();
-              if (type==unspecified)
-                {
-                  b=t-f;
-                  k=5;
-                }
-            }
-          else if (num==3)
-            {
-              f=range[arg].getFloatValue();
-              t=range[arg+1].getFloatValue();
-              b=range[arg+2].getFloatValue();
-              if (type==unspecified)
-                {
-                  k=5;
-                }
-            }
-          else if (num==4)
-            {
-              f=range[arg].getFloatValue();
-              t=range[arg+1].getFloatValue();
-              b=range[arg+2].getFloatValue();
-              k=range[arg+3].getIntValue();
-            }
-          
-          if ((f<t) && (b>0) && (k>-1))
-            {
-              from=f; to=t; by=b; ticks=(int)k;
-              if (type==unspecified)
-                type=generic;
-            }
-        }
-    }
-}
-
-void Axis::init (AxisType typ) 
-{
-  // init axis data according to common "templates"
-  name=String::empty;
-  decimals=2;
-  type=typ;
-  switch (typ)
-    {
-    case percentage :
-      from=0.0; to=100.0; by=25.0; ticks=5; decimals=0;
-      break;
-    case keynum :
-      from=0.0; to=127; by=12.0; ticks=12; decimals=0;
-      break;
-    case seconds :
-      from=0.0; to=60.0; by=1.0; ticks=4;
-      break;
-    case hertz :  // log freq
-      from=8.175798; to=16744.035; by=2.0; ticks=6; 
-      break;
-    case circle :
-      from=-1.0; to=1.0; by=.25; ticks=4;
-      break;
-    case ordinal :
-      from=0; to=1; by=1; ticks=1; decimals=0;
-      break;
-    case normalized :
-      from=0.0; to=1.0; by=0.25; ticks=5;
-      break;
-    case midi :
-      from=0.0; to=127.0; by=16; ticks=2; decimals=0;
-      break;
-    default :
-      break;
-    }
-}
-
-/*=======================================================================*
-                          Plot Viewport (scrolling)
- *=======================================================================*/
-
-class PlotViewport : public Viewport 
-{
- public:
-  Plotter * plotter;
-  PlotViewport (Plotter * p) {
-    // register plotter to receive callbacks from the viewport's
-    // scollers so plotter can scroll axis views whenever the plot is
-    // scrolled
-    plotter=p;
-    getHorizontalScrollBar()->setName(T("xscroll"));
-    getHorizontalScrollBar()->addListener(p);
-    getVerticalScrollBar()->setName(T("yscroll"));
-    getVerticalScrollBar()->addListener(p);
-  }
-  ~PlotViewport () {}
-};
-
-/*=======================================================================*
-                             AxisView methods
- *=======================================================================*/
-
-bool AxisView::isVertical()
-{
-  return (orient==Plotter::vertical);
-}
-
-bool AxisView::isHorizontal() 
-{
-  return (orient==Plotter::horizontal);
-}
-
-void AxisView::paint (Graphics& g) 
-{
-  #define graywidth 13
-  #define majortick 12
-  #define minortick 6
-  g.fillAll (Colours::white); 
-  //  g.fillAll(Colours::lightyellow); // **showregion
-
-  if (!hasAxis() ) return;
-  int w=getWidth();
-  int h=getHeight();
-
-  g.setColour(Colours::lightgrey);   
-  if ( isVertical() )
-    g.fillRect(w-graywidth, 0, graywidth, h);
-  else  
-    g.fillRect(0, graywidth, w, graywidth);
-
-  g.setColour(Colours::black);  
-  // not sure if juce would call this method before SetAxis happens
-  // but no reason not to be safe!
-  
-  if ( viewport==(PlotViewport *)NULL ) 
-    return;
-  
-  // drawing axis ticks: first determine the visible portion of the
-  // plot display since this will determine what portion of the axis
-  // gets drawn.  then we find the FIRST label position at or above
-  // that pixl position and draw all the labels and ticks until the
-  // end of the axis view. then we go back to the the first label and
-  // REVERSE direction to fill in any ticks that are visible before
-  // the first label.
-
-  double isiz=incrementSize();
-  double tsiz=tickSize();
-  Colour col1=Colours::darkgrey;
-  Colour col2=Colours::lightgrey;
-  Colour tcol=Colours::black;  // text color
-  col2=col1;
-  Font font=viewport->plotter->font;
-  String labl;
-  double lhei=font.getHeight(), lwid, just;
-  double pval=getOrigin(); 
-  double aval=axis->getMinimum();   
-  double save;
-  double by=axis->getIncrement();
-  
-  if (viewport->plotter->numLayers()>1 &&
-      viewport->plotter->isBackViewPlotting())
-    tcol=viewport->plotter->getFocusLayer()->getLayerColor();
-
-  g.setFont(font);
-  
-  if ( isHorizontal() ) 
-    {
-      int left=viewport->getViewPositionX();  // plot's visible left
-      int width=viewport->getViewWidth();
-      int height=getHeight();   // height of axis view
-      
-      //g.drawHorizontalLine(height-1,0, getWidth());
-      g.drawLine(0.0, (float)(height-1), (float)getWidth(), (float)(height-1), 2.0);
-      
-      // determine first visible label that is >= plot's visible left
-      while ( pval<left ) 
-	{
-	  pval+=isiz;
-	  aval+=by;
-	}
-      // subtract out visible left position to make it position of the
-      // first major tick+label in the axis view
-      save=pval-left;  // save=first label tick
-      pval=save;
-      // draw labels and ticks till end of view. label drawing is
-      // justified so that the text stays witin bounds. at start display
-      // labels are Right, in the middle they are centered and at the
-      // end they are left justified.
-      while ( pval<=width )
-	{
-	  g.setColour(col1);
-	  g.drawVerticalLine((int)pval, (float)(height-majortick), (float)height);
-	  labl=String(aval,axis->getDecimals());
-	  lwid=font.getStringWidthFloat(labl);
-	  just=(int)(-lwid*(pval/width));  // twiddle label justification
-	  g.setColour(tcol);
-	  g.drawText(labl,(int)(pval+just),0,(int)lwid,(int)lhei, 
-		     Justification::topLeft, false);
-	  // draw minor ticks above each major tick
-	  g.setColour(col2);
-	  for (int i=1;i<numTicks();i++)
-	    g.drawVerticalLine((int)(pval+(tsiz*i)), (float)(height-minortick),
-			       (float)height);
-	  pval+=isiz;
-	  aval+=by;
-	}
-      // now draw any ticks left of first increment
-      pval=save-tsiz;
-      g.setColour(col2);
-      while (pval > 0)
-	{
-	  g.drawVerticalLine((int)pval, (float)(height-minortick), (float)height);
-	  pval-=tsiz;
-	}
-    }
-  else
-    {
-      int height=viewport->getViewHeight();
-      int top=viewport->getViewPositionY();
-      int bottom=height+top;
-      int width=getWidth();   // width of axis view
-//      float tx,ty;
-      
-      //g.drawVerticalLine(width-1, 0, getHeight());
-      g.drawLine((float)(width-1), 0.0, (float)(width-1), (float)getHeight(), 2.0);
-
-      while (pval>bottom)
-	{
-	  pval-=isiz;
-	  aval+=by;
-	}
-
-      save=pval-top;
-      pval=save;
-      while (pval>=0) 
-	{
-	  g.setColour(col1);
-	  g.drawHorizontalLine((int)pval, (float)(width-majortick), (float)width);
-	  labl=String(aval, axis->getDecimals());
-	  lwid=font.getStringWidthFloat(labl);
-	  
-	  // METHOD1: justify vertically, but now the view has to be wider.
-	  just=(int)(lhei*(pval/height));  // twiddle label justification
-	  g.setColour(tcol);
-	  g.drawText(labl,
-		     (int)(width-graywidth-4-lwid),
-		     (int)(pval-just),
-		     (int)lwid,
-		     (int)lhei,
-		     Justification::topLeft,
-		     false);	  
-	  g.setColour(col2);
-	  for (int i=1;i<numTicks();i++)
-	    g.drawHorizontalLine((int)(pval-(tsiz*i)), (float)(width-minortick),
-				 (float)width);
-	  pval-=isiz;
-	  aval+=by;
-	}
-      // now draw any ticks below first increment
-      pval=save+tsiz;
-      g.setColour(col2);
-      while (pval < height) 
-	{
-	  g.drawHorizontalLine((int)pval, (float)(width-minortick), (float)width);
-	  pval+=tsiz;
-	}
-    }
-  g.setColour(Colours::black);
-}
-
-void AxisView::mouseDown(const MouseEvent &e) 
-{
-  viewport->plotter->setBackViewCaching(false);
-  _sweep=_spread;
-}
-
-void AxisView::mouseDrag(const MouseEvent &e)
-{
-  double a,b;
-  viewport->plotter->setScrolling(true); // drag cancels fit in windows
-  if (isHorizontal())
-    {
-      a=e.getDistanceFromDragStartX();
-      b=getWidth();
-      setSpread(jlimit(.25, 4.0, _sweep+((a/b)*1)));
-      viewport->plotter->resizeForSpread();
-      // now have to update the size of the Axis' view -- this is NOT
-      // the size of the axis!
-      setSize(viewport->getViewWidth(), getHeight());
-      // if spread has gotten larger then the size of the axis view
-      // doenst actually change, in which case we have to force a
-      // repaint to see the axis content drawn at the new spread.
-      if (b==getWidth())
-	repaint();
-    }
-  else
-    {
-      a=e.getDistanceFromDragStartY();
-      b=getHeight();
-      setSpread(jlimit(.25, 4.0, _sweep+((a/b)*1)));
-      viewport->plotter->resizeForSpread();
-      setSize(getWidth(), viewport->getViewHeight()) ;
-      if (b==getHeight())
-	repaint();
-    }
-  //std::cout << "mousedrag=" << c << "\n";
-  viewport->plotter->setScrolling(true);
-
-}
-
-void AxisView::mouseUp(const MouseEvent &e)
-{
-  //std::cout << "mouseup\n";
-  viewport->plotter->setBackViewCaching(true);
-}
-
-void AxisView::mouseDoubleClick(const MouseEvent &e)
-{
-  PlotterWindow* w=(PlotterWindow*)getTopLevelComponent();
-  w->openAxisDialog(getOrientation());
-}
-
-/*=======================================================================*
-                    Region and selection, sweeping and editing
- *=======================================================================*/
-
-class Region : public Component {
+  PlotWindow* plotwin;
 public:
-  enum {selection = 1, horizontal, vertical};
-  int type;
-  Colour fillcolor, linecolor;
-  int linewidth;
-  AxisView * xa;
-  AxisView * ya;
-  Region ()
-    : fillcolor(Colour(0x66dddddd )),
-      linecolor(Colour(0x99111111)),
-      linewidth(1),
-      type(1)
-     {
-     }
-  ~Region() { }
-  bool isActive() { return isVisible(); }
-  void setType(int t) {type=t;}
-
-  void beginSweep (const MouseEvent& e, AxisView * x, AxisView * y) {
-    xa=x;
-    ya=y;
-    setSize(0,0);
+  static const int plotviewwidth=500;
+  static const int tabviewheight=150;
+  PlotWindowComponent (PlotWindow* win) : plotwin (win) {}
+  ~PlotWindowComponent () {deleteAllChildren();}
+  void resized ()
+  {
+    int w=getWidth();
+    int h=getHeight();
+    std::cout << "PlotWindowComponent: w=" << w << ", h=" << h << "\n";
+    plotwin->plotter->setBounds(0,0,w,h-tabviewheight);
+    plotwin->tabview->setBounds(0,h-tabviewheight,w,tabviewheight);
   }
-  void sweep (const MouseEvent& e) {
-    const int x1 = e.getMouseDownX();
-    const int y1 = e.getMouseDownY();
-    setBounds(jmin(x1, e.x), jmin(y1, e.y), abs(e.x - x1), abs (e.y - y1));
-    setVisible(true);
-  }
-  void endSweep (const MouseEvent& e) {
-    //printf("region: x1=%f x2=%f, y1=%f, y2=%f\n", minX(),  maxX(), minY(),  maxY());
-    setSize(0,0);
-    setVisible(false);
-  }
-  // NB: these cant be called after region has been closed!
-  double minX() {return xa->toValue(getX());}
-  double maxX() {return xa->toValue(getRight());}
-  double minY() {return ya->toValue(getBottom());}
-  double maxY() {return ya->toValue(getY());}
-
-  void paint (Graphics& g) {
-    g.fillAll(fillcolor);
-    g.setColour (linecolor);
-    g.drawRect (0, 0, getWidth(), getHeight(), linewidth);
-    //printf("region: x=%d y=%d, w=%d, h=%d\n", getX(), getY(), getWidth(), getHeight());
-   }
 };
 
 /*=======================================================================*
-             BackView: view to hold grid and background plots.
- *=======================================================================*/
-
-void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, 
-	       AxisView* vaxview, double ppp, double spread, bool isFoc, 
-	       SelectedItemSet<LayerPoint*> * sel);
-
-void drawGrid(Graphics& g, AxisView * haxview, AxisView * vaxview, 
-	      Colour c1, Colour c2) ;
-
-class BackView : public Component 
-{
-public:
-  Plotter * plotter;
-  Colour bgcolors[6];
-  Plotter::BGStyle bgstyle;
-  bool bgplots;
-  BackView (Plotter * p) :
-    bgstyle(Plotter::bgGrid),
-    bgplots (true) 
-  {
-    plotter=p;
-    bgcolors[0]=Colours::white;
-    bgcolors[1]=Colours::lightyellow;
-    bgcolors[2]=Colours::darkgrey;
-    bgcolors[3]=Colours::lightgrey;
-    bgcolors[4]=Colours::lavender;
-    bgcolors[5]=Colour(0xf7, 0xf7, 0xf7);
-    setBufferedToImage(true);
-    //setInterceptsMouseClicks(false,false);
-  }
-
-  Plotter::BGStyle getBackViewStyle() {return bgstyle;}
-  void setBackViewStyle( Plotter::BGStyle b) {bgstyle=b;}
-  bool isBackViewPlotting() {return bgplots;}
-  void setBackViewPlotting( bool b) {bgplots=b;}
-  void setBackViewCaching(bool b) {setBufferedToImage(b);}
-  void paint (Graphics& g) {
-    g.fillAll(bgcolors[0]);
-    AxisView * haxview = plotter->getHorizontalAxisView();
-    AxisView * vaxview = plotter->getVerticalAxisView();
-    Layer * layer;
-    
-    if (!vaxview->hasAxis() || !haxview->hasAxis()) return;
-
-    // draw background grid
-    if (bgstyle==Plotter::bgGrid)
-      drawGrid(g, haxview, vaxview, bgcolors[2], bgcolors[3]);
-    else if (bgstyle==Plotter::bgTiled)
-    {
-      Rectangle<int> r ((int)haxview->getOrigin(),
-			 (int)(vaxview->getOrigin()-vaxview->extent()),
-			 (int)haxview->extent(), 
-			 (int)vaxview->extent()
-			);
-      g.fillCheckerBoard(r, /*(int)haxview->getOrigin(),
-			 (int)(vaxview->getOrigin()-vaxview->extent()),
-			 (int)haxview->extent(), 
-			 (int)vaxview->extent(), */
-			 (int)haxview->tickSize(), 
-			 (int)vaxview->tickSize(),
-			 bgcolors[4],bgcolors[5]);
-    }
-    else g.fillAll(bgcolors[1]);
-
-    // draw non-focus plots
-    if ( isBackViewPlotting() ) {
-      double psize=plotter->getPointSize();
-    for (int i=0; i < plotter->numLayers(); i++) {
-      layer = plotter->getLayer(i);
-      if (! plotter->isFocusLayer(layer) ) 
-	drawLayer(g, layer, haxview, vaxview, psize, 1.0, false, 
-		  (SelectedItemSet<LayerPoint*> *)NULL);
-      }
-    }
-  }
-
-  ~BackView () {};
-};
-
-/*=======================================================================*
-              PlotView: the focus layer's drawing canvas
- *=======================================================================*/
-
-class PlotView : public Component 
-{
-public:
-  Plotter * plotter;
-  BackView * backview;
-  double pad; // pix per inc, pix per point, margin pad
-  Point<float> mousedown, mousemove;
-  SelectedItemSet<LayerPoint*> selection;
-  Region region;
-  Layer * focuslayer; // cached focus layer for fast acesss
-  
-  PlotView (Plotter * p) : pad (8.0) 
-  {
-    plotter=p;
-  }
-  
-  ~PlotView () { }
-  
-  void paint (Graphics& g);
-  void repaintFocusPlot() {repaint();}
-  void resized() {plotter->backview->setSize(getWidth(),getHeight());}
-  void mouseDown(const MouseEvent &e) ;
-  void mouseDrag(const MouseEvent &e) ;
-  void mouseUp(const MouseEvent &e) ;
-  void mouseDoubleClick(const MouseEvent &e) ;
-
-  bool keyPressed (const KeyPress& key) ;
-
-  void resizeForDrawing();
-  /*
-  int visiblePixelLeft () { return plotter->viewport->getViewPositionX();}
-  int visiblePixelTop () { return plotter->viewport->getViewPositionY();}
-  int visiblePixelRight () { 
-    return (plotter->viewport->getViewPositionX() +
-	    plotter->viewport->getViewWidth());
-  }
-  int visiblePixelBottom () { 
-    return (plotter->viewport->getViewPositionY() +
-	    plotter->viewport->getViewHeight());
-  }
-  double visibleValueLeft(){return haxview->toValue(visiblePixelLeft());}
-  double visibleValueRight(){return haxview->toValue(visiblePixelRight());}
-  double visibleValueTop(){return vaxview->toValue(visiblePixelTop()); }
-  double visibleValueBottom(){return vaxview->toValue(visiblePixelBottom());}
-  */
-
-  bool isSelection() {return (selection.getNumSelected() > 0);}
-  int numSelected() {return selection.getNumSelected();}
-
-  bool isSelected(LayerPoint* p) {return selection.isSelected(p);}
-  bool isSelected(int h) {return isSelected(focuslayer->getPoint(h));}
-
-  void selectAll (bool redraw=true)
-  {
-    int i;
-    selection.deselectAll();
-    for (i=0; i<focuslayer->numPoints(); i++)
-      selection.addToSelection(focuslayer->getPoint(i));
-    if (redraw) repaintFocusPlot();
-  }
-
-  void deselectAll(bool redraw=true)
-  {
-    if (isSelection()) 
-      {
-	selection.deselectAll();
-	if (redraw) repaintFocusPlot();
-      }
-  }
-
-  void removeSelection(LayerPoint* p) {selection.deselect(p);}
-  void removeSelection(int h) {removeSelection(focuslayer->getPoint(h));}
-
-  void setSelection(LayerPoint* p) ;
-  void setSelection(int h) {setSelection(focuslayer->getPoint(h));}
-
-  void addSelection(LayerPoint* p) {
-    selection.addToSelection(p);
-  }
-  void addSelection(int h) {addSelection(focuslayer->getPoint(h));}
-
-  void deleteSelection (bool cut=false) 
-  {
-    for (int i=0; i<numSelected(); i++)
-      focuslayer->deletePoint( getSelected(i));
-    repaint();
-  }
-
-  LayerPoint* getSelected(int i) {return selection.getSelectedItem(i);}
-  int getSelectedIndex(int i) {
-    return focuslayer->getPointIndex(selection.getSelectedItem(i));
-  }
-
-  void dragSelection(double x, double y);
-  void shiftSelection(int orient, double delta);
-  void rescaleSelection (int orient, double newlow, double newhigh);
-
-  void getSelectionRange(int orient, double& low, double& high);
-  double getSelectionMin(Plotter::Orientation orient);
-
-  bool isInside(double x, double y, double left, double top,
-		double right, double bottom);
-
-  // this shuold be a layer method...
-  void selectPointsInside(double left, double top, double right, double bottom) ;
-
-  void printSelection() {
-    printf("#<Selection:");
-    for (int i=0;i<numSelected(); i++)
-      printf(" %d", getSelectedIndex(i));
-    printf(">\n");
-  }
-};
-
-void PlotView::setSelection(LayerPoint* p) {
-  selection.selectOnly(p);
-}
-
-double PlotView::getSelectionMin(Plotter::Orientation orient)
-{
-  std::numeric_limits<double> info;
-  double (Layer::*getter) (LayerPoint* p) ;
-  double lim=info.max();
-  info; // keep ms compiler from complaining
-
-  if (orient == Plotter::horizontal)
-    getter = &Layer::getPointX;
-  else 
-    getter = &Layer::getPointY;
-
-  for (int i = 0; i< numSelected(); i++) {
-    lim=jmin( lim, (focuslayer->*getter) (  getSelected(i) ) );
-  }
-  return lim;
-}
-
-void PlotView::getSelectionRange(int orient, double& low, double& high)
-{
-  std::numeric_limits<double> info;  
-  low=info.max();
-  high=info.min();
-  double x;
-  info; // keep ms compiler from complaining
-
-  if (orient==Plotter::horizontal)
-    for (int i=0; i<numSelected(); i++) 
-      {
-	x=focuslayer->getPointX(getSelected(i)) ;
-	low=jmin(low, x);
-	high=jmax(high, x);
-      }
-  else  
-    for (int i=0; i<numSelected(); i++) 
-      {
-	x=focuslayer->getPointY(getSelected(i)) ;
-	low=jmin(low, x);
-	high=jmax(high, x);
-      }
-}
-   
-void PlotView::dragSelection(double dx, double dy) 
-{
-  int n=numSelected();
-  for (int i=0; i<n; i++)
-    focuslayer->incPoint( getSelected(i), dx, dy);
-}
-
-void PlotView::shiftSelection(int orient, double delta) 
-{
-  if (delta==0.0) return;
-  int n=numSelected();
-  LayerPoint* p;
-  if (orient==Plotter::vertical)
-    for (int i=0; i<n; i++)
-      {
-	p=getSelected(i);
-	focuslayer->incPointY(p, delta);
-      }
-  else
-    {
-      for (int i=0; i<n; i++)
-      {
-	p=getSelected(i);
-	focuslayer->incPointX(p, delta);
-      }
-      focuslayer->sortPoints();
-    }
-  repaintFocusPlot();
-}
-
-void PlotView::rescaleSelection (int orient, double newmin, double newmax)
-{
-  LayerPoint* p;
-  double oldmin, oldmax;
-  double v;
-  getSelectionRange(orient, oldmin, oldmax);
-  if ((oldmin==newmin) && (oldmax==newmax))
-    return;
-  if (orient==Plotter::vertical)
-    for (int i=0; i<numSelected(); i++)
-      {
-	p=getSelected(i);
-	v=cm_rescale(focuslayer->getPointY(p), oldmin, oldmax,
-		     newmin, newmax, 1);
-	focuslayer->setPointY(p,(double)v);
-      }
-    else 
-    {
-      for (int i=0; i<numSelected(); i++)
-	{
-	  p=getSelected(i);
-	  v=cm_rescale(focuslayer->getPointX(p), oldmin, oldmax,
-		       newmin, newmax, 1);
-	  focuslayer->setPointX(p,(double)v);
-	}
-      focuslayer->sortPoints();
-    }      
-  repaintFocusPlot();
-}
-
-// drawing and mouse
-
-void PlotView::resizeForDrawing() {
-  // called when spread value changes to reset total size of plotting view
-  double xsiz, ysiz, xtot, ytot;
-  AxisView * haxview=plotter->getHorizontalAxisView();
-  AxisView * vaxview=plotter->getVerticalAxisView();
-  // xpad and ypad are margins around the plotting area so points at
-  // the edge aren't clipped
-  xsiz=haxview->extent();
-  ysiz=vaxview->extent();
-  xtot=pad+xsiz+pad;
-  ytot=pad+ysiz+pad;
-  haxview->setOrigin(pad);
-  vaxview->setOrigin(ytot-pad);
-  setSize( (int)xtot, (int)ytot );
-}
-
-void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview, 
-	       double ppp, double zoom, bool isFoc, 
-	       SelectedItemSet<LayerPoint*> * sel) 
-{
-  double half=(ppp/2);
-  double ax, ay, px, py, lx, ly, ox, oy;
-  Colour color, selcolor= Colours::grey;
-  int ndraw;
-  bool fillp=true;
-  //printf("visible left=%f, right=%f\n", visibleValueLeft(), visibleValueRight());
-  color=layer->color;
-  ndraw=layer->numPoints();
-
-  // need pixel origins for vert/horiz lines/bars
-  if (vaxview->axisMinimum() < 0.0 && vaxview->axisMaximum() >= 0.0)
-    oy=vaxview->toPixel(0.0);
-  else oy=vaxview->toPixel(vaxview->axisMinimum());
-
-  if (haxview->axisMinimum() < 0.0 && haxview->axisMaximum() >= 0.0)
-    ox=haxview->toPixel(0.0);
-  else ox=haxview->toPixel(haxview->axisMinimum());
-
-  g.setColour(color);
-  for (int i=0; i<ndraw; i++) {
-    LayerPoint* p = layer->getPoint(i);
-    ax=layer->getPointX(p);
-    ay=layer->getPointY(p);  
-    px=haxview->toPixel(ax);   // pixel coords
-    py=vaxview->toPixel(ay);
-
-    if ( layer->isDrawStyle(Layer::line)  ) {
-      if (layer->isDrawStyle(Layer::vertical))
-	g.drawLine( (float)px, (float)oy, (float)px, (float)py); // vertical line from orign
-      else if (layer->isDrawStyle(Layer::horizontal) )
-	g.drawLine( (float)ox, (float)py, (float)px, (float)py); // horizontal line from origin
-      else if (i>0)  // normal line between points
-	g.drawLine( (float)lx, (float)ly, (float)px, (float)py);
-      }
-
-    if (layer->isDrawStyle(Layer::point)) {
-      // if we are moving selection then draw selected point gray
-      if ( isFoc && sel->isSelected(p) ) {
-	g.setColour(selcolor);
-	g.fillEllipse((float)(px-half), (float)(py-half), (float)ppp, (float)ppp);
-	g.setColour(color);
-      }
-      else
-	g.fillEllipse((float)(px-half), (float)(py-half), (float)ppp, (float)ppp);
-    } 
-    else if (layer->isDrawStyle(Layer::hbox)) {
-      // to get pixel width of Z, get absolute axis position of Z,
-      // convert to pixel and then subtract out px
-      double az=ax + layer->getPointZ(p);
-      double pz = (int)haxview->toPixel(az);
-      // draw selected boxes gray if moving
-      if ( isFoc && sel->isSelected(p) ) {
-	g.setColour(selcolor);
-	g.fillRect((int)px, (int)(py-half), (int)(pz-px), (int)ppp);
-	g.setColour(color);
-      }
-      else
-	g.fillRect((int)px, (int)(py-half), (int)(pz-px), (int)ppp);
-    }
-    lx=px;
-    ly=py;
-  }
-}
-
-void PlotView::paint (Graphics& g) 
-{
-  //g.fillAll(Colours::lightseagreen);  // **showregion
-
-  drawLayer(g, focuslayer,
-	    plotter->getHorizontalAxisView(),
-	    plotter->getVerticalAxisView(),
-	    plotter->getPointSize(),
-	    1.0,
-	    true,
-	    &selection);
-}
-
-void drawGrid(Graphics& g, AxisView* haxview, AxisView* vaxview, 
-	      Colour c1, Colour c2) 
-{
-  double left=haxview->getOrigin();
-  double right=left+haxview->extent();
-  double bottom=vaxview->getOrigin();
-  double top=bottom-vaxview->extent();
-  double p,t,d;
-  p=haxview->getOrigin();
-  d=haxview->incrementSize();
-  t=haxview->tickSize();
-  while (p <= right) 
-    {
-      g.setColour(c1);
-      g.drawVerticalLine((int)p, (float)top, (float)bottom);
-      g.setColour(c2);
-      for (int i=1;i<haxview->numTicks();i++) 
-	g.drawVerticalLine((int)(p+(t*i)), (float)top, (float)bottom);
-      p += d;
-    }
-  p=vaxview->getOrigin();
-  d=vaxview->incrementSize();
-  t=vaxview->tickSize();
-  while (p >= top)
-    {
-      g.setColour(c1);
-      g.drawHorizontalLine((int)p, (float)left, (float)right);
-      g.setColour(c2);
-      for (int i=1;i<vaxview->numTicks();i++) 
-	g.drawHorizontalLine((int)(p-(t*i)), (float)left, (float)right);
-      p -= d;
-    }
-  g.setColour(c1);
-}
-
-bool PlotView::isInside(double x, double y, double l, double t, double r, double b) 
-{
-  if ((l <= x) && (x <= r) && (b <= y) && (y <= t))
-    return true;
-  else 
-    return false;
-}
-
-void PlotView::selectPointsInside(double l, double t, double r, double b)
-{
-  //printf("looking in region: left=%f top=%f, right=%f, bottom=%f\n",x1, y2, x2, y1);
-  //deselectAll();
-  for (int i=0; i<focuslayer->numPoints(); i++) 
-    {
-      double x=focuslayer->getPointX(i);
-      double y=focuslayer->getPointY(i);
-      if (isInside(x, y, l, t, r, b))
-	addSelection(i);
-      else
-	if (x > r)
-	  break; // stop looking
-    }
-}
-
-void PlotView::mouseDown (const MouseEvent &e)
-{
-  // shoudnt happen
-  if (focuslayer==(Layer *)NULL) return;
-
-  int mxp=e.getMouseDownX();
-  int myp=e.getMouseDownY();
-  AxisView* haxview=plotter->getHorizontalAxisView();
-  AxisView* vaxview=plotter->getVerticalAxisView();
-  
-  // cache mouse down position  FIX THIS ISNT NEEDED
-  mousedown.setXY((float)mxp, (float)myp);
-  mousemove.setXY((float)mxp, (float)myp);
-  
-  // Control-Click: add point make selection
-  // Control-Shift-Click: add point add selection.
-  // Control-Option-Click: call plot hook
-  if (e.mods.isCtrlDown())
-    if (e.mods.isAltDown())
-      {
-	String str=T("(call-plot-hook");
-	str << T(" ") << plotter->getPlotTitle().quoted()
-	    << T(" ") << haxview->toValue(mxp)
-	    << T(" ") << vaxview->toValue(myp) 
-	    << T(")") ; 
-	SchemeThread::getInstance()->eval(str);
-	return;
-      }
-    else
-      {
-	int i = focuslayer->addPoint(haxview->toValue(mxp),
-				     vaxview->toValue(myp));
-	if (e.mods.isShiftDown())
-	  addSelection(i);
-	else setSelection(i);
-	repaintFocusPlot();
-	return;
-      }
-  
-  double half=plotter->getPointSize()/2;
-  int h=-1;
-  double left, top, right, bottom, x, y;
-  
-  if (focuslayer->isDrawStyle(Layer::hbox)) 
-    {
-      // speed: since box height is constant check point y againt a
-      // (constant) vertical box height centered on mouse y
-      top=vaxview->toValue( myp - half);
-      bottom=vaxview->toValue( myp + half);
-      x=haxview->toValue( mxp);
-      for (int i=0; i < focuslayer->numPoints(); i++)
-	{
-	  left=focuslayer->getPointX(i);
-	  right=left+focuslayer->getPointZ(i);
-	  y=focuslayer->getPointY(i);
-	  if ( isInside(x, y, left, top, right, bottom) )
-	    {
-	      h=i;
-	      break;
-	    }
-	  // give up when points are rightward of mouse x
-	  else if (left > x)
-	    break;
-	}
-    }
-  else
-    {
-      // calc a constant "point" around mouse x and y and try to
-      // find a point thats inside it
-      left=haxview->toValue( mxp - half);
-      top=vaxview->toValue( myp - half);
-      right=haxview->toValue( mxp + half);
-      bottom=vaxview->toValue( myp + half);
-      for (int i=0; i < focuslayer->numPoints(); i++)
-	{
-	  x=focuslayer->getPointX(i);
-	  y=focuslayer->getPointY(i);
-	  if (isInside(x, y, left, top , right, bottom)) 
-	    {
-	      h=i;
-	      break;
-	    } 
-	  // give up when points are rightward of mouse x
-	  else if (x > right) 
-	    break;
-	}
-    }
-  
-  if (h<0) 
-    {
-      // Mouse down on empty space . Add to selection if shift is down
-      if (isSelection())
-	{
-	  if (!e.mods.isShiftDown())
-	    {
-	      deselectAll();
-	    }
-	}
-      addChildComponent (&region);
-      region.beginSweep(e, haxview, vaxview);
-    }
-  else if (isSelected(h)) 
-    {
-      // point is already selected.
-      // Mouse-shift-click remove Point from selection
-      if (e.mods.isShiftDown())
-	{
-	  removeSelection(h);
-	  repaintFocusPlot();
-	}
-    }
-  else
-    {
-      // point is not selected.
-      // Mouse-Click: set point as (single) selection
-      // Mouse-shift-click:   add Point from selection
-      if (e.mods.isShiftDown()) 
-	addSelection(h);
-      else setSelection(h);
-      repaintFocusPlot();
-    }
-}
-
-void PlotView::mouseDrag(const MouseEvent &e) {
-  AxisView * haxview=plotter->getHorizontalAxisView();
-  AxisView * vaxview=plotter->getVerticalAxisView();
-  
-  if ( isSelection() ) {
-    double dx=haxview->toValue(e.x) - haxview->toValue(mousemove.getX()) ;
-    double dy=vaxview->toValue(e.y) - vaxview->toValue(mousemove.getY()) ;
-    //    for (int i=0; i<numSelected(); i++)
-    //      focuslayer->incPoint( getSelected(i), dx, dy);
-    dragSelection(dx, dy);
-    repaintFocusPlot();
-    mousemove.setXY((float)e.x, (float)e.y);
-  } 
-  else {
-    region.toFront(false);
-    region.sweep(e);
-  }
-}
-
-void PlotView::mouseUp(const MouseEvent &e)
-{
-  if ( isSelection() ) 
-    {
-      if (mousedown.getX() != mousemove.getX() ) 
-	{
-	  focuslayer->sortPoints();
-	  //printSelection();
-	}
-      repaintFocusPlot();
-    }
-  else if ( e.getDistanceFromDragStart() == 0) 
-    {
-      // clicked without drag
-    }
-  else
-    {
-      // get region extent before closing region!
-      double l = region.minX();
-      double t = region.maxY();
-      double r = region.maxX();
-      double b = region.minY();
-      region.endSweep(e);
-      selectPointsInside(l,t,r,b);
-      removeChildComponent(&region);
-      repaintFocusPlot();
-    }
-}
-
-void PlotView::mouseDoubleClick(const MouseEvent &e)
-{
-  PlotterWindow* w=(PlotterWindow*)getTopLevelComponent();
-  if (isSelection()) 
-    w->openEditPointsDialog();
-  else
-    w->openLayerDialog();
-}
-
-bool PlotView::keyPressed (const KeyPress& key)
-{
-  if ((key.isKeyCode(KeyPress::backspaceKey) ||
-       key.isKeyCode(KeyPress::deleteKey)))
-    {
-      if (!key.getModifiers().isAnyModifierKeyDown() &&
-	  isSelection())
-	deleteSelection();
-    }
-  else if (key.isKeyCode('a') && 
-	   key.getModifiers().isCommandDown())
-    {
-      selectAll();
-    }
-
-
-  return true;
-}
-
-/*=======================================================================*
-             Plotter: contains all the subcomponents for plotting
+                   PlotWindow: top level window for plotting
  *=======================================================================*/
 
 PointClipboard pointClipboard;
 
-Plotter::Plotter (XmlElement* plot) 
-  : ppp (8.0),
-    zoom (1.0),
-    haxview (NULL),
-    vaxview (NULL),
-    viewport (NULL),
-    plotview (NULL),
-    backview (NULL),
-    changed (false),
-    scrolling (false),
-    flags (0)
+PlotWindow::PlotWindow(XmlElement* plot)
+  : DocumentWindow (String::empty, Colours::white, 
+		    DocumentWindow::allButtons, true)
 {
-  createPlottingComponents();
-  OwnedArray<XmlElement> xmlfields;
-  OwnedArray<XmlElement> xmlplots;
-  if (plot!=NULL)
-    {
-      std::cout << plot->createDocument(T("")).toUTF8() << "\n";
-      XmlElement* sub=plot->getChildByName(T("fields"));
-      forEachXmlChildElement(*sub, e)
-	if (e->hasTagName(T("field")))
-	  xmlfields.add(e);
-      sub=plot->getChildByName(T("layers"));
-      forEachXmlChildElement(*sub, e)
-        if (e->hasTagName(T("points")))
-	  xmlplots.add(e);
-    }  
-  if (xmlfields.size()==0) // No axes specified
-    {
-      fields.add(new Field(T("Field 1"), new Axis(NULL)));
-      fields.add(new Field(T("Field 2"), new Axis(NULL)));
-    }
-  else if (xmlfields.size()==1) // Just Y axis specified
-    {
-      fields.add(new Field(T("Field 1"), new Axis(Axis::ordinal)));
-      String yname=xmlfields[0]->
-	getStringAttribute(T("name"), T("Field 2"));
-      fields.add(new Field(yname,new Axis(xmlfields[0])));
-    }
-  else
-    for (int i=0; i<xmlfields.size(); i++)
-      {
-	String n=xmlfields[i]->
-	  getStringAttribute(T("name"), T("Field ")+String(i+1));
-	String r=xmlfields[i]->
-	  getStringAttribute(T("axis"), String::empty);
-	Axis* a=NULL;
-	int s=-1;
-	if (r.isNotEmpty())
-	  for (int j=0; j<i && j<fields.size() && a==NULL; j++)
-	    if (fields[j]->name==r)
-	      {
-		a=fields[j]->axis;	
-		s=j;
-	      }
-	if (a)
-	  ;
-	else
-	  a=new Axis(xmlfields[i]);
-	fields.add(new Field(n, a, s));
-      }
-  if (xmlplots.size()>0)
-    for (int i=0; i<xmlplots.size(); i++)
-      newLayer(xmlplots[i]);
-  else
-    newLayer(NULL);
-  //  bool haspoints=false;
-  //  for (int i=0; i<numLayers(); i++)
-  //    if (getLayer(i)->isChanged())
-
-  autosizeAxes();
-  xmlfields.clear(false);
-  xmlplots.clear(false);
-  plotview->resizeForDrawing();  // calc plots width/height
-  setUnsavedChanges(false);
+  listener.window=this;
+  String title=(plot==NULL) ? T("Untitled Plot") :
+    plot->getStringAttribute(T("title"), T("Untitled Plot"));
+  setName(title);
+  plotter = new Plotter(plot) ;
+  tabview = new TabbedComponent(TabbedButtonBar::TabsAtTop);
+  init();
 }
 
-Plotter::Plotter(MidiFile& midifile)
-  : ppp (8.0),
-    zoom (1.0),
-    haxview (NULL),
-    vaxview (NULL),
-    viewport (NULL),
-    plotview (NULL),
-    backview (NULL),
-    changed(false),
-    scrolling (false),
-    flags (0)
+PlotWindow::PlotWindow(String title, MidiFile& midifile)
+  : DocumentWindow (title, Colours::white, 
+		    DocumentWindow::allButtons, true)
 {
-  createPlottingComponents();
-  // juce time format is postive for beats and negative for SMTPE
-  int format=midifile.getTimeFormat();
-  double scaler=1.0; // scale smpte to seconds
-  if (format>0)
-    midifile.convertTimestampTicksToSeconds();    
-  else  // juce smpte frames per second is negative upper byte
-    scaler=(0xFF-((format & 0xFF00) >> 8)+1) * (format & 0xFF);
-  // start importing at track 1 in level 1 file (?)
-  int numtracks=midifile.getNumTracks();
-  int track=((numtracks==1) ? 0 : 1);
-  int count=0;
-  double maxend=0.0;
-  double maxkey=-1.0;
-  double minkey=128.0;
-  OwnedArray<Layer>midilayers;
-  int arity=5;
-  for ( ; track<numtracks; track++)
+  listener.window=this;
+  setName(title);
+  plotter=new Plotter(midifile);
+  tabview = new TabbedComponent(TabbedButtonBar::TabsAtTop);
+  init();
+}
+
+PlotWindow::~PlotWindow ()
+{
+  delete menubar;
+  setMenuBar(0);
+}
+
+void PlotWindow::init()
+{
+  menubar = new MenuBarComponent(this);
+  setMenuBar(this);
+  setUsingNativeTitleBar(true);    
+  plotter->setSize(PlotWindowComponent::plotviewwidth,PlotWindowComponent::plotviewwidth); // extra 24 in veritical because of menu
+  tabview->addTab(T("Plot"), Colour(0xffe5e5e5), new PlotWindowTab(plotter, this), true);
+  tabview->addTab(T("Audio"), Colour(0xffe5e5e5), NULL, false);
+  tabview->addTab(T("Export"), Colour(0xffe5e5e5), NULL, false);
+  tabview->addTab(T("X Axis"), Colour(0xffe5e5e5), new PlotterAxisTab(plotter, Plotter::horizontal), true);
+  tabview->addTab(T("Y Axis"), Colour(0xffe5e5e5), new PlotterAxisTab(plotter, Plotter::vertical), true);
+
+  for (int i=0; i<plotter->numLayers(); i++)
+  {
+    Layer* layer=plotter->getLayer(i);
+    tabview->addTab(layer->getLayerName(), Colour(0xffe5e5e5), new LayerTab(plotter,layer), true);
+  }
+
+  PlotWindowComponent* content=new PlotWindowComponent(this);
+  setContentComponent(content, true, true);
+  content->addChildComponent(plotter);
+  content->addChildComponent(tabview);
+  plotter->setVisible(true);
+  tabview->setVisible(true);
+  content->setVisible(true);
+  centreWithSize (PlotWindowComponent::plotviewwidth, PlotWindowComponent::plotviewwidth + PlotWindowComponent::tabviewheight + 24);
+  setResizable(true, true); 
+  setVisible(true);
+  WindowTypes::setWindowType(this, WindowTypes::PlotWindow);
+  plotter->insurePointsVisible();
+}
+
+PlotWindow* PlotWindow::getPlotWindow(String title)
+{
+  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
     {
-      MidiMessageSequence* seq=
-	(MidiMessageSequence*)midifile.getTrack(track);
-      seq->updateMatchedPairs();
-      Layer* lay=new Layer(arity, T("Track ") + String(track),
-			   Layer::defaultColor(count), Layer::hbox);
-      //lay->setXField(0);
-      //lay->setYField(2);
-      //lay->setZField(1);
-      lay->setFieldAccess(0,2,1);
-      for (int i=0; i<seq->getNumEvents(); i++)
-	{
-	  MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
-	  if (h->message.isNoteOn())
-	    {
-	      double t=h->message.getTimeStamp()/scaler;
-	      double d=.5;
-	      if (h->noteOffObject!=NULL)
-		d=(h->noteOffObject->message.getTimeStamp()/scaler)-t;
-	      double k=h->message.getNoteNumber();
-	      double a=(double)(h->message.getFloatVelocity());
-	      double c=h->message.getChannel()-1;
-	      LayerPoint* p=new LayerPoint(arity);
-	      p->setVal(0,t);
-	      p->setVal(1,d);
-	      p->setVal(2,k);
-	      p->setVal(3,a);
-	      p->setVal(4,c);
-	      lay->_points.add(p);  // add same order as seq
-	      if (k<minkey) minkey=k;
-	      if (k>maxkey) maxkey=k;
-	      t+=d;
-	      if (t>maxend) maxend=t;
-	    }
-	}
-      if (lay->numPoints()==0)
-	delete lay;
+      TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+      if (WindowTypes::isWindowType(w, WindowTypes::PlotWindow) &&
+	  w->getName()==title)
+	return (PlotWindow*)w;
+    }
+  return (PlotWindow*)NULL;
+}
+
+bool PlotWindow::hasUnsavedChanges()
+{
+  return plotter->hasUnsavedChanges();
+}
+
+// This is called from Scheme to open a new plot window.
+// in this case we want to set it to changed if there
+// are any points at all
+
+void PlotWindow::openWindowFromXml(void* ptr) //(String str)
+{
+  //std::cout << str.toUTF8() << "\n";
+  XmlDocument doc (String((char *)ptr));
+  XmlElement* xml = doc.getDocumentElement();
+  if (xml && xml->getChildByName(T("fields")) &&
+      xml->getChildByName(T("layers")))
+  {
+    PlotWindow* w = new PlotWindow(xml);
+    w->plotter->setUnsavedChanges(true);
+    delete xml;
+  }
+  else
+  {
+    String err=T(">>> Error ");
+    if (!xml)
+      err << doc.getLastParseError() << T("\n");
+    else
+    {
+      err << T("invalid xml plot data\n");
+      delete xml;
+    }
+    Console::getInstance()->printError(err);
+  }
+}
+
+void PlotWindow::browseForFileToOpen(int type)
+{
+  if (type==CommandIDs::PlotterOpenMidiFile)
+    {
+      FileChooser ch (T("Plot Midi File"),
+		      File::getCurrentWorkingDirectory(),
+		      T("*.mid"));
+      if (ch.browseForFileToOpen())
+	openMidiFile(ch.getResult());
+    }
+  else if (type==CommandIDs::PlotterOpen)
+    {
+      FileChooser ch (T("Open Plot"), 
+		      File::getCurrentWorkingDirectory(),
+		      T("*.xml"));
+      if (ch.browseForFileToOpen())
+	openXmlFile(ch.getResult());
+    }
+}
+
+void PlotWindow::openXmlFile(File file)
+{
+  XmlDocument doc (file);
+  XmlElement* xml = doc.getDocumentElement();
+  if (xml && xml->getChildByName(T("fields")) &&
+      xml->getChildByName(T("layers")))
+  {
+    PlotWindow* w=new PlotWindow(xml);
+    w->setPlotFile(file);
+    delete xml;
+  }
+  else
+  {
+    String err=T(">>> Error: ");
+    if (!xml)
+      err << doc.getLastParseError() << T("\n");
+    else
+    {
+      err << file.getFullPathName() 
+          << T(" is not a valid plot (xml) file.\n");
+      delete xml;
+    }
+    Console::getInstance()->printError(err);
+  }
+}
+
+void PlotWindow::openMidiFile(File file)
+{
+  String title=file.getFileNameWithoutExtension();
+  FileInputStream* input=file.createInputStream();
+  MidiFile midifile;
+  if (midifile.readFrom(*input))
+  {
+    PlotWindow* w=new PlotWindow(title, midifile);
+  }
+  else
+  {
+    String err=T(">>> Error: ");
+    err << file.getFullPathName() 
+        << T(" is not a valid midi file.");
+    Console::getInstance()->printError(err);
+  }
+}
+
+bool PlotWindow::save(bool saveas)
+{
+  File f=getPlotFile();
+  if (saveas || (f==File::nonexistent))
+    {
+      String t=((saveas) ? T("Save Plot As") : T("Save Plot"));
+      if (f==File::nonexistent)
+	f=File::getCurrentWorkingDirectory().getChildFile(getName() + T(".xml"));
+      FileChooser ch (t, f, "*.xml");
+      if (ch.browseForFileToSave(true))
+	// std::cout << ch.getResult().getFullPathName().getUTF8() << "\n";
+	setPlotFile(ch.getResult());
       else
-	{
-	  midilayers.add(lay);
-	  count++;
-	}
+	return false;
     }
-  Axis* a=new Axis(Axis::seconds);
-  if (maxend>0.0) a->setMaximum(maxend);
-  fields.add(new Field(T("Time"), a));
-  fields.add(new Field(T("Duration"), a, 0));
-  fields.add(new Field(T("Keynum"), new Axis(Axis::keynum)));
-  fields.add(new Field(T("Amplitude"), new Axis(Axis::normalized)));      
-  fields.add(new Field(T("Channel"), new Axis(Axis::generic,0,15,1,1,0)));
-  for (int i=0;i<midilayers.size();i++)
-    addLayer(midilayers[i]);
-  midilayers.clear(false);
-  plotview->resizeForDrawing();  // calc plots width/height
-  setUnsavedChanges(false);
+  String text=toXmlString();
+  if (!getPlotFile().replaceWithText(text))
+    {
+      text=T(">> Error: file ")+getPlotFile().getFullPathName() + T(" not writable.\n");
+      Console::getInstance()->printError(text);
+      return false;
+    }
+  plotter->setUnsavedChanges(false);
+  return true;
 }
 
-void Plotter::createPlottingComponents()
+void PlotWindow::closeButtonPressed () //{this->~PlotWindow();}
 {
-  int II=0;
-  font=Font(Font::getDefaultSansSerifFontName(), 10.0, Font::bold);
-  plotview=new PlotView (this);
-  backview=new BackView(this);
-  // plot view is child of backview so that it is in front
-  //std::cout << II++ << "\n"; //0
-  backview->addChildComponent(plotview);
-  //std::cout << II++ << "\n";
-  plotview->setTopLeftPosition(0,0);
-  //std::cout << II++ << "\n";
-  plotview->setWantsKeyboardFocus(true);
-  //std::cout << II++ << "\n";
-  viewport=new PlotViewport (this);
-  //std::cout << II++ << "\n";
-  // add the backview to the viewport. the plotview is a child of the
-  // backview and so it will scroll with it
-  addChildComponent(viewport);
-  //std::cout << II++ << "\n"; //5
-  haxview=new AxisView(viewport, horizontal);
-  //std::cout << II++ << "\n";
-  vaxview=new AxisView(viewport, vertical);
-  //std::cout << II++ << "\n";
-  addChildComponent(haxview);  
-  //std::cout << II++ << "\n";
-  addChildComponent(vaxview);  
-  //std::cout << II++ << "\n";
-  viewport->setViewedComponent(backview);
-  //std::cout << II++ << "\n"; //10
-  viewport->setScrollBarsShown (true, true);
-  // std::cout << II++ << "\n";
-  viewport->setViewPositionProportionately(0.0,1.0);
-  //std::cout << II++ << "\n";
-  viewport->setVisible(true);
-  //std::cout << II++ << "\n";
-  backview->setVisible(true);
-  //std::cout << II++ << "\n";
-  plotview->setVisible(true);
-  //std::cout << II++ << "\n";//15
-  haxview->setVisible(true);
-  //std::cout << II++ << "\n";
-  vaxview->setVisible(true);
-  ///std::cout << II++ << "\n";
-}
-
-void Plotter::setPlottingFields(int xax, int yax)
-{
-  setHorizontalAxis(fields[xax]->axis);
-  setVerticalAxis(fields[yax]->axis);
-  plotview->resizeForDrawing();  // calc plots width/height
-}
-
-Plotter::~Plotter()
-{
-  // zero out shared axis before deleting
-  deleteAndZero(haxview);
-  deleteAndZero(vaxview);
-  deleteAndZero(plotview);
-  deleteAndZero(backview);
-  deleteAndZero(viewport);
-  //actions.clear();
-  layers.clear();
-  fields.clear();
-}
-
-bool Plotter::hasUnsavedChanges()
-{
-  if (changed)
+  int x=2;
+  if (hasUnsavedChanges())
   {
-    std::cout << "plotter has unsaved changes\n";
-    return true;
+    x=Alerts::showYesNoCancelBox(AlertWindow::QuestionIcon,
+                                 T("Close"),
+                                 T("Save changes before closing?"),
+                                 T("Save"),
+                                 T("Don't Save"),
+                                 T("Cancel")
+                                 );
   }
-  for (int i=0; i<numLayers(); i++)
-    if (getLayer(i)->hasUnsavedChanges())
-    {
-      std::cout << "layer " << i << " has unsaved changes\n";
-      return true;
-    }
-  return false;
-}
-
-void Plotter::setUnsavedChanges(bool isChanged)
-{
-  changed=isChanged;
-  if (!isChanged)
-    for (int i=0; i<numLayers(); i++)
-      getLayer(i)->setUnsavedChanges(false);
-}
-
-void Plotter::autosizeAxes()
-{
-  // look for unspecified axes to autosize
-  for (int i=0;i<fields.size();i++)
-    {
-      if (fields[i]->isSharedAxis()) continue; // skip if shared
-      Axis* ax=fields[i]->axis;
-      if (ax->type==Axis::unspecified)
-	{
-	  double lo=0.0, hi=1.0;
-	  for (int j=0; j<layers.size(); j++)
-	    {
-	      Layer* l=layers[j];
-	      if (l->numPoints()==0) 
-		continue;
-	      if (i==0) // horizontal axis stored sorted
-		{
-		  lo=jmin(lo,(double)(l->getFirstPoint()->getVal(0)));
-		  hi=jmax(hi,(double)(l->getLastPoint()->getVal(0)));
-		}
-	      else
-		for (int k=0; k<l->numPoints(); k++)
-		  {
-		    double f=(double)(l->getPoint(k)->getVal(i));
-		    lo=jmin(lo,f);
-		    hi=jmax(hi,f);
-		  }
-	    }
-	    ax->setMinimum(lo);
-
-	  if (hi<=1.0)
-	    {
-	      ax->setMaximum(1.0);
-	    }
-	  else if (hi<=10.0)
-	    {
-	      ax->setMaximum(ceil(hi));
-	      ax->setIncrement(1.0);
-	    }
-	  else if (hi<=100.0)
-	    {
-	      ax->setMaximum(ceil(hi));
-	      ax->setIncrement(10.0);
-	      ax->setTicks(2);
-	    }
-	  else if (hi<=1000)
-	    {
-	      ax->setMaximum(ceil(hi));
-	      ax->setIncrement(10.0);
-	      ax->setTicks(2);
-	    }
-	  ax->type=Axis::generic; // make it a generic axis
-	  //std::cout << "autosized axis[" << i <<"]: min=" << ax->getMinimum() << " max=" << ax->getMaximum() << "\n";
-	}
-      else if (ax->type==Axis::ordinal)
-	{
-	  int siz=1;
-	  for (int j=0; j<layers.size(); j++)
-	    siz=jmax(siz,layers[j]->numPoints());
-	  ax->setMaximum(siz-1);
-	}
-    }
-}
-
-void Plotter::insurePointsVisible()
-{
-  if (getPlotViewport()->isVerticalScrollBarShown())
-    {
-      // center on average of min max of first 8 notes
-      Layer* l=getFocusLayer();
-      double y=.5;
-      if (l->numPoints()>0)
-	{
-	  Axis* a=getVerticalAxis();
-	  double ymin=a->getMaximum();
-	  double ymax=a->getMinimum();
-	  for (int i=0;i<8 && i<l->numPoints(); i++)
-	    {
-	      y=l->getPointY(i);
-	      if (y<ymin) ymin=y;
-	      if (y>ymax) ymax=y;
-	    }
-	  y=1-((((ymin+ymax)/2)-a->getMinimum())/a->getRange());
-	}
-      getPlotViewport()->setViewPositionProportionately(0.0, y);
-    }
-}
- 
-///
-/// Component View Accessing 
-///
-
-AxisView* Plotter::getHorizontalAxisView() {return haxview;}
-AxisView* Plotter::getVerticalAxisView() {return vaxview;}
-
-void Plotter::setHorizontalAxis (Axis* a) {haxview->setAxis(a);}
-void Plotter::redrawHorizontalAxisView() {haxview->repaint();}
-
-void Plotter::setVerticalAxis (Axis* a) {vaxview->setAxis(a);}
-void Plotter::redrawVerticalAxisView() {vaxview->repaint();}
-
-Axis* Plotter::getVerticalAxis(){return vaxview->getAxis();}
-Axis* Plotter::getHorizontalAxis(){return haxview->getAxis();}
- 
-void Plotter::setFocusVerticalField(int i)
-{
-  /*  Layer* layer=getFocusLayer();
-  layer->setYField(i);
-  setVerticalAxis(layer->getAxis(i));
-  redrawVerticalAxisView();
-  redrawPlotView();
-  */
-}
-
-BackView * Plotter::getBackView() {
-  return backview;
-}
-
-bool Plotter::isBackViewPlotting() {
-  return backview->isBackViewPlotting();
-}
-
-void Plotter::setBackViewPlotting( bool b) {
-  backview->setBackViewPlotting(b);
-}
-
-void Plotter::setBackViewCaching(bool b)
-{
-  backview->setBackViewCaching(b);
-}
-
-void Plotter::resizeForSpread()
-{
-  plotview->resizeForDrawing();
-}
-
-Plotter::BGStyle Plotter::getBackViewStyle() {
-  return backview->getBackViewStyle();
-}
-
-void Plotter::setBackViewStyle( BGStyle b) {
-  backview->setBackViewStyle(b);
-}
-
-PlotView * Plotter::getPlotView() {
-  return plotview;
-}
-
-PlotViewport * Plotter::getPlotViewport() {
-  return viewport;
-}
-
-void Plotter::redrawPlotView() {
-  plotview->repaint();
-}
-
-void Plotter::redrawBackView() {
-  backview->repaint();
-}
-
-///
-/// layers
-///
-
-Layer* Plotter::getLayer(int i) 
-{
-  return layers[i];
-}
-
-Layer* Plotter::findLayer(int id) 
-{
-  Layer* l;
-  for (int i=0; i< layers.size(); i++)
-    {
-      l=layers[i];
-    if (id == l->getLayerID()) return l;
-    }
-  return (Layer *)NULL;
-}
-
-int Plotter::numLayers() 
-{
-  return layers.size();
-}
-
-Layer* Plotter::getFocusLayer()
-{
-  return plotview->focuslayer;
-}
-
-bool Plotter::isFocusLayer(Layer * l)
-{
-  return (l == getFocusLayer()); 
+  if (x==0)
+    return;
+  if (x==2 || save())
+    delete this;
 }
 
 
-void Plotter::setFocusLayer(Layer * layr)
-{
-  plotview->deselectAll(false);
-  plotview->focuslayer=layr;
-  Axis* oldx=getHorizontalAxisView()->getAxis();
-  Axis* oldy=getVerticalAxisView()->getAxis();
-  Axis* newx=getFieldAxis(layr->getXField());
-  Axis* newy=getFieldAxis(layr->getYField());
-  if ((oldx!=newx)||(oldy!=newy))
-    {
-      setHorizontalAxis(newx);
-      setVerticalAxis(newy);
-      // doesnt work here...
-      //      plotview->resizeForDrawing();  // calc plots width/height
-    }
-}
 
-void Layer::addXmlPoints(XmlElement* points)
-{
-  StringArray pts;
-  int ind=0;
-  int cur=_points.size();
-  forEachXmlChildElement(*points, p)
-    {
-      LayerPoint* f=new LayerPoint(arity);
-      pts.addTokens(p->getAllSubText(), false);
-      if (pts.size()==1) // just provided a Y value
-	{
-	  f->setVal(0, ind);
-	  f->setVal(1, pts[0].getFloatValue());
-	}
-      else
-	for (int i=0; i<pts.size() && i<arity; i++)
-	  f->setVal(i,pts[i].getFloatValue());
-      // init unspecified fields with 0.0
-      for (int i=pts.size(); i<arity; i++) 
-	f->setVal(i, 0.0);
-      _points.addSorted(*this,f);
-      cur++;
-      pts.clear();
-    }
-  if (cur > _points.size())
-    changed=true;
-}
 
-Layer* Plotter::newLayer(XmlElement* points)
-{
-  Colour col = Layer::defaultColor(layers.size());
-  int sty=Layer::lineandpoint;
-  String nam = T("Layer ") + String(layers.size()+1);
-  int num=numFields();
-  Layer* layer=NULL;
-
-  if (points)
-    {
-      String s=points->getStringAttribute(T("style"));
-      if (s.isNotEmpty())
-	sty=Layer::toLayerType(s, sty);
-      s=points->getStringAttribute(T("color"));
-      if (s.isNotEmpty())
-	if (s.containsOnly(T("0123456789aAbBcCdDeEfF")))
-	  col=Colour::fromString(s);	  
-	col=Colours::findColourForName(s, col);
-      nam=points->getStringAttribute(T("title"), nam);
-      layer=new Layer(num, nam, col, sty);
-      layer->addXmlPoints(points);
-      // parse optional access fields
-      StringArray access;
-      access.addTokens(points->getStringAttribute(T("access")), false);
-      for (int i=0; i<access.size() && i<4; i++)
-	{
-	  int j=access[i].getIntValue();
-	  if (j>=layer->getLayerArity()) break;
-	  else if (i==0) layer->setXField(j);
-	  else if (i==1) layer->setYField(j);
-	  else if (i==2) layer->setZField(j);
-	  //else if (i==3) ; // TODO!
-	}
-    }
-  else
-    layer=new Layer(num, nam, col, sty);
-  addLayer(layer);
-  return layer;
-}
-
-void Plotter::addLayer(Layer* layer)
-{
-  changed=true;
-  layers.add(layer);
-  setFocusLayer(layer);
-}
-
-void Plotter::removeLayer(Layer* layer) 
-{
-
-  // THIS CHECK SHOULDNT BE NECESSARY (MENU CHECKS)
-  if ( numLayers() < 2 ) return;
-  // if removing focus layer then switch focus to other layer.
-  if ( isFocusLayer(layer) ) 
-    {
-      for (int i=0; i<numLayers(); i++) 
-	{
-	  Layer* l=getLayer(i);
-	  if (l != layer) 
-	    {
-	      setFocusLayer(l);
-	      break;
-	    }
-	}
-    }
-  layers.removeObject(layer,false);
-  changed=true;
-}
-
-void Plotter::selectAll() 
-{
-  getPlotView()->selectAll();
-}
-
-void Plotter::deselectAll()
-{
-  getPlotView()->deselectAll();
-}
-
-bool Plotter::isSelection() 
-{
-  return getPlotView()->isSelection();
-}
-
-int Plotter::numSelected() 
-{
-  return getPlotView()->numSelected();
-}
-
-void Plotter::deleteSelection(bool cut) 
-{
-  getPlotView()->deleteSelection(cut);
-}
-
-void Plotter::paint(Graphics& g) 
-{
-  //  g.fillAll(Colours::lightcoral);  // **showregion
-}
-
-void Plotter::resized () 
-{
-  viewport->setBounds(70, 50, getWidth()-80, getHeight()-60);
-
-  std::cout << "plotter: x=" << getX() << ", y=" << getY() << ", w=" << getWidth() << " h=" << getHeight() << "\n";
-  //std::cout << "viewport: x=" << viewport->getX() << ", y=" << viewport->getY() << ", w=" << viewport->getWidth() << " h=" << viewport->getHeight() << ", vw=" << viewport->getViewWidth() << " vh=" << viewport->getViewHeight() << "\n";
-
-  if (!isScrolling()) // fit in window
-  {
-    // set axis views to full extent of viewport so that there are no scrollers
-    haxview->setBounds(70, 20, viewport->getWidth(), 26);
-    vaxview->setBounds(2, 50, 64, viewport->getHeight());
-    // calculate spead factors for axis to use all the available space
-    haxview->setSpreadToFit(viewport->getWidth());
-    vaxview->setSpreadToFit(viewport->getHeight());
-    resizeForSpread();
-  }
-  else
-  {
-    haxview->setBounds(70, 20, viewport->getViewWidth(), 26); 
-    vaxview->setBounds(2, 50, 64, viewport->getViewHeight());
-  }
-}
-
-void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
-  // Scrolling callback. Used to scroll the axis views whenever
-  // viewport's scrollbar is scrolled.
-  String name = sb->getName();
-  
-  if ( name == T("xscroll") )
-    haxview->repaint();
-  else
-    vaxview->repaint();
-}
 
 /*=======================================================================*
                                  Edit Actions
@@ -1803,222 +326,14 @@ public:
   int getSizeInUnits(){return 1;}
 };
 
-//class AddPointsAction : public UndoableAction {}
-//class RemovePointsAction : public UndoableAction {}
-
-
-/*=======================================================================*
-                   PlotterWindow: top level window for plotting
- *=======================================================================*/
-
-PlotterWindow::PlotterWindow(XmlElement* plot)
-  : DocumentWindow (String::empty, Colours::white, 
-		    DocumentWindow::allButtons, true)
-{
-  listener.window=this;
-  String title=(plot==NULL) ? T("Untitled Plot") :
-    plot->getStringAttribute(T("title"), T("Untitled Plot"));
-  setName(title);
-  plotter = new Plotter(plot) ;
-  init();
-}
-
-PlotterWindow::PlotterWindow(String title, MidiFile& midifile)
-  : DocumentWindow (title, Colours::white, 
-		    DocumentWindow::allButtons, true)
-{
-  listener.window=this;
-  setName(title);
-  plotter=new Plotter(midifile);
-  init();
-}
-
-PlotterWindow::~PlotterWindow ()
-{
-  delete menubar;
-  setMenuBar(0);
-}
-
-void PlotterWindow::init()
-{
-  menubar = new MenuBarComponent(this);
-  setMenuBar(this);
-  setUsingNativeTitleBar(true);    
-  plotter->setSize(500, 524); // extra 24 in veritical because of menu
-  plotter->setVisible(true);
-  setContentComponent(plotter,true,true);
-  centreWithSize (plotter->getWidth(), plotter->getHeight());
-  setResizable(true, true); 
-  setVisible(true);
-  //  setComponentProperty(T("WindowType"), WindowTypes::PlotWindow);
-  WindowTypes::setWindowType(this, WindowTypes::PlotWindow);
-  plotter->insurePointsVisible();
-}
-
-PlotterWindow* PlotterWindow::getPlotWindow(String title)
-{
-  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
-    {
-      TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
-      if (WindowTypes::isWindowType(w, WindowTypes::PlotWindow) &&
-	  w->getName()==title)
-	return (PlotterWindow*)w;
-    }
-  return (PlotterWindow*)NULL;
-}
-
-bool PlotterWindow::hasUnsavedChanges()
-{
-  return plotter->hasUnsavedChanges();
-}
-
-// This is called from Scheme to open a new plot window.
-// in this case we want to set it to changed if there
-// are any points at all
-
-void PlotterWindow::openWindowFromXml(void* ptr) //(String str)
-{
-  //std::cout << str.toUTF8() << "\n";
-  XmlDocument doc (String((char *)ptr));
-  XmlElement* xml = doc.getDocumentElement();
-  if (xml && xml->getChildByName(T("fields")) &&
-      xml->getChildByName(T("layers")))
-  {
-    PlotterWindow* w = new PlotterWindow(xml);
-    w->plotter->setUnsavedChanges(true);
-    delete xml;
-  }
-  else
-  {
-    String err=T(">>> Error ");
-    if (!xml)
-      err << doc.getLastParseError() << T("\n");
-    else
-    {
-      err << T("invalid xml plot data\n");
-      delete xml;
-    }
-    Console::getInstance()->printError(err);
-  }
-}
-
-void PlotterWindow::browseForFileToOpen(int type)
-{
-  if (type==CommandIDs::PlotterOpenMidiFile)
-    {
-      FileChooser ch (T("Plot Midi File"),
-		      File::getCurrentWorkingDirectory(),
-		      T("*.mid"));
-      if (ch.browseForFileToOpen())
-	openMidiFile(ch.getResult());
-    }
-  else if (type==CommandIDs::PlotterOpen)
-    {
-      FileChooser ch (T("Open Plot"), 
-		      File::getCurrentWorkingDirectory(),
-		      T("*.xml"));
-      if (ch.browseForFileToOpen())
-	openXmlFile(ch.getResult());
-    }
-}
-
-void PlotterWindow::openXmlFile(File file)
-{
-  XmlDocument doc (file);
-  XmlElement* xml = doc.getDocumentElement();
-  if (xml && xml->getChildByName(T("fields")) &&
-      xml->getChildByName(T("layers")))
-  {
-    PlotterWindow* w=new PlotterWindow(xml);
-    w->setPlotFile(file);
-    delete xml;
-  }
-  else
-  {
-    String err=T(">>> Error: ");
-    if (!xml)
-      err << doc.getLastParseError() << T("\n");
-    else
-    {
-      err << file.getFullPathName() 
-          << T(" is not a valid plot (xml) file.\n");
-      delete xml;
-    }
-    Console::getInstance()->printError(err);
-  }
-}
-
-void PlotterWindow::openMidiFile(File file)
-{
-  String title=file.getFileNameWithoutExtension();
-  FileInputStream* input=file.createInputStream();
-  MidiFile midifile;
-  if (midifile.readFrom(*input))
-  {
-    PlotterWindow* w=new PlotterWindow(title, midifile);
-  }
-  else
-  {
-    String err=T(">>> Error: ");
-    err << file.getFullPathName() 
-        << T(" is not a valid midi file.");
-    Console::getInstance()->printError(err);
-  }
-}
-
-bool PlotterWindow::save(bool saveas)
-{
-  File f=getPlotFile();
-  if (saveas || (f==File::nonexistent))
-    {
-      String t=((saveas) ? T("Save Plot As") : T("Save Plot"));
-      if (f==File::nonexistent)
-	f=File::getCurrentWorkingDirectory().getChildFile(getName() + T(".xml"));
-      FileChooser ch (t, f, "*.xml");
-      if (ch.browseForFileToSave(true))
-	// std::cout << ch.getResult().getFullPathName().getUTF8() << "\n";
-	setPlotFile(ch.getResult());
-      else
-	return false;
-    }
-  String text=toXmlString();
-  if (!getPlotFile().replaceWithText(text))
-    {
-      text=T(">> Error: file ")+getPlotFile().getFullPathName() + T(" not writable.\n");
-      Console::getInstance()->printError(text);
-      return false;
-    }
-  plotter->setUnsavedChanges(false);
-  return true;
-}
-
-void PlotterWindow::closeButtonPressed () //{this->~PlotterWindow();}
-{
-  int x=2;
-  if (hasUnsavedChanges())
-  {
-    x=Alerts::showYesNoCancelBox(AlertWindow::QuestionIcon,
-                                 T("Close"),
-                                 T("Save changes before closing?"),
-                                 T("Save"),
-                                 T("Don't Save"),
-                                 T("Cancel")
-                                 );
-  }
-  if (x==0)
-    return;
-  if (x==2 || save())
-    delete this;
-}
-
-const StringArray PlotterWindow::getMenuBarNames ()
+const StringArray PlotWindow::getMenuBarNames ()
 {
   const tchar* const menuNames[] =
     {T("Plot"), T("Edit"), T("View"), T("Audio"), T("Window"), T("Help"), 0};
   return StringArray((const tchar**) menuNames);
 }
 
-const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
+const PopupMenu PlotWindow::getMenuForIndex(int idx, const String &name)
 {
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3;
@@ -2128,7 +443,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
     menu.addItem(CommandIDs::PlotterZoomInY, T("Zoom In Y"));
     menu.addItem(CommandIDs::PlotterZoomOutY, T("Zoom Out Y"));
     menu.addSeparator();
-    menu.addItem(CommandIDs::PlotterZoomToFit, T("Fit in Window"), true, !plotter->isScrolling() );
+    menu.addItem(CommandIDs::PlotterZoomToFit, T("Fit in Window"), true, true);
     menu.addItem(CommandIDs::PlotterZoomReset, T("Reset Zoom"));
   }
   else if (name==T("Audio"))
@@ -2140,7 +455,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
   return menu;
 }
 
-void PlotterWindow::menuItemSelected (int id, int idx)
+void PlotWindow::menuItemSelected (int id, int idx)
 {
   CommandID cmd = CommandIDs::getCommand(id);
   int data = CommandIDs::getCommandData(id);  
@@ -2149,7 +464,7 @@ void PlotterWindow::menuItemSelected (int id, int idx)
   switch (cmd)
   {
   case CommandIDs::PlotterNew :
-    new PlotterWindow((XmlElement*)NULL);
+    new PlotWindow((XmlElement*)NULL);
     break;
   case CommandIDs::PlotterOpen :
   case CommandIDs::PlotterOpenMidiFile :
@@ -2246,21 +561,9 @@ void PlotterWindow::menuItemSelected (int id, int idx)
     break;
 
   case CommandIDs::PlotterZoomReset:
-    plotter->getHorizontalAxisView()->setSpread(1.0);
-    plotter->getVerticalAxisView()->setSpread(1.0);
-    plotter->setScrolling(true);
-    plotter->resizeForSpread();
-    plotter->repaint();
-    plotter->redrawHorizontalAxisView();
-    plotter->redrawVerticalAxisView();
-    plotter->redrawBackView();
-    plotter->redrawPlotView();
     break;
 
   case CommandIDs::PlotterZoomToFit:
-    std::cout << "plotterZoomToFit\n";
-    plotter->setScrolling(!plotter->isScrolling());
-    plotter->repaint();
     break;
 
   default :
@@ -2268,7 +571,7 @@ void PlotterWindow::menuItemSelected (int id, int idx)
   }
 }
 
-void PlotterWindow::PlotterWindowListener::handleMessage(const Message &m)
+void PlotWindow::PlotWindowListener::handleMessage(const Message &m)
 {
 
   switch (m.intParameter1)
@@ -2314,25 +617,25 @@ void PlotterWindow::PlotterWindowListener::handleMessage(const Message &m)
                               FileIO and Exporting
  *=======================================================================*/
 
-String PlotterWindow::toXmlString()
+String PlotWindow::toXmlString()
 {
   String text=String::empty;
   text << T("<plot title=") << getName().quoted() << T(">\n") ;
   // output axis definitions
   text << T("  <fields>\n");
   for (int i=0; i<plotter->numFields(); i++)
-    {
-      Axis* a=plotter->getFieldAxis(i);
-      text << T("    ")
-	   << T("<field")
-           << T(" name=") << plotter->getFieldName(i).quoted()
-	   << T(" axis=") ;
-      if (plotter->isSharedField(i))
-	text << plotter->getSharedFieldName(i).quoted();
-      else
-	text << a->toString().quoted();
-      text << T("/>\n");
-    }
+  {
+    Axis* a=plotter->getFieldAxis(i);
+    text << T("    ")
+         << T("<field")
+         << T(" name=") << plotter->getFieldName(i).quoted()
+         << T(" axis=") ;
+    if (plotter->isSharedField(i))
+      text << plotter->getSharedFieldName(i).quoted();
+    else
+      text << a->toString().quoted();
+    text << T("/>\n");
+  }
   text << T("  </fields>\n");
   text << T("  <layers>\n");
   for (int i=0; i<plotter->numLayers(); i++)
@@ -2411,6 +714,7 @@ String Layer::toString(int exportid, int decimals,
 /*=======================================================================*
 
                              Plotting Dialogs
+X Axis | Y axis | Audio | Export | Layer1 | Layer2 | Layer...
 
  *=======================================================================*/
 
@@ -2578,7 +882,7 @@ void ExportPointsDialog::resized()
 
 void ExportPointsDialog::exportPlot() 
 {
-  PlotterWindow* p=(PlotterWindow*)plotter->getTopLevelComponent();
+  PlotWindow* p=(PlotWindow*)plotter->getTopLevelComponent();
   String text=p->toXmlString();
   int destination=destmenu->getSelectedId();
   if (destination==1) // to new edit window
@@ -2690,7 +994,7 @@ void ExportPointsDialog::comboBoxChanged(ComboBox* cbox)
     }      
 }
 
-void PlotterWindow::openExportDialog ()
+void PlotWindow::openExportDialog ()
 {
   DialogWindow::showModalDialog(T("Export Plot"),
 				new ExportPointsDialog(plotter),
@@ -2837,7 +1141,7 @@ void LayerDialog::changeListenerCallback (juce::ChangeBroadcaster* source)
   plotter->redrawPlotView();
 }
 
-void PlotterWindow::openLayerDialog ()
+void PlotWindow::openLayerDialog ()
 {
   DialogWindow::showModalDialog(T("Edit Layer"),
 				new LayerDialog(plotter),
@@ -3177,11 +1481,11 @@ void AxisDialog::textEditorReturnKeyPressed (TextEditor& editor)
   if (redraw)
     {
       axisview->repaint();
-      plotter->plotview->resizeForDrawing();
+      plotter->resizeForSpread();
     }
 }
 
-void PlotterWindow::openAxisDialog (int orient)
+void PlotWindow::openAxisDialog (int orient)
 {
   DialogWindow::showModalDialog(T("Edit Axis"),
 				new AxisDialog(plotter, orient),
@@ -3561,7 +1865,7 @@ void PlayPlotDialog::playPlot(bool write)
 class PlayPlotWindow : public DocumentWindow 
 {
 public:
-  PlayPlotWindow(PlotterWindow* win)
+  PlayPlotWindow(PlotWindow* win)
     : DocumentWindow(String::empty, Colour(0xffe5e5e5),
 		     DocumentWindow::closeButton, true)
   {
@@ -3582,7 +1886,7 @@ public:
   }
 };
 
-void PlotterWindow::openPlayPlotDialog ()
+void PlotWindow::openPlayPlotDialog ()
 {
   new PlayPlotWindow(this);
   /*
@@ -3628,8 +1932,8 @@ EditPointsDialog::EditPointsDialog(Plotter* plotr)
   plotter=plotr;
   StringArray fields;
   plotter->getFieldNames(fields);
-  LayerPoint* p=(plotter->getPlotView()->numSelected()==1)
-    ? plotter->getPlotView()->getSelected(0) : NULL ;
+  LayerPoint* p=(plotter->numSelected()==1)
+    ? plotter->getSelected(0) : NULL ;
   for (int i=0; i<fields.size(); i++)
     {
       labels.add(new Label(String::empty, fields[i]));
@@ -3654,11 +1958,11 @@ void EditPointsDialog::resized()
   int x1=margin, x2=margin+labelwidth+margin;
   int y=margin;
   for(int i=0; i<labels.size(); i++)
-    {
-      labels[i]->setBounds(x1, y, labelwidth, lineheight);
-      editors[i]->setBounds(x2, y, editorwidth, lineheight);
-      y += lineheight + margin;
-    }
+  {
+    labels[i]->setBounds(x1, y, labelwidth, lineheight);
+    editors[i]->setBounds(x2, y, editorwidth, lineheight);
+    y += lineheight + margin;
+  }
 }
 
 void EditPointsDialog::labelTextChanged (Label *label)
@@ -3670,17 +1974,17 @@ void EditPointsDialog::labelTextChanged (Label *label)
   String text=label->getText().trim();
   if ((index>=0) && text.isNotEmpty() &&
       text.containsOnly(T("0123456789.-"))) 
-    {
-      double value=text.getDoubleValue();
-      // FIXME: undo/redo
-      for (int i=0;i<plotter->plotview->numSelected(); i++)
-	plotter->plotview->getSelected(i)->setVal(index,value);
-      if (plotter->getFocusLayer()->isVisibleField(index))
-	plotter->plotview->repaintFocusPlot();
-    }
+  {
+    double value=text.getDoubleValue();
+    // FIXME: undo/redo
+    for (int i=0;i<plotter->numSelected(); i++)
+      plotter->getSelected(i)->setVal(index,value);
+    if (plotter->getFocusLayer()->isVisibleField(index))
+      plotter->redrawPlotView();
+  }
 }
 
-void PlotterWindow::openEditPointsDialog ()
+void PlotWindow::openEditPointsDialog ()
 {
   DialogWindow::showModalDialog(T("Edit Points"), 
 				new EditPointsDialog(plotter),
@@ -3841,7 +2145,7 @@ void RescalePointsDialog::buttonClicked (Button* button)
   if (command==CommandIDs::PlotterRescalePoints)
     {
       double low,high;
-      plotter->plotview->getSelectionRange(orient,low,high);
+      plotter->getSelectionRange(orient,low,high);
       editor1->setText(String(low));
       editor2->setText(String(high));
     }
@@ -3850,8 +2154,6 @@ void RescalePointsDialog::buttonClicked (Button* button)
       editor1->setText(T("0.0"));
     }
 }
-
-
 
 void RescalePointsDialog::textEditorReturnKeyPressed (TextEditor& editor)
 {
@@ -3863,9 +2165,9 @@ void RescalePointsDialog::textEditorReturnKeyPressed (TextEditor& editor)
   if (command==CommandIDs::PlotterShiftPoints)
     {
       if (isVertical())
-	plotter->plotview->shiftSelection(Plotter::vertical, num1);
+	plotter->shiftSelection(Plotter::vertical, num1);
       else
-	plotter->plotview->shiftSelection(Plotter::horizontal, num1);
+	plotter->shiftSelection(Plotter::horizontal, num1);
     }
   else if (command==CommandIDs::PlotterRescalePoints)
     {
@@ -3874,15 +2176,13 @@ void RescalePointsDialog::textEditorReturnKeyPressed (TextEditor& editor)
 	return;
       num2=str.getFloatValue();
       if (isVertical())
-	plotter->plotview->rescaleSelection(Plotter::vertical, 
-					    num1, num2);
+	plotter->rescaleSelection(Plotter::vertical, num1, num2);
       else
-	plotter->plotview->rescaleSelection(Plotter::horizontal, 
-					    num1, num2);
+	plotter->rescaleSelection(Plotter::horizontal, num1, num2);
     }   
 }
 
-void PlotterWindow::openRescalePointsDialog (int cmd)
+void PlotWindow::openRescalePointsDialog (int cmd)
 {
   String title=String::empty;
   if (cmd==CommandIDs::PlotterRescalePoints)

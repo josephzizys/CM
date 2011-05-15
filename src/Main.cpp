@@ -19,7 +19,7 @@
 #include "Audio.h"
 #include "Syntax.h"
 #include "CodeEditor.h"
-#include "Plot.h"
+#include "Plotter.h"
 #ifdef LIBLO
 #include "Osc.h"
 #endif
@@ -173,7 +173,7 @@ int Grace::getNumUnsavedWindows()
     }
     else if (WindowTypes::isWindowType(w, WindowTypes::PlotWindow))
     {
-      PlotterWindow* p=(PlotterWindow*)w;
+      PlotWindow* p=(PlotWindow*)w;
       if (p->hasUnsavedChanges())
         n++;
     }
