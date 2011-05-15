@@ -19,6 +19,70 @@
  
 juce_ImplementSingleton(AudioManager)
 
+
+class AudioFilePlayer : public Component,
+                        public FilenameComponentListener,
+                        public ButtonListener,
+                        public SliderListener,
+                        public ChangeListener,
+                        public AudioIODeviceCallback,
+                        public Transport::Listener
+{ 
+  class WaveformComp; // taken from JUCE Demo, added zoomFactor.
+  class PlaybackCursor; // playback cursor
+
+  FilenameComponent* fileChooser;
+  TextButton* audioSettingsButton;
+  Slider* zoomSlider;
+  Label* minTime;
+  Label* maxTime;
+
+  Transport* transport;
+  
+  // this wraps the actual audio device
+  AudioDeviceManager audioDeviceManager;
+  // this allows an audio source to be streamed to the IO device
+  AudioSourcePlayer audioSourcePlayer;
+  // this controls the playback of a positionable audio stream, handling the
+  // starting/stopping and sample-rate conversion
+  AudioTransportSource transportSource;
+  // this is the actual stream that's going to read from the audio file.
+  AudioFormatReaderSource* currentAudioFileSource;
+  File currentFile;
+  double fileduration;
+public:
+  AudioFilePlayer();
+  ~AudioFilePlayer();
+  AudioFormatManager formatManager;
+  WaveformComp* waveform;
+  PlaybackCursor* playbackCursor;
+  double getFileDuration();
+  TextButton* getSettings();
+  void setFileToPlay(File file, bool play=false);
+  void stop();
+  void pause();
+  void play(double pos);
+  void positionChanged(double position, bool isPlaying);
+  void rewind();
+  AudioTransportSource& getTransportSource();
+  void audioDeviceIOCallback (const float** inputChannelData,
+                              int totalNumInputChannels,
+                              float** outputChannelData,
+                              int totalNumOutputChannels,
+                              int numSamples);
+  void audioDeviceAboutToStart (AudioIODevice* device);
+  void audioDeviceStopped();
+  void paint (Graphics& g){}
+  void resized();
+  void updateButtons();
+  void buttonClicked (Button* button);
+  void sliderValueChanged (Slider* slider);
+  //  void mouseWheelMove (const MouseEvent& e, float wheelIncrementX, float wheelIncrementY);
+  void filenameComponentChanged (FilenameComponent*);
+  void changeListenerCallback (ChangeBroadcaster* source);
+  bool keyPressed (const KeyPress& key);
+};
+
 AudioManager::AudioManager()
   : audioready (false),
     audiofileplayer (NULL)
@@ -319,38 +383,6 @@ public:
                              Audio Transport Widget
  *=======================================================================*/
 
-class AudioFilePlayer::AudioTransport : public Transport
-{
-public:
-  AudioFilePlayer* player;
-  void play(double position)
-  {
-    player->getTransportSource().setPosition(player->getFileDuration()*position);
-    player->getTransportSource().start();
-    player->getSettings()->setEnabled(false);
-  }
-  
-  void pause(void)
-  {
-    player->getTransportSource().stop();
-    player->getSettings()->setEnabled(true);
-  }
-  
-  void positionChanged(double position, bool isPlaying)
-  {
-    //'position' is normalized from 0 to 1.0 
-    //if (isPlaying)
-    double pos=player->getFileDuration()*position;
-    player->getTransportSource().setPosition(player->getFileDuration()*position);
-    player->playbackCursor->setPosition(pos);
-    if(!player->getTransportSource().isPlaying() && isPlaying)
-      {
-        player->getTransportSource().start();
-        player->getSettings()->setEnabled(false);
-      }
-  }
-};
-
 AudioFilePlayer::AudioFilePlayer ()
   : 
   fileChooser (0),
@@ -374,9 +406,7 @@ AudioFilePlayer::AudioFilePlayer ()
 				     T("Configure audio settings"));
   addAndMakeVisible (audioSettingsButton);
   audioSettingsButton->addListener(this);
-  transport=new AudioTransport();
-  transport->addAndMakeVisible(this);
-  transport->player=this;
+  addAndMakeVisible(transport=new Transport(*this));
 
  // add labels for seconds display
   Font secsfont (10, Font::plain);
@@ -430,7 +460,7 @@ void AudioFilePlayer::resized()
   fileChooser->setBounds(x, y, w-(m*2), l);
   y=y+l+m;
   // transport has 6 buttons, each 44px centered in window's width
-  transport->setPositions((w/2)-(44*3), y, 44, 24);
+  transport->setTopLeftPosition((w/2)-(44*3), y);
   // transport consists of two lines
   y=y+l+l+m;
   // calculate zoom and setting's button from bottom of window
@@ -441,6 +471,33 @@ void AudioFilePlayer::resized()
   playbackCursor->setBounds(x, y, w-m, (audioSettingsButton->getY()-m)-y);
   minTime->setTopLeftPosition(waveform->getX(), waveform->getY()-minTime->getHeight());
   maxTime->setTopRightPosition(w-m, waveform->getY()-maxTime->getHeight());
+}
+
+void AudioFilePlayer::play(double position)
+{
+  getTransportSource().setPosition(getFileDuration()*position);
+  getTransportSource().start();
+  getSettings()->setEnabled(false);
+}
+
+void AudioFilePlayer::pause(void)
+{
+  getTransportSource().stop();
+  getSettings()->setEnabled(true);
+}
+
+void AudioFilePlayer::positionChanged(double position, bool isPlaying)
+{
+  //'position' is normalized from 0 to 1.0 
+  //if (isPlaying)
+  double pos=getFileDuration()*position;
+  getTransportSource().setPosition(getFileDuration()*position);
+  playbackCursor->setPosition(pos);
+  if(!getTransportSource().isPlaying() && isPlaying)
+  {
+    getTransportSource().start();
+    getSettings()->setEnabled(false);
+  }
 }
 
 AudioTransportSource& AudioFilePlayer::getTransportSource()
@@ -456,16 +513,12 @@ void AudioFilePlayer::setFileToPlay(File file, bool play)
   // change if its adding the same file
   fileChooser->setCurrentFile(File::nonexistent, false, false);
   fileChooser->setCurrentFile(file, true, true);
-  //  if (play)
-  //    {
-  //      transport->pushButton(Transport::PlayFromBeginningButton);
-  //    }
 }
 
 void AudioFilePlayer::stop()
 {
   if (getTransportSource().isPlaying())
-    transport->pushButton(Transport::PlayPauseButton);
+    transport->setPausing();
 }
 
 double AudioFilePlayer::getFileDuration()
@@ -484,7 +537,8 @@ void AudioFilePlayer::filenameComponentChanged (FilenameComponent*)
   File audioFile(fileChooser->getCurrentFile());
   
   // stop and unload the previous file source and delete it..
-  transport->pause();
+  transport->setPausing();
+  transport->setPlaybackPosition(0);
   transportSource.setSource(0);
   deleteAndZero(currentAudioFileSource);
   
@@ -538,7 +592,7 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
   else if(!wasStreamFinished && transportSource.hasStreamFinished())
   {
     const MessageManagerLock mmLock;
-    transport->pushButton(Transport::PlayPauseButton);
+    transport->setPausing();
     wasStreamFinished = !wasStreamFinished;
     playbackCursor->setPosition(-1);
   }
@@ -549,9 +603,9 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
       {
         const MessageManagerLock mmLock;
         double pos=transportSource.getCurrentPosition()/getFileDuration();
-        transport->setSliderPosition(pos, false);
+        //transport->setPlaybackPosition(pos, false);
         // update the transport's position slider without triggering its action
-        transport->sendMessage(Transport::SetSliderPosition, pos, 0, false);
+        transport->sendMessage(Transport::SetPlaybackPosition, pos, 0, false);
         playbackCursor->setPosition(pos);
       }
     counter=0;
@@ -598,23 +652,26 @@ bool AudioFilePlayer::keyPressed (const KeyPress& key)
   bool handled=false;
   if (key == KeyPress(KeyPress::spaceKey))
   {
-    transport->pushButton(Transport::PlayPauseButton);
+    if (transport->isPlaying())
+      transport->setPausing();
+    else
+      transport->setPlaying();
     handled=true;
   }
   else if ((key == KeyPress(KeyPress::returnKey) ||
             (key == KeyPress(KeyPress::homeKey))))
   {
-    transport->pushButton(Transport::RewindButton);
+    transport->setPlaybackPosition(0);
     handled=true;
   }
   else if (key == KeyPress(KeyPress::rightKey))
   {
-    transport->pushButton(Transport::ForwardButton);
+    transport->incrementPlaybackPosition(0.1);
     handled=true;
   }
   else if (key == KeyPress(KeyPress::leftKey))
   {
-    transport->pushButton(Transport::BackButton);
+    transport->incrementPlaybackPosition(-0.1);
     handled=true;
   }
   else if (key == KeyPress('M', ModifierKeys::commandModifier, T('M')))

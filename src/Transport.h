@@ -1,77 +1,132 @@
+/*=======================================================================*
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the Lisp Lesser Gnu Public License. The text
+  of this agreement is available at http://www.cliki.net/LLGPL
+ *=======================================================================*/
+
 #ifndef Transport_h
 #define Transport_h
 
 #include "juce.h"
 
-class Transport : public AsyncUpdater,
+/** A component for controlling audio/midi playback. Based on Andrew
+    Burnson's original Transport class in Chorale Composer I. A
+    Tranport provides 5 buttons: Rewind, Back, Play/Pause, Forward,
+    GoToEnd and a slider for scrolling through the playback
+    sequence. To create a Transport just pass it a Transport::Listener
+    with the required play() pause() and positionChanged() callbacks
+    implemented. These methods will be called whenever the user clicks
+    on the Transport's components.  The Transport can also be trigger
+    procedurally from other objects running in the main message thread
+    by calling the underlying setPlaying(), setPausing() and
+    setPlaybackPosition() methods.  To trigger transport actions from other
+    threads use the sendMessage() method. **/
+
+class Transport : public Component, 
+  public AsyncUpdater,
   public ButtonListener,
   public SliderListener
-
 {
  public:
 
-  enum 
+  /** Transport button ids. **/
+
+  enum TransportButtonIds
   {
-    RewindButton=1, BackButton, PlayPauseButton, ForwardButton, GoToEndButton,
-    PlayButton, StopButton, SliderButton,
-    SetPlaying, SetPausing, SetSliderPosition
+    RewindButton=1, BackButton, PlayPauseButton, ForwardButton, GoToEndButton, SliderButton
   };
 
-  //The following need to be overridden in a subclass.
+  /** Transport message ids. Use these with sendMessage to control the
+      transport from other threads.  **/
 
-  virtual void play(double position) = 0;
-  virtual void pause(void) = 0;
-  virtual void positionChanged(double position, bool isPlaying) = 0;
-  
- Transport()
-   : buttonRewind(0), buttonBack(0), buttonPlayPause(0), buttonForward(0), buttonGoToEnd(0),
-    sliderPosition(0), playing(false)
+  enum TransportMessageIds
   {
-    buttonColor = Colour(90,90,120);
-    toggleColor = Colour(60,60,180);
-	
-    int connectLeft = Button::ConnectedOnLeft;
-    int connectBoth = Button::ConnectedOnLeft | Button::ConnectedOnRight;
-    int connectRight = Button::ConnectedOnRight;
-      
-    DrawableButton::ButtonStyle buttonStyle = DrawableButton::ImageOnButtonBackground;
-      
-    buttonRewind = new DrawableButton(String("Rewind"), buttonStyle);
-    buttonRewind->setBackgroundColours(buttonColor, toggleColor);
-    buttonRewind->setConnectedEdges(connectRight);
-    drawRewind(buttonRewind);
-    buttonRewind->addListener(this);
-	
-    buttonBack = new DrawableButton(String("Back"), buttonStyle);
-    buttonBack->setBackgroundColours(buttonColor, toggleColor);
-    buttonBack->setConnectedEdges(connectBoth);
-    drawBack(buttonBack);
-    buttonBack->addListener(this);
-	
-    buttonPlayPause = new DrawableButton(String("PlayPause"), buttonStyle);
-    buttonPlayPause->setBackgroundColours(buttonColor, toggleColor);
-    buttonPlayPause->setConnectedEdges(connectBoth);
-    drawPlay(buttonPlayPause);
-    buttonPlayPause->addListener(this);
-	
-    buttonForward = new DrawableButton(String("Forward"), buttonStyle);
-    buttonForward->setBackgroundColours(buttonColor, toggleColor);
-    buttonForward->setConnectedEdges(connectBoth);
-    drawForward(buttonForward);
-    buttonForward->addListener(this);
+    SetPlaying, SetPausing, SetPlaybackPosition
+  };
 
-    buttonGoToEnd = new DrawableButton(String("GoToEnd"), buttonStyle);
-    buttonGoToEnd->setBackgroundColours(buttonColor, toggleColor);
-    buttonGoToEnd->setConnectedEdges(connectLeft);
-    drawGoToEnd(buttonGoToEnd);
-    buttonGoToEnd->addListener(this);
+  /** A class for receiving callbacks from a Transport. **/
+
+  class Listener
+  {
+  public:
+
+    /** Called when the user presses the transport's Play button. The
+        playback position is a normalized value 0.0 to 1.0. **/
+
+    virtual void play(double position) = 0;
+
+    /** Called when the user presses the transport's Pause button. **/
+
+    virtual void pause(void) = 0;
+
+    /** Called when the user moves the transport's slider button. The
+        playback position is a normalized value 0.0 to 1.0 and
+        isPlaying is true if the transport is currently marked as
+        playing. **/
+
+    virtual void positionChanged(double position, bool isPlaying) = 0;
+  };
+  
+ Transport (Listener& transportListener)
+   : listener(transportListener),
+    buttonRewind(0),
+    buttonBack(0),
+    buttonPlayPause(0),
+    buttonForward(0),
+    buttonGoToEnd(0),
+    sliderPosition(0),
+    buttonWidth(44),
+    buttonHeight(24),
+    buttonColor (Colour(90,90,120)),
+    toggleColor (Colour(60,60,180)),
+    playing(false)
+    {
+      int connectLeft = Button::ConnectedOnLeft;
+      int connectBoth = Button::ConnectedOnLeft | Button::ConnectedOnRight;
+      int connectRight = Button::ConnectedOnRight;     
+      DrawableButton::ButtonStyle buttonStyle = DrawableButton::ImageOnButtonBackground;
+      
+      addAndMakeVisible(buttonRewind = new DrawableButton(String("Rewind"), buttonStyle));
+      buttonRewind->setBackgroundColours(buttonColor, toggleColor);
+      buttonRewind->setConnectedEdges(connectRight);
+      drawRewind(buttonRewind);
+      buttonRewind->addListener(this);
 	
-    sliderPosition = new Slider(String("Position"));
-    sliderPosition->setSliderStyle(Slider::LinearHorizontal);
-    sliderPosition->setTextBoxStyle(Slider::NoTextBox, false, 0, 0);
-    sliderPosition->setColour(Slider::thumbColourId,buttonColor);
-    sliderPosition->addListener(this);
-  }
+      addAndMakeVisible(buttonBack = new DrawableButton(String("Back"), buttonStyle));
+      buttonBack->setBackgroundColours(buttonColor, toggleColor);
+      buttonBack->setConnectedEdges(connectBoth);
+      drawBack(buttonBack);
+      buttonBack->addListener(this);
+	
+      addAndMakeVisible(buttonPlayPause = new DrawableButton(String("PlayPause"), buttonStyle));
+      buttonPlayPause->setBackgroundColours(buttonColor, toggleColor);
+      buttonPlayPause->setConnectedEdges(connectBoth);
+      drawPlay(buttonPlayPause);
+      buttonPlayPause->addListener(this);
+	
+      addAndMakeVisible(buttonForward = new DrawableButton(String("Forward"), buttonStyle));
+      buttonForward->setBackgroundColours(buttonColor, toggleColor);
+      buttonForward->setConnectedEdges(connectBoth);
+      drawForward(buttonForward);
+      buttonForward->addListener(this);
+
+      addAndMakeVisible(buttonGoToEnd = new DrawableButton(String("GoToEnd"), buttonStyle));
+      buttonGoToEnd->setBackgroundColours(buttonColor, toggleColor);
+      buttonGoToEnd->setConnectedEdges(connectLeft);
+      drawGoToEnd(buttonGoToEnd);
+      buttonGoToEnd->addListener(this);
+	
+      addAndMakeVisible(sliderPosition = new Slider(String("Position")));
+      sliderPosition->setSliderStyle(Slider::LinearHorizontal);
+      sliderPosition->setTextBoxStyle(Slider::NoTextBox, false, 0, 0);
+      sliderPosition->setColour(Slider::thumbColourId,buttonColor);
+      sliderPosition->setRange(0, 1.0);
+      sliderPosition->addListener(this);
+      setVisible(true);
+      // autosize the transport to width of 5 buttons and height of 2
+      // lines with 4px margins all around
+      setSize((buttonWidth*5)+8, (buttonHeight*2)+8);
+    }
   
   ~Transport()
   {
@@ -83,86 +138,43 @@ class Transport : public AsyncUpdater,
     delete sliderPosition;
   }
 
-  /** push tranport buttons using code. this method is not thread
-      safe, use Transport::sendMessage() for that.
-   **/
-
-  void pushButton(int buttonId, double data=0.0)
-  {
-    switch (buttonId)
-    {
-    case RewindButton :
-      buttonRewind->triggerClick();
-      break;
-    case BackButton :
-      buttonBack->triggerClick();
-      break;
-    case PlayPauseButton : // toggles PlayPauseButton
-      buttonPlayPause->triggerClick();
-      break;
-    case PlayButton :      // sets PlayPauseButton to play
-      setPlaying(true);
-      break;
-    case StopButton :      // sets PlayPause Button to pause
-      setPausing(true);
-      break;
-    case ForwardButton :
-      buttonForward->triggerClick();
-      break;
-    case GoToEndButton :
-      buttonGoToEnd->triggerClick();
-      break;
-    case SetSliderPosition :
-      setSliderPosition(data,true);
-      break;
-    default:
-      break;
-    }
-  }
-
-  /** Posts an asynchronous message to control the transport from
-      another thread. Typ is one of the button enums defined at the
-      top of this file. The rest af the args are any data you need to
-      pass. **/ 
-
-  void sendMessage(int typ, double d=0.0, int i=0, bool b=false)
-  {
-    ScopedLock mylock(messages.getLock());
-    messages.add(new TransportMessage(typ, d, i, b));
-    triggerAsyncUpdate();
-  }
-
-  /** Returns true if the transport thinks it is playing otherwiswe
-      false. This method is not thread safe. **/
+ /** Returns true if the transport' state is set to playing otherwise
+     false. This method is not thread safe. **/
 
   bool isPlaying()
   {
     return playing;
   }
 
-  /** Sets the position of the slider on a scale 0.0 to 1.0. If
-      triggerAction is true then the positionChanged() method will be
-      called (via setValue) with the position and a boolean flag
-      indicating if the transport is currently playing or not. This
-      method is not thread safe, use sendMessage() for that. **/
+  /** Sets the playback position as a normalized value 0.0 to 1.0. If
+      triggerAction is true then the positionChanged() callback will
+      be triggred. This method is not thread safe, use sendMessage()
+      for that. **/
 
-  void setSliderPosition(double position, bool triggerAction=true)
+  void setPlaybackPosition(double position, bool triggerAction=true)
   {
+    if (position<0.0) position=0.0;
+    else if (position>1.0) position=1.0;
     sliderPosition->setValue(position, triggerAction, false);
   }
 
-  /** Gets the position of the slider on a scale 0.0 to 1.0. this is
-      not thread safe **/
+  void incrementPlaybackPosition(double delta, bool triggerAction=true)
+  {
+    setPlaybackPosition(sliderPosition->getValue()+delta);
+  }
 
-  double getPosition(void)
+  /** Returns the position of the slider on a normalized scale 0.0 to
+      1.0. This function is not thread safe. **/
+
+  double getPlaybackPosition(void)
   {
     return sliderPosition->getValue();
   }
 
-  /** Marks transport as playing, displays the "pause" icon for the
-      user and calls the play() method if triggerAction is true and
-      the transport is not currently playing. This method is not
-      thread safe, use sendMessage() for that. **/
+  /** Marks transport as playing, flips to the "pause" icon for the
+      user and calls the play() method if triggerAction is true (and
+      the transport is not already playing). This method is not thread
+      safe, use sendMessage() for that. **/
 
   void setPlaying(bool triggerAction=true)
   {
@@ -173,13 +185,13 @@ class Transport : public AsyncUpdater,
     if (triggerAction && toggled)
     {
       //      std::cout << "triggering play...\n";
-      play(getPosition());
+      listener.play(getPlaybackPosition());
     }
   }
   
   /** Marks transport as pausing, displays the "play" icon for the
-      user and calls the pause() method if triggerAction is true and
-      the transport is currently playing. This method is not thread
+      user and calls the pause() method if triggerAction is true (and
+      the transport is currently playing). This method is not thread
       safe, use sendMessage() for that. **/
 
   void setPausing(bool triggerAction=true)
@@ -191,47 +203,38 @@ class Transport : public AsyncUpdater,
     if (triggerAction && toggled)
     {
       //      std::cout << "triggering pause...\n";
-      pause();
+      listener.pause();
     }
   }
 
-  /** Positions the transport buttons. **/
+  /** Implements thread-safe transport control. id
+      is a message id, one of the button enums defined at the top of
+      this file. The rest af the args are any data you need to
+      pass. **/ 
 
-  void setPositions(int x, int y, int buttonWidth, int height)
+  void sendMessage(int id, double d=0.0, int i=0, bool b=false)
   {
-    int buttonLeft = x;
-    buttonRewind->setBounds(buttonLeft, y, buttonWidth, height);      
-    buttonBack->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);      
-    buttonPlayPause->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);
-    buttonForward->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);
-    buttonGoToEnd->setBounds(buttonLeft += buttonWidth, y, buttonWidth, height);    
-    sliderPosition->setBounds(x, y + height, (buttonLeft += buttonWidth) - x, height);
-    sliderPosition->setRange(0, 1.0);
-  }
-  
-  void addAndMakeVisible(Component* parent)
-  {
-    parent->addAndMakeVisible(buttonRewind);
-    parent->addAndMakeVisible(buttonBack);
-    parent->addAndMakeVisible(buttonPlayPause);
-    parent->addAndMakeVisible(buttonForward);
-    parent->addAndMakeVisible(buttonGoToEnd);
-    parent->addAndMakeVisible(sliderPosition);
+    ScopedLock mylock(messages.getLock());
+    messages.add(new TransportMessage(id, d, i, b));
+    triggerAsyncUpdate();
   }
 
  private:
 
   bool playing;
+  Listener& listener; 
   DrawableButton* buttonPlayPause;
   DrawableButton* buttonRewind;
   DrawableButton* buttonBack;
   DrawableButton* buttonForward;
   DrawableButton* buttonGoToEnd;
   Slider*         sliderPosition;
+  int buttonWidth;
+  int buttonHeight;
   Colour buttonColor;
   Colour toggleColor;
 
-  /** Support for async messaging from other threads **/
+  /** Internal support for messaging from other threads **/
 
   class TransportMessage
   {
@@ -240,11 +243,8 @@ class Transport : public AsyncUpdater,
     double double1;
     int int1;
     bool bool1;
-    TransportMessage (int typ, double d1, int i1, bool b1)
-      : type(typ), double1 (d1), int1 (i1), bool1 (b1)
-    {} 
-    ~TransportMessage()
-    {}
+    TransportMessage (int typ, double d1, int i1, bool b1) : type(typ), double1 (d1), int1 (i1), bool1 (b1) {} 
+    ~TransportMessage() {}
   };
 
   OwnedArray<TransportMessage, CriticalSection> messages;
@@ -266,9 +266,9 @@ class Transport : public AsyncUpdater,
         //std::cout << "TransportMessage: SetPlaying\n";
         setPlaying(msg->bool1); // false means dont trigger action
         break;
-      case SetSliderPosition:
+      case SetPlaybackPosition:
         //std::cout << "TransportMessage: SetPosition pos=" << msg->double1 << "\n";
-        setSliderPosition(msg->double1, msg->bool1);
+        setPlaybackPosition(msg->double1, msg->bool1);
         break;
       default:
         break;
@@ -278,11 +278,30 @@ class Transport : public AsyncUpdater,
       messages.clear();
   }
 
+  /** Centers the transport controls within the horizontal and
+      vertical area of the Transport. **/
+
+  void resized()
+  {
+    int viewWidth=getWidth();
+    int viewHeight=getHeight();
+    int buttonLeft=(viewWidth/2)-(buttonWidth*2.5);  // total of 5 buttons
+    int buttonTop=(viewHeight/2)-buttonHeight;
+    buttonRewind->setBounds(buttonLeft, buttonTop, buttonWidth, buttonHeight);
+    buttonBack->setBounds(buttonLeft + buttonWidth, buttonTop, buttonWidth, buttonHeight);      
+    buttonPlayPause->setBounds(buttonLeft + (buttonWidth*2), buttonTop, buttonWidth, buttonHeight);
+    buttonForward->setBounds(buttonLeft + (buttonWidth*3), buttonTop, buttonWidth, buttonHeight);
+    buttonGoToEnd->setBounds(buttonLeft + (buttonWidth*4), buttonTop, buttonWidth, buttonHeight);    
+    sliderPosition->setBounds(buttonLeft, buttonTop + buttonHeight, (buttonWidth*5), buttonHeight);
+  }
+
+  /** Internal function implements button clicked actions. **/
+
   virtual void buttonClicked(Button* button)
   {
     static bool isShowingPlayNotPause = true;
     
-    if(button->getName() == String("PlayPause"))
+    if(button == buttonPlayPause)
     {
       //Toggle the play/pause button.
       isShowingPlayNotPause = !isShowingPlayNotPause;
@@ -296,34 +315,35 @@ class Transport : public AsyncUpdater,
         setPlaying();
       }
     }
-    else if(button->getName() == String("Rewind"))
+    else if(button == buttonRewind)
     {
       sliderPosition->setValue(0);
     }
-    else if(button->getName() == String("Back"))
+    else if(button == buttonBack)
     {
       sliderPosition->setValue(sliderPosition->getValue() - 0.10);
     }
-    else if(button->getName() == String("Forward"))
+    else if(button == buttonForward)
     {
       sliderPosition->setValue(sliderPosition->getValue() + 0.10);
     }
-    else if(button->getName() == String("GoToEnd"))
+    else if(button == buttonGoToEnd)
     {
       sliderPosition->setValue(1);
     }
   }
   
+  /** Internal function implements slider moved actions by calling the
+      source's postionChanged() method. **/
+
   virtual void sliderValueChanged(Slider *slider)
   {
-    //'percentage' will be a value from 0 to 1.0, so you just have to
-    //multiply it by the length of whatever you have to get the sample.
-    double percentage = slider->getValue();
-    
-    if(slider->getName() == String("Position"))
-      positionChanged(percentage, isPlaying());
+    if (slider == sliderPosition)
+      listener.positionChanged(sliderPosition->getValue(), isPlaying());
   }
  
+  /** Internal button drawing. **/
+
   void drawRewind(DrawableButton* b)
   {
     DrawablePath imageRewind;
@@ -335,6 +355,8 @@ class Transport : public AsyncUpdater,
     imageRewind.setFill(ft);
     b->setImages(&imageRewind);
   }
+
+  /** Internal button drawing. **/
 
   void drawBack(DrawableButton* b)
   {
@@ -348,6 +370,8 @@ class Transport : public AsyncUpdater,
     b->setImages(&imageBack);
   }
   
+  /** Internal button drawing. **/
+
   void drawPlay(DrawableButton* b)
   {
     DrawablePath imagePlay;
@@ -359,6 +383,8 @@ class Transport : public AsyncUpdater,
     b->setImages(&imagePlay);
   }
   
+  /** Internal button drawing. **/
+
   void drawPause(DrawableButton* b)
   {
     DrawablePath imagePause;
@@ -371,6 +397,8 @@ class Transport : public AsyncUpdater,
     b->setImages(&imagePause);
   }
   
+  /** Internal button drawing. **/
+
   void drawForward(DrawableButton* b)
   {
     DrawablePath imageForward;
@@ -383,6 +411,8 @@ class Transport : public AsyncUpdater,
     b->setImages(&imageForward);
   }
     
+  /** Internal button drawing. **/
+
   void drawGoToEnd(DrawableButton* b)
   {
     DrawablePath imageGoToEnd;
@@ -395,21 +425,6 @@ class Transport : public AsyncUpdater,
     b->setImages(&imageGoToEnd);
   }
 
-  // unused
-  void drawStop(DrawableButton* b)
-  {
-    DrawablePath imageStop;
-    Path pathStop;
-    pathStop.addRectangle(0,0,1.0f,1.0f);
-    imageStop.setPath(pathStop);
-    {
-      FillType ft (Colours::white);
-      imageStop.setFill(ft);
-    }
-    b->setImages(&imageStop);
-  }
-
 };
-
 
 #endif

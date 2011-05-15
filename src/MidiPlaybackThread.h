@@ -1,5 +1,5 @@
 /*=======================================================================*
-  Copyright (c) 2010 Rick Taube.                                        
+  Copyright (c) 2011 Rick Taube.                                        
   This program is free software; you can redistribute it and/or modify
   it under the terms of the Lisp Lesser Gnu Public License. The text
   of this agreement is available at http://www.cliki.net/LLGPL
@@ -11,162 +11,175 @@
 #include <juce.h>
 #include "Transport.h"
 
-/** a queue of time-sorted midi messages. Your MidiPlaybackSource
-    should use the addMessage() method to add midi messages to the
-    queue for playback. the queue automatically sorts itself and
-    insures that noteOffs are placed before noteOns with the same time
-    stamp. **/
 
-class MidiPlaybackQueue : public OwnedArray<MidiMessage>
-{
- public: 
-
-  MidiPlaybackQueue() {}
-
-  ~MidiPlaybackQueue(){}
-
-  /** queue comparator ensures noteOffs appear before anything else at
-      the same time stamp. this is to avoid note clipping in the case
-      where we have repeated notes with duration = rhythm. in this
-      case you want to make sure that second note's NoteOn message is
-      added to the queue AFTER the first note's NoteOff message, eg:
-
-      time:    0      1       1       2
-      good:    N1(on) N1(off) N2(on)  N2(off)
-      bad:     N1(on) N2(on)  N1(off) N2(off)   **/
-
-  static int compareElements(MidiMessage* a, MidiMessage* b)
-  {
-    if (a->getTimeStamp() < b->getTimeStamp())
-      return -1;
-    else if (b->getTimeStamp() < a->getTimeStamp())
-      return 1;
-    else
-    {
-      if (a->isNoteOff())
-      {
-        if (b->isNoteOff())
-          return 0;
-        else 
-          return -1;
-      }
-      else
-      {
-        if (b->isNoteOff())
-          return 1;
-        else
-          return 0;
-      }
-    }
-  }
-  
-  /** adds a midi message to the playback queue.  message will be
-       inserted in the queue the proper time stamp. message is deleted
-       after its been sent out the midi port. **/
-  
-  void addMessage(MidiMessage* msg)
-  {
-    addSorted(*this, msg);
-  }
-  
-};
-
-/** a class that represents the midi thread's playback position. a
-    position has two fields time (double) and index (int). the user
-    sets the max ranges for both of these fields using the setRange()
-    function and is responsible for incrementing the position's index
-    and time values in the getPlaybackMessages callback.
-**/
-
-class MidiPlaybackPosition
-{
- public:
-  double time;
-  int index;
-  double endtime;  // no more notes after this time
-  int length;      // no more notes at or after this index
-  int srate;       // times per second thread queries for notes from source
-  
- MidiPlaybackPosition()
-   : time (0.0),
-    index (0),
-    endtime (0.0),
-    length (0),
-    srate (100) // by default source it queried evey 10mss
-    {
-    }
-  
-  ~MidiPlaybackPosition()
-  {
-  }
-  
-  /** returns true if the index is equal or greater than the length or
-      the tme is beyond the endtime. **/
-
-  bool isAtEnd()
-  {
-    return ((index >= length) || (time > endtime));
-  }
-  
-  /** sets the maximum note time and total number of events to
-      play **/
-
-  void setRange(double endTime, int numEvents, int sampRate)
-  {
-    endtime=endTime;
-    length=numEvents;
-    srate=sampRate;
-    std::cout << "PlaybackPosition: endtime=" << endtime << ", length=" << length << ", srate=" << srate << "\n";
-  }
-  
-  /** moves the position back to the start **/
-
-  void rewind()
-  {
-    time=0.0;
-    index=0;
-  }
-  
-  /** moves the user's source position (index) to a new position **/
-  void setSourcePosition(int pos)
-  {
-    index=pos;
-  }
-  
-  void moveTo(double nextTime, int nextIndex)
-  {
-    time = nextTime;
-    index = nextIndex;
-  }
-
-};
-
-/** A class that provides midi events for a MidiPlaybackThread to
-    play. The source's getMidiPlaybackMessages callback is passed the
-    playback queue and the current playback position and can add midi
-    messages using the queue's addMessage() methods for the given time
-    and index. future message can also be added to the queue. Callback
-    is responsible for incrementing the position's time and
-    (optionally) index for the next call. the callback will not be
-    called once the position is past its range. **/
-
-class MidiPlaybackSource
-{
- public:
-  virtual void getMidiPlaybackMessages(MidiPlaybackQueue& queue, MidiPlaybackPosition& position) = 0;
-};
-
-/** A thread that plays midi messages in real time out the midi
-    port. calls the midi source's getMidiPlaybackMessages method to
-    add playback messages. the thread will send position updates to a
-    transport if one is provided.  **/
+/** A thread that plays midi messages. Calls its MidiMessageSource
+    repeatedly to fill a playback queue and the sends the queued
+    messages to a MidiOut port at the appropriate time. **/
 
 class MidiPlaybackThread : public Thread
 {
 
+ public:
+
+/** The PlaybackPosition maintains the thread's playback time and
+    index. The PlaybackPosition's time is managed by the thread but
+    the MidiMessageSource is responsible for incrementing the playback
+    index if it wants to use it. Playback stops once the position's
+    time is greater than its endtime or the index is equal or greater
+    than its length. Use setPlaybackLimits() to establish these
+    limits. **/
+
+  class PlaybackPosition
+  {
+
+  public:
+
+    double time;
+    int index;
+    double endtime;  // no more source callbacks when time > endtime
+    int length;      // no more source callbacks when index >= length
+    int srate;       // times per second thread queries for notes from source
+  
+  PlaybackPosition()
+    : time (0.0),
+      index (0),
+      endtime (0.0),
+      length (0),
+      srate (100) // by default source callback every 10ms
+      {
+      }
+  
+    ~PlaybackPosition()
+    {
+    }
+  
+    /** Returns true if position's index is equal or greater than its
+        length or its tme is greater than its endtime. **/
+
+    bool isAtEnd()
+    {
+      return ((index >= length) || (time > endtime));
+    }
+  
+    /** Sets the maximum midinote time and the total number of events to
+        play and optionally the number of times per second the source is
+        called. **/
+
+    void setRange(double endTime, int numEvents, int sampRate)
+    {
+      endtime=endTime;
+      length=numEvents;
+      srate=sampRate;
+      std::cout << "PlaybackPosition: endtime=" << endtime << ", length=" << length << ", srate=" << srate << "\n";
+    }
+  
+    /** Resets the position back to its start values **/
+
+    void rewind()
+    {
+      time=0.0;
+      index=0;
+    }
+  
+    /** Moves the position's source index to a new value. Note that this
+        index is not used by the thread at all, its only useful to the
+        caller.  The caller is responsible for incrementing the index
+        during the callback. **/
+
+    void setSourcePosition(int pos)
+    {
+      index=pos;
+    }
+  
+    void moveTo(double nextTime, int nextIndex)
+    {
+      time = nextTime;
+      index = nextIndex;
+    }
+
+  };
+
+  /** A queue of time-sorted midi messages that the MidiMessageSource
+       adds to using addMessage(). The queue automatically sorts
+       itself and insures that noteOffs are placed before noteOns with
+       the same time stamp. Note that once you add a message to this
+       queue you no longer own it and the message will get deleteed
+       automtatically once its sent out the MidiOut port. **/
+
+  class MidiMessageQueue : public OwnedArray<MidiMessage>
+  {
+
+  public:
+
+     MidiMessageQueue() {}
+
+    ~MidiMessageQueue(){}
+
+   /** Adds a midi message to the playback queue at the the proper
+       position according to its time stamp and message type. Message
+       is deleted after it has been sent out the midi port. **/
+  
+    void addMessage(MidiMessage* msg)
+    {
+      addSorted(*this, msg);
+    }
+
+    /** Comparator keeps the queue in time sorted order. Puts note
+        offs before anyting else at the same time stamp to stop note
+        clipping, other messages are added at the last possible
+        position for their time. **/
+
+    static int compareElements(MidiMessage* a, MidiMessage* b)
+    {
+      if (a->getTimeStamp() < b->getTimeStamp())
+        return -1;
+      else if (b->getTimeStamp() < a->getTimeStamp())
+        return 1;
+      else
+      {
+        if (a->isNoteOff())
+        {
+          if (b->isNoteOff())
+            return 0;
+          else 
+            return -1;
+        }
+        else
+        {
+          if (b->isNoteOff())
+            return 1;
+          else
+            return 0;
+        }
+      }
+    } 
+  };
+
+  /** A class for receiving callbacks from a MidiPlaybackThread to add
+    midi messages to the thread's midi message queue. **/
+
+  class MidiMessageSource
+  {
+  public:
+    /** Called by the MidiPlaybackThread to add midi messages to the
+        MidiMessageQueue for the PlaybackPosition's current time and
+        index. Use the queue's addMessage() method to add midi
+        messages at or later than the current time. The position's
+        time is automatically incremented by the MidiPlaybackThread
+        but the caller is responsible for incrementing the play index
+        if it is being used. The callback will not be invoked after
+        the position's time or index values exceed the limits
+        established by setRange().
+    **/
+    virtual void addMidiPlaybackMessages(MidiMessageQueue& queue, PlaybackPosition& position) = 0;
+  };
+
+  MidiMessageQueue messages;
+  PlaybackPosition position;
+
  private:
 
-  MidiPlaybackSource& source;
+  MidiMessageSource& source;
   MidiOutput* port;
   Transport* transport;
   CriticalSection pblock;
@@ -177,26 +190,24 @@ class MidiPlaybackThread : public Thread
 
  public:
 
-  MidiPlaybackQueue messages;
+  /** A thread that implements realtime midi playback for a source of
+      midi messages. Midisource is the source that will provide midi
+      messages whenever its addMidiPlaybackMessage() method is
+      called. Midiout is the MIDI device to send MIDI messages to. Trans is
+      an optional transport object. If provided the thread will
+      periodically message the transport during playback to update its
+      position slider. **/
 
-  MidiPlaybackPosition position;
-
-  /** create a midi playback thread. src is the source of midi events
-      that will be polled by getMidiPlaybackMessages. transport is an
-      optional transport object whose state the thread will update if
-      provided. **/
-
- MidiPlaybackThread(MidiPlaybackSource& src, MidiOutput* midiout=0, Transport* trans=0)
-    : Thread(T("Midi Playback Thread")),
+ MidiPlaybackThread(MidiMessageSource& midisource, MidiOutput* midiout=0, Transport* transprt=0)
+   : Thread(T("Midi Playback Thread")),
     paused(true),
     beat(0.0),
     delta(0.01),
     index(0),
     port(midiout),
-    transport (trans),
-    source(src)
-    {
-      
+    transport (transprt),
+    source(midisource)
+    {   
     }
   
   ~MidiPlaybackThread()
@@ -205,11 +216,11 @@ class MidiPlaybackThread : public Thread
     std::cout << "deleted MidiPlaybackThread\n";
   }
 
-  /** sets the playback position's end time and number of events to
-      play.  the getMidiPlaybackMessages callback will not happen
-      after this end time or number has been reached **/
+  /** Sets the playback position's maximum time and the number of
+      events to play. addMidiPlaybackMessages() callback will not be
+      called after either limit has been reached. **/
 
-  void setPlaybackRange(double endtime, int length, double srate=100)
+  void setPlaybackLimits(double endtime, int length, double srate=100)
   {
     ScopedLock mylock(pblock);
     position.setRange(endtime, length, srate);
@@ -233,7 +244,7 @@ class MidiPlaybackThread : public Thread
     messages.clear();
   }
 
-  /** returns true if the thread is currently paused **/
+  /** Returns true if the thread is currently paused. **/
 
   bool isPaused()
   {
@@ -241,16 +252,14 @@ class MidiPlaybackThread : public Thread
     return paused;
   }
 
-  /** returns true if the thread is currently playing **/
+  /** Returns true if the thread is currently playing. **/
 
   bool isPlaying()
   {
     return !isPaused();
   }
 
-  /**  if called with true then pause the thread otherwise start the
-       thread running.  has no effect if the state you specify is the
-       same as the thread's current state.**/
+  /** A wrapper that starts the thread running if it is paused. **/
 
   void play()
   {
@@ -258,11 +267,15 @@ class MidiPlaybackThread : public Thread
       setPaused(false);
   }
 
+  /** A wrapper that pauses the thread if it is running. **/
+
   void pause()
   {
     if (isPlaying())
-    setPaused(true);
+      setPaused(true);
   }
+
+  /** Puts the thread in pause or play mode. **/
 
   void setPaused(bool pause)
   {
@@ -284,17 +297,27 @@ class MidiPlaybackThread : public Thread
 
  private:
 
+  /** the run method for midi playback. Runs at a specified rate per
+      second, each time calling the source's addMidiPlaybackMessages()
+      to get any Midi message to play and then playing the messages
+      for the current time.  Thread can be pasued and resumed using
+      the thread's play() and pause() methods. If a transport is
+      associate with the thread then the transport will be messaged
+      periodically to update its slider position to reflect the
+      current playback time. **/
+
   void run ()
   {
     int transpcounter=0;  // send transport updates at a slower rate than the playback rate
     while (!threadShouldExit())
     {
-      // lock before testing variables other threads can affect
+      // lock thread variables and copy to locals
       pblock.enter();
       bool ispaused=paused;
       bool isatend=position.isAtEnd();
       int  pending=messages.size();
-      double delta = 1.0/position.srate; // amount of time to wait between calls to getMidiPlayBackMessages
+      // delta time to wait before next run 
+      double delta = 1.0/position.srate;
       pblock.exit();
 
       // if playback is paused then block until user unblocks us
@@ -307,13 +330,12 @@ class MidiPlaybackThread : public Thread
       else
       {
         double pos=0;
-        // if our position is past the end of the sequence then dont
+        // if position has reached its limits then dont
         // try to get any more messages from the source
         if (isatend)
         {
           // we are at the end of the source but we may still have
-          // pending messages in the queue if the used spooled them
-          // into the queue
+          // pending messages in the queue if future ones were added
           if (pending==0) 
           {
             // nothing in the queue, rewind the position and autopause
@@ -361,7 +383,7 @@ class MidiPlaybackThread : public Thread
           double now=position.time;
           pos=now/position.endtime;
           // call sources's routine to get more messages
-          source.getMidiPlaybackMessages(messages, position);
+          source.addMidiPlaybackMessages(messages, position);
           MidiMessage* msg=messages.getFirst();          
           while (msg && msg->getTimeStamp() <= now)
           {
@@ -377,7 +399,7 @@ class MidiPlaybackThread : public Thread
         {
           if (transpcounter==0)
             // update the transport's position slider without triggering its action
-            transport->sendMessage(Transport::SetSliderPosition, pos, 0, false);
+            transport->sendMessage(Transport::SetPlaybackPosition, pos, 0, false);
           else
             transpcounter = ((transpcounter + 1) % 10);
         }
@@ -388,9 +410,7 @@ class MidiPlaybackThread : public Thread
     std::cout << "exiting MidiPlaybackThread\n";
   }
   
-  /** internal function sends a message out the port. if we are
-      running dynamically then delete the message after we send it out
-      the port **/
+  /** Internal function sends a message out the port. **/
 
   void processMessage(MidiMessage* msg)
   {
@@ -402,8 +422,8 @@ class MidiPlaybackThread : public Thread
     delete msg; // DELETE MESSAGE AFTER USE
   }
   
-  /**  internal function that sends an allNotesOff if we pause or move
-       the transport with pending messages in the queue. **/
+  /** Internal function that sends an allNotesOff if we pause or move
+      the transport with pending messages in the queue. **/
 
   void sendAllNotesOff()
   {

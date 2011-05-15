@@ -3207,41 +3207,17 @@ class MidiFilePlayer : public Component,
                        public ButtonListener,
                        public SliderListener,
                        public ComboBoxListener,
-                       public MidiPlaybackSource,
-                       public ChangeListener
-
+                       public MidiPlaybackThread::MidiMessageSource,
+                       public ChangeListener,
+                       public Transport::Listener
 {
-  class MidiTransport : public Transport
-  {
-  public:
-    MidiFilePlayer* player;
-
-    // this function called by the transport when it really toggles from pause to play.
-    void play(double position)
-    {
-      // std::cout << "MidiTransport::play pos=" << position << "\n" ;
-      player->play(position);
-    }
-
-    // this function is called by the transport when it really toggles from play to pause.
-    void pause(void)
-    {
-      //std::cout << "MidiTransport::pause\n";
-      player->pause();
-    }
-    void positionChanged(double position, bool isPlaying)
-    {
-      //std::cout << "MidiTransport::positionChanged pos=" << position << " is playing=" << isPlaying << "\n" ;
-      player->positionChanged(position, isPlaying);
-    }
-  };
   Label* midiFileLabel;
   FilenameComponent* midiFileChooser;
   Label* midiPortLabel;
   ComboBox* midiPortMenu;
   String midiPortName;
   MidiOutput* midiPort;
-  MidiTransport* transport;
+  Transport* transport;
   Label* minTime;
   Label* maxTime;
   File midiFile;
@@ -3249,6 +3225,7 @@ class MidiFilePlayer : public Component,
   int fileLength;
   MidiMessageSequence sequence;
   MidiPlaybackThread* pbthread;
+
 public:
 
   MidiFilePlayer()
@@ -3274,9 +3251,7 @@ public:
     addAndMakeVisible(midiFileChooser);
     midiFileChooser->addListener(this);
     midiFileChooser->setBrowseButtonText(T("File..."));
-    transport=new MidiTransport();
-    transport->addAndMakeVisible(this);
-    transport->player=this;
+    addAndMakeVisible(transport=new Transport(*this));
 
     // create the playback thread with this object as the source.
     pbthread=new MidiPlaybackThread(*this, 0, transport);
@@ -3371,10 +3346,8 @@ public:
     // push the stop button on the transposrt to stop any playback
     // push the rewind button on the transport
     // clear the thread of any current messsages
-    transport->pushButton(Transport::StopButton);
-    transport->pushButton(Transport::RewindButton);
-    // FIXME THIS SHOULD CALLED IN THE POSITIONCHANGED METHOD
-    pbthread->position.rewind();
+    transport->setPausing();
+    transport->setPlaybackPosition(0);
 
     fileDuration=0;
     fileLength=0;
@@ -3443,7 +3416,7 @@ public:
       }
     // set the playback range to our upper bounds, note that the
     // length may include meta message
-    pbthread->setPlaybackRange(fileDuration, sequence.getNumEvents());
+    pbthread->setPlaybackLimits(fileDuration, sequence.getNumEvents());
     pbthread->setPlaybackPort(MidiOutPort::getInstance()->device);
     std::cout << "MidiFilePlayer::setFileToPlay: " << midiFile.getFullPathName().toUTF8() 
               << " tracks=" << numtracks << " duration=" << fileDuration << "\n";
@@ -3452,9 +3425,10 @@ public:
   /** add noteOns for the current playback time and index and update
       the index for the next (future) event. **/
 
-  void getMidiPlaybackMessages(MidiPlaybackQueue& queue, MidiPlaybackPosition& position)
+  void addMidiPlaybackMessages(MidiPlaybackThread::MidiMessageQueue& queue, 
+                               MidiPlaybackThread::PlaybackPosition& position)
   {
-    //std::cout << "getMidiPlaybackMessages beat=" << position.time << " index=" << position.index << "\n";
+    //std::cout << "addMidiPlaybackMessages beat=" << position.time << " index=" << position.index << "\n";
     int index=index=position.index;
     for (; index<position.length; index++)
     {
@@ -3510,8 +3484,7 @@ public:
   midiPortMenu->setBounds(x, y, 200, lineheight);
   x=margin;
   y=y+margin+(lineheight * 1.5);
-  // transport has 5 buttons, each 44px centered in window's width
-  transport->setPositions((width/2)-(44*2.5), y, 44, lineheight);
+  transport->setTopLeftPosition((width/2)-(44*2.5),y);
   }
 
   void buttonClicked (Button* button)
