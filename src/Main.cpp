@@ -19,7 +19,7 @@
 #include "Audio.h"
 #include "Syntax.h"
 #include "CodeEditor.h"
-#include "Plotter.h"
+#include "Plot.h"
 #ifdef LIBLO
 #include "Osc.h"
 #endif

@@ -193,6 +193,10 @@ for i = 1,numtargets do
       add(mypackage.files, "src/Cells.cpp")
       add(mypackage.files, "src/Plot.h")
       add(mypackage.files, "src/Plot.cpp")
+      add(mypackage.files, "src/PlotEditor.h")
+      add(mypackage.files, "src/PlotEditor.cpp")
+      add(mypackage.files, "src/PlotWindow.h")
+      add(mypackage.files, "src/PlotWindow.cpp")
       add(mypackage.files, "src/Alerts.h")
       add(mypackage.files, "src/Alerts.cpp")
    end

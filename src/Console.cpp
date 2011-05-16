@@ -14,7 +14,7 @@
 #include "Commands.h"
 #include "Audio.h"
 #include "Images.h"
-#include "Plotter.h"
+#include "Plot.h"
 //#include "TextEditor.h"
 #include "CodeEditor.h"
 #include "Alerts.h"

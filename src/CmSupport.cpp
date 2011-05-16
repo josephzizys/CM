@@ -28,7 +28,7 @@
 #endif
 
 #ifdef GRACE
-#include "Plotter.h"
+#include "Plot.h"
 #include "Cells.h"
 #endif
 

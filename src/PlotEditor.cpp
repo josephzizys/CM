@@ -5,8 +5,8 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-#include "PlotTabs.h"
-#include "Plotter.h"
+#include "PlotEditor.h"
+#include "Plot.h"
 
 static bool isNumericalText(const String num)
 {

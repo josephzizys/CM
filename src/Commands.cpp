@@ -16,7 +16,7 @@
 #include "Preferences.h"
 #include "Audio.h"
 #include "Csound.h"
-#include "Plotter.h"
+#include "Plot.h"
 #include "CodeEditor.h"
 
 #include "Cells.h"

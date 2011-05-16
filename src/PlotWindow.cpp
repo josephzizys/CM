@@ -9,8 +9,8 @@
 #include "Menus.h"
 #include "Console.h"
 #include "CodeEditor.h"
-#include "Plotter.h"
-#include "PlotTabs.h"
+#include "Plot.h"
+#include "PlotEditor.h"
 #include "Midi.h"
 #include "Scheme.h"
 #include <limits>
