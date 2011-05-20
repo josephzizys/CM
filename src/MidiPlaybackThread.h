@@ -8,128 +8,159 @@
 #ifndef MIDI_PLAYBACK_THREAD_H
 #define MIDI_PLAYBACK_THREAD_H
 
-#include <juce.h>
+
+#ifndef COMMONMUSIC
+#include "Libraries.h"
+#endif
 #include "Transport.h"
 
+/** A thread that plays midi messages out a midi port in real
+    time. Calls its MidiMessageSource every tick per beat to fill a
+    playback queue and then sends the queued messages to a MidiOut
+    port at the appropriate real time. To use a MidiPlaybackThread
+    first create it and then set its playback limit using
+    setPlaybackLimit(). Call play() to start the thread running,
+    pause() to pause it, and setPlaybackPosition() and setTempo() to
+    modify playback as its running. For easy controls add a Transport
+    object so that the user control midi playback with buttons and
+    sliders. **/
 
-/** A thread that plays midi messages. Calls its MidiMessageSource
-    repeatedly to fill a playback queue and the sends the queued
-    messages to a MidiOut port at the appropriate time. **/
-
-class MidiPlaybackThread : public Thread
+class MidiPlaybackThread : public juce::Thread
 {
 
  public:
 
-/** The PlaybackPosition maintains the thread's playback time and
-    index. The PlaybackPosition's time is managed by the thread but
-    the MidiMessageSource is responsible for incrementing the playback
-    index if it wants to use it. Playback stops once the position's
-    time is greater than its endtime or the index is equal or greater
-    than its length. Use setPlaybackLimits() to establish these
-    limits. **/
+/** Holds the thread's current playback time in beats and an index
+    value that the caller can use as a running position into its
+    sequence of midi data. The PlaybackPostion is owned by the thread
+    but the caller can safely read/write the beat, index, and stop
+    values within its addMessagesToQueue() function. Playback
+    automatically stops as soon as the position's beat is greater than
+    its endbeat, or the index is equal to its length, or the stop flag
+    value is set to true. The beat value is incremeted by the thread,
+    the caller is responsible for incrementing the playback index if
+    it is using it. **/
 
   class PlaybackPosition
   {
 
   public:
 
-    double time;
+    /** The thread's current playback position expressed in 'beat
+        time' without regard to tempo. The beat is incremented a
+        tick's worth of beat time on each iteration. See
+        setTicksPerBeat() for more information. **/
+
+    double beat;
+
+    /** A position index for the caller to use if it wants to maintain
+        a running position in its sequence of data while its
+        addMessagesToQueue() is repeatedly called during
+        playback. Caller is reponsible for incrementing the index if
+        it is using it. Playback will stop once this index is equal to
+        or greater than the position's length value (and the length is
+        greater than 0.) **/
+
     int index;
-    double endtime;  // no more source callbacks when time > endtime
-    int length;      // no more source callbacks when index >= length
-    int srate;       // times per second thread queries for notes from source
-  
+
+    /** Specifies the ending time for playback expressed in
+        beats. Playback is automatically stopped as soon as the
+        position's beat exceeds this value. **/
+
+    double endbeat; 
+
+    /** Specifies the maximum number of positions the source has in
+        its sequenence of midi data. if length is greater than 0 then
+        playback is stopped as soon as the index is equal to or
+        exceeeds this value. **/
+
+    int length;
+
+    /** If true playback will stop. **/
+
+    bool stop;
+
+    /** Internal PlaybackPosition constructor */
+
   PlaybackPosition()
-    : time (0.0),
+    : beat (0.0),
       index (0),
-      endtime (0.0),
+      endbeat (0.0),
       length (0),
-      srate (100) // by default source callback every 10ms
+      stop (false)
       {
       }
   
+    /** Internal PlaybackPosition destructor */
+
     ~PlaybackPosition()
     {
     }
   
-    /** Returns true if position's index is equal or greater than its
-        length or its tme is greater than its endtime. **/
+    /** Internal function returns true if stop is true, or the
+        postion's beat is greater than its endbeat, or its index is
+        not less than the length and length is greater than 0. **/
 
     bool isAtEnd()
     {
-      return ((index >= length) || (time > endtime));
+      return (stop || (beat > endbeat) || ((length > 0) && (index >= length)) );
     }
-  
-    /** Sets the maximum midinote time and the total number of events to
-        play and optionally the number of times per second the source is
-        called. **/
-
-    void setRange(double endTime, int numEvents, int sampRate)
-    {
-      endtime=endTime;
-      length=numEvents;
-      srate=sampRate;
-      std::cout << "PlaybackPosition: endtime=" << endtime << ", length=" << length << ", srate=" << srate << "\n";
-    }
-  
-    /** Resets the position back to its start values **/
+    
+    /** Internal function resets the position back to its starting
+        values. **/
 
     void rewind()
     {
-      time=0.0;
+      beat=0.0;
       index=0;
+      stop=false;
     }
   
-    /** Moves the position's source index to a new value. Note that this
-        index is not used by the thread at all, its only useful to the
-        caller.  The caller is responsible for incrementing the index
-        during the callback. **/
-
-    void setSourcePosition(int pos)
-    {
-      index=pos;
-    }
-  
-    void moveTo(double nextTime, int nextIndex)
-    {
-      time = nextTime;
-      index = nextIndex;
-    }
-
   };
 
-  /** A queue of time-sorted midi messages that the MidiMessageSource
-       adds to using addMessage(). The queue automatically sorts
-       itself and insures that noteOffs are placed before noteOns with
-       the same time stamp. Note that once you add a message to this
-       queue you no longer own it and the message will get deleteed
-       automtatically once its sent out the MidiOut port. **/
+  /** A queue of time sorted midi messages. The queue automatically
+      sorts itself according to the time stamps of the added messages
+      but insures that noteOffs are placed before noteOns with the
+      same time stamp. The queue is owned by the thread but is passed
+      to the caller's addMessageToQueue function so that the caller
+      can add messages to it using the addMessage() method.  Once
+      messages are added they are owned by the queue and are
+      automatically deleted once they have been sent out the MidiOut
+      port. **/
 
-  class MidiMessageQueue : public OwnedArray<MidiMessage>
+  class MidiMessageQueue : public juce::OwnedArray<juce::MidiMessage>
   {
 
   public:
 
-     MidiMessageQueue() {}
+    /** Internal MidiMessageQueue constuctor. **/
+
+     MidiMessageQueue(){}
+
+    /** Internal MidiMessageQueue destructor. **/
 
     ~MidiMessageQueue(){}
 
-   /** Adds a midi message to the playback queue at the the proper
-       position according to its time stamp and message type. Message
-       is deleted after it has been sent out the midi port. **/
+   /** Adds a MidiMessage to the playback queue. Once messages are
+       added they are owned by the queue and will be automaticall
+       deleted once they are sent out the midi port. Added messages
+       are inserted at the appopriate position in the queue according
+       to the message time stamp. Time stamps are in beats, not
+       seconds, and this beat time is automatically scaled by a tempo
+       factor during playback. Once a message has been sent out the
+       midiport it is deleted by the thread. **/
   
-    void addMessage(MidiMessage* msg)
+    void addMessage(juce::MidiMessage* msg)
     {
       addSorted(*this, msg);
     }
 
-    /** Comparator keeps the queue in time sorted order. Puts note
-        offs before anyting else at the same time stamp to stop note
-        clipping, other messages are added at the last possible
-        position for their time. **/
+    /** Comparator keeps the queue in time sorted order but places
+        note offs before anything else at the same time stamp to avoid
+        note clipping. All other message types are added at the last
+        possible position for their time. **/
 
-    static int compareElements(MidiMessage* a, MidiMessage* b)
+    static int compareElements(juce::MidiMessage* a, juce::MidiMessage* b)
     {
       if (a->getTimeStamp() < b->getTimeStamp())
         return -1;
@@ -155,58 +186,60 @@ class MidiPlaybackThread : public Thread
     } 
   };
 
-  /** A class for receiving callbacks from a MidiPlaybackThread to add
-    midi messages to the thread's midi message queue. **/
+  /** A class to receive callbacks from a MidiPlaybackThread to add
+      midi message to its playback queue. Messages should be added at
+      or later than the current beat time of the thread. **/
 
   class MidiMessageSource
   {
   public:
-    /** Called by the MidiPlaybackThread to add midi messages to the
-        MidiMessageQueue for the PlaybackPosition's current time and
-        index. Use the queue's addMessage() method to add midi
-        messages at or later than the current time. The position's
-        time is automatically incremented by the MidiPlaybackThread
-        but the caller is responsible for incrementing the play index
-        if it is being used. The callback will not be invoked after
-        the position's time or index values exceed the limits
-        established by setRange().
-    **/
-    virtual void addMidiPlaybackMessages(MidiMessageQueue& queue, PlaybackPosition& position) = 0;
-  };
 
-  MidiMessageQueue messages;
-  PlaybackPosition position;
+    /** Called by the MidiPlaybackThread at every tick to add midi
+        messages to the thread's MidiMessageQueue. Time stamps in the
+        added messages should be at or later than the current time
+        value in PlaybackPosition.beat.  PlaybackPosition.index is a
+        read/write variable the caller can use to maintain a running
+        index into its midi data -- the caller is responsible for
+        incremeting the index if it is using it. callbacks to
+        addMidiPlaybackMessages() cease once the position's beat or
+        index values exceed the playback limits established by the
+        thread's setPlaybackLimits() method. **/
+
+    virtual void addMidiPlaybackMessages(MidiMessageQueue& queue, PlaybackPosition& position) = 0;
+
+  };
 
  private:
 
-  MidiMessageSource& source;
-  MidiOutput* port;
-  Transport* transport;
-  CriticalSection pblock;
-  bool paused;
-  double beat;
-  double delta;
-  int index;
+  MidiMessageQueue messages; // midi message queue, time is in beats
+  PlaybackPosition position; // playback position with current beat and user index
+  MidiMessageSource* source; // called every tick to add messages to the queue
+  juce::MidiOutput* port;          // the midi output port to receive messages
+  Transport* transport;      // transport to update while running
+  juce::CriticalSection pblock; // playback lock for accessing thread state
+  bool paused;               // true if thread is paused false if its running
+  double tempo;              // metronome speed of beat
+  int ticks;                 // number of times per beat the source is called
 
  public:
 
-  /** A thread that implements realtime midi playback for a source of
-      midi messages. Midisource is the source that will provide midi
-      messages whenever its addMidiPlaybackMessage() method is
-      called. Midiout is the MIDI device to send MIDI messages to. Trans is
-      an optional transport object. If provided the thread will
-      periodically message the transport during playback to update its
-      position slider. **/
+  /** Creates a MidiPlaybackThread that plays midi messages out a midi
+      port in real time. Midisource is the source that will provide
+      midi messages. TicksPerBeat is the number of times per beat the
+      source will called to add its messages. BeatsPerMinute is the
+      initial metronome tempo for playback. Midiout is the MIDI device
+      to send MIDI messages to. If Transport is not null the thread
+      will periodically send messages during playback to update its
+      sliders an buttons. **/
 
- MidiPlaybackThread(MidiMessageSource& midisource, MidiOutput* midiout=0, Transport* transprt=0)
-   : Thread(T("Midi Playback Thread")),
-    paused(true),
-    beat(0.0),
-    delta(0.01),
-    index(0),
-    port(midiout),
+ MidiPlaybackThread(MidiMessageSource* midiSource, int ticksPerBeat, double beatsPerMinute=60.0, juce::MidiOutput* midiOut=NULL, Transport* transprt=NULL)
+   : juce::Thread (juce::String("Midi Playback Thread")),
+    source (midiSource),
+    tempo (beatsPerMinute),
+    ticks (ticksPerBeat),
+    port (midiOut),
     transport (transprt),
-    source(midisource)
+    paused (true)
     {   
     }
   
@@ -216,39 +249,64 @@ class MidiPlaybackThread : public Thread
     std::cout << "deleted MidiPlaybackThread\n";
   }
 
-  /** Sets the playback position's maximum time and the number of
-      events to play. addMidiPlaybackMessages() callback will not be
-      called after either limit has been reached. **/
+  /** Sets the maximum beat and index range for playback. playback
+      will autopause when beat>endBeat or index is >= length. **/
 
-  void setPlaybackLimits(double endtime, int length, double srate=100)
+  void setPlaybackLimit(double endbeat, int length=0)
   {
-    ScopedLock mylock(pblock);
-    position.setRange(endtime, length, srate);
+    juce::ScopedLock mylock(pblock);
+    position.endbeat=endbeat;
+    position.length=length;
   }
 
-  // FIXME start should be in srate quanta
-  void setPlaybackPosition(double start, int index)
+  /** Sets the playback position to the specified beat. To update the
+      position's index as well specify an index value 0 or larger. **/
+
+  void setPlaybackPosition(double beat, int index=-1)
   {
-    ScopedLock mylock(pblock);
-    position.moveTo(start, index);
+    juce::ScopedLock mylock(pblock);
+    position.beat=beat;
+    if (index>-1)
+      position.index=index;      
   }
 
-  void setPlaybackPort(MidiOutput* midiport)
+  /** Sets the midi output port that will receive MIDI messages from
+      the thread. **/
+
+  void setMidiOutputPort(juce::MidiOutput* midiport)
   {
-    ScopedLock mylock(pblock);
+    juce::ScopedLock mylock(pblock);
     port=midiport;
   }
 
-  void clear()
+  /** Sets the thread's playback tempo in beats per minute. This value
+      is used to convert playback beat time into seconds. **/
+
+  void setTempo(double bpm)
   {
-    messages.clear();
+    juce::ScopedLock mylock(pblock);
+    if (bpm<=0) bpm=60;
+    tempo=bpm;
+  }
+
+  /** Specifies the the number of times per beat that the thread calls
+      its MidiMessageSource to add midi messages to the
+      queue. TicksPerBeat is converted into a time delta (a tick) that
+      is scaled by the thread's tempo value to determine the actual
+      amount of time the thread waits between interations. **/
+
+  void setTicksPerBeat(double tpb)
+  {
+    juce::ScopedLock mylock(pblock);
+    if (tpb<1) tpb=1;
+    ticks=tpb;
   }
 
   /** Returns true if the thread is currently paused. **/
 
   bool isPaused()
   {
-    ScopedLock mylock(pblock);
+    juce::ScopedLock mylock(pblock);
     return paused;
   }
 
@@ -279,7 +337,7 @@ class MidiPlaybackThread : public Thread
 
   void setPaused(bool pause)
   {
-    ScopedLock mylock(pblock);
+    juce::ScopedLock mylock(pblock);
     if (paused != pause) 
     {
       paused=pause;
@@ -295,16 +353,24 @@ class MidiPlaybackThread : public Thread
     }
   }
 
+  /** Clears the queue of pending messages. Don't call this unless the
+      thread is currently paused or you will pobably have dangling
+      midi notes to deal with!  **/
+
+  void clear()
+  {
+    messages.clear();
+  }
+
  private:
 
-  /** the run method for midi playback. Runs at a specified rate per
-      second, each time calling the source's addMidiPlaybackMessages()
-      to get any Midi message to play and then playing the messages
-      for the current time.  Thread can be pasued and resumed using
-      the thread's play() and pause() methods. If a transport is
-      associate with the thread then the transport will be messaged
-      periodically to update its slider position to reflect the
-      current playback time. **/
+  /** Main loop for the MidiPlaybackTread. On each iteration it calls
+      the source's addMidiPlaybackMessages() to get more Midi message
+      to play and then plays them out the midi port. The run loop can
+      be paused and resumed using the thread's play() and pause()
+      methods. If a transport is associate with the thread then the
+      transport will be messaged periodically to update its slider
+      position to reflect the current playback beat. **/
 
   void run ()
   {
@@ -316,8 +382,10 @@ class MidiPlaybackThread : public Thread
       bool ispaused=paused;
       bool isatend=position.isAtEnd();
       int  pending=messages.size();
-      // delta time to wait before next run 
-      double delta = 1.0/position.srate;
+      double bpm=tempo;
+      // 'ticks' is the number of ticks per beat and 'tick' is the
+      // wait time expressed in beats, without regard to tempo
+      double tick = 1.0/ticks;
       pblock.exit();
 
       // if playback is paused then block until user unblocks us
@@ -355,9 +423,9 @@ class MidiPlaybackThread : public Thread
             // end of the source there are still pending messages left
             // in the queue to process
             pblock.enter();
-            double now=position.time;
-            pos=now/position.endtime;
-            MidiMessage* msg=0; 
+            double now=position.beat;
+            pos=now/position.endbeat;
+            juce::MidiMessage* msg=0; 
             while (msg=messages.getFirst())
             {
               if (msg->getTimeStamp() <= now)              
@@ -370,7 +438,7 @@ class MidiPlaybackThread : public Thread
                 break;
               }
             }
-            position.time += delta;
+            position.beat += tick;
             pblock.exit();
           }
         }
@@ -378,20 +446,20 @@ class MidiPlaybackThread : public Thread
         {
           // if we are here then the playback position is still valid
           // so we call source function to add messages to the queue
-          // and then process the messages for the current time
+          // and then process the messages for the current beat
           pblock.enter();
-          double now=position.time;
-          pos=now/position.endtime;
+          double now=position.beat;
+          pos=now/position.endbeat;
           // call sources's routine to get more messages
-          source.addMidiPlaybackMessages(messages, position);
-          MidiMessage* msg=messages.getFirst();          
+          source->addMidiPlaybackMessages(messages, position);
+          juce::MidiMessage* msg=messages.getFirst();          
           while (msg && msg->getTimeStamp() <= now)
           {
             messages.remove(0, false); // pop message off queue
             processMessage(msg);       // send message out port
             msg=messages.getFirst();   // increment to next
           }
-          position.time += delta;      // increment time
+          position.beat += tick;      // increment beat
           pblock.exit();
         }
         // update position of transport's slider at 1/10 the playback rate
@@ -403,18 +471,28 @@ class MidiPlaybackThread : public Thread
           else
             transpcounter = ((transpcounter + 1) % 10);
         }
-        //if (position.time <= position.endtime)
-        wait(1000*delta);
+        // calculate the amount of time to wait between iterations
+        // by converting ticks to milliseconds at the current tempo
+        // e.g  wait(1000 * tick * (60/bpm));
+        wait((int)(60000*(tick/bpm)));
       }
     }
+    // send all notes off if user closed the window without stopping
+    // the playback!
+
+    // FIXME: if this thread was killed indirectly by user quitting
+    // the app during playback the midi port might already be deleted!! 
+    /*
+    if (!paused)
+      sendAllNotesOff();
+    */
     std::cout << "exiting MidiPlaybackThread\n";
   }
   
-  /** Internal function sends a message out the port. **/
+  /** Internal function that sends a message out the midi port. **/
 
-  void processMessage(MidiMessage* msg)
+  void processMessage(juce::MidiMessage* msg)
   {
-    //MidiOutput* port=MidiOutPort::getInstance()->device;
     if (port)
       port->sendMessageNow(*msg);
     if (1)
@@ -427,27 +505,28 @@ class MidiPlaybackThread : public Thread
 
   void sendAllNotesOff()
   {
-    //MidiOutput* port=MidiOutPort::getInstance()->device;
     if (port)
     {
       std::cout << "sending AllNotesOff...\n";
       for(int i = 1; i <= 16; i++)
       {
-        port->sendMessageNow(MidiMessage::allSoundOff(i));
+        port->sendMessageNow(juce::MidiMessage::allSoundOff(i));
       }
     }
   }
 
-  static const void printMidiMessage(MidiMessage& msg)
+  static const void printMidiMessage(juce::MidiMessage& msg)
   {
     int op=(msg.getRawData()[0] & 0xf0)>>4;
     int ch=msg.getChannel()-1;
     int d1=msg.getRawData()[1] & 0x7f;
     int d2=(msg.getRawDataSize() > 2) ? (msg.getRawData()[2] & 0x7f) : 0;
     if (op==9 && d2==0) op=8; // show as note off
-    String text=String(msg.getTimeStamp());
-    text << T(" op=") << String(op) << " ch=" << String(ch) << T(" d1=") << String(d1) << T(" d2=") << String(d2);
-    std::cout << text.toUTF8() << "\n" << std::flush;
+    juce::String text=juce::String(msg.getTimeStamp());
+    text << juce::String(" op=") << juce::String(op) << " ch=" << juce::String(ch) << juce::String(" d1=") << juce::String(d1) << juce::String(" d2=") << juce::String(d2);
+
+    const char* wtf = text.toUTF8();
+    std::cout << wtf << "\n" << std::flush;
   }
   
 };

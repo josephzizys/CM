@@ -15,6 +15,7 @@
 #include <limits>
 #include "CmSupport.h"
 #include "Alerts.h"
+#include "PlotEditor.h"
 //#include <cmath>
 #include <iostream>
 
@@ -1118,12 +1119,14 @@ bool PlotView::keyPressed (const KeyPress& key)
 Plotter::Plotter (XmlElement* plot) 
   : ppp (8.0),
     zoom (1.0),
-    haxview (NULL),
-    vaxview (NULL),
-    viewport (NULL),
-    plotview (NULL),
-    backview (NULL),
+    haxview (0),
+    vaxview (0),
+    viewport (0),
+    plotview (0),
+    backview (0),
+    editor (0),
     changed (false),
+    playing (false),
     flags (0)
 {
   createPlottingComponents();
@@ -1194,12 +1197,14 @@ Plotter::Plotter (XmlElement* plot)
 Plotter::Plotter(MidiFile& midifile)
   : ppp (8.0),
     zoom (1.0),
-    haxview (NULL),
-    vaxview (NULL),
-    viewport (NULL),
-    plotview (NULL),
-    backview (NULL),
+    haxview (0),
+    vaxview (0),
+    viewport (0),
+    plotview (0),
+    backview (0),
+    editor (0),
     changed(false),
+    playing (false),
     flags (0)
 {
   createPlottingComponents();
@@ -1321,6 +1326,12 @@ void Plotter::createPlottingComponents()
   //std::cout << II++ << "\n";
   vaxview->setVisible(true);
   ///std::cout << II++ << "\n";
+  playbackparams[PlaybackMinKey]=0;
+  playbackparams[PlaybackMaxKey]=127;
+  playbackparams[PlaybackDuration]=.25;
+  playbackparams[PlaybackAmplitude]=.5;
+  playbackparams[PlaybackChannel]=0;
+  playbackparams[PlaybackTempo]=1.0;
 }
 
 void Plotter::setPlottingFields(int xax, int yax)
@@ -1794,4 +1805,73 @@ void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
   else
     vaxview->repaint();
 }
+
+/*=======================================================================*
+                                Audio Playback
+ *=======================================================================*/
+
+bool Plotter::isPlaying()
+{
+  return playing;
+}
+
+void Plotter::setPlaying(bool p)
+{
+  playing=p;
+}
+
+void Plotter::setPlaybackParameter(PlaybackParam id, double value)
+{
+  playbackparams[id]=value;
+}
+
+double Plotter::getPlaybackParameter(PlaybackParam id)
+{
+  return playbackparams[id];
+}
+
+void Plotter::pause()
+{
+  std::cout << "plot pause()\n";
+}
+
+void Plotter::play(double pos)
+{
+  std::cout << "plotter play("<<pos<<")\n ";
+}
+
+void Plotter::tempoChanged(double tempo, bool isPlaying)
+{
+  std::cout << "plotter tempoChanged(" << tempo << ", " << isPlaying << ")\n";
+}
+
+void Plotter::positionChanged(double position, bool isPlaying)
+{
+  //  double xInUnits=(position*getHorizontalAxis()->getMax());
+  // iterate the layers finding the last index whose X value is <= unit.
+  //  for (int i=0;i<numLayers(); i++)
+  //    closestIndex(xInUnits);
+  std::cout << "plotter positionChanged(" << position << ", " << isPlaying << ")\n";
+}
+
+void Plotter::addMidiPlaybackMessages(MidiPlaybackThread::MidiMessageQueue& queue,
+                                      MidiPlaybackThread::PlaybackPosition& position)
+{
+  /*  double x=(position*getHorizontalAxis()->getAxisMaximum());
+  Layer* focus=getFocusLayer();
+  for (int i=0; i<getNumLayers(); i++)
+  {
+    Layer* layer=getLayer(i);
+    if (layer!=focus && layer->isMuted()) continue;
+    int index=layer->getStartingIndexforX(x);
+    while (index<=layer->getNumPoints() && layer->getPointX(index)<=x)
+    {
+      ADDMIDI();
+      index+=1;
+    }
+  }
+  */
+  std::cout << "plotter addMidiPlaybackMessages("<<position.beat<<")\n";
+}
+
 

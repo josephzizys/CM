@@ -63,6 +63,8 @@ public:
   void pause();
   void play(double pos);
   void positionChanged(double position, bool isPlaying);
+  void tempoChanged(double tempo, bool isPlaying);
+
   void rewind();
   AudioTransportSource& getTransportSource();
   void audioDeviceIOCallback (const float** inputChannelData,
@@ -406,7 +408,7 @@ AudioFilePlayer::AudioFilePlayer ()
 				     T("Configure audio settings"));
   addAndMakeVisible (audioSettingsButton);
   audioSettingsButton->addListener(this);
-  addAndMakeVisible(transport=new Transport(*this));
+  addAndMakeVisible(transport=new Transport(this));
 
  // add labels for seconds display
   Font secsfont (10, Font::plain);
@@ -498,6 +500,10 @@ void AudioFilePlayer::positionChanged(double position, bool isPlaying)
     getTransportSource().start();
     getSettings()->setEnabled(false);
   }
+}
+
+void AudioFilePlayer::tempoChanged(double tempo, bool isPlaying)
+{
 }
 
 AudioTransportSource& AudioFilePlayer::getTransportSource()

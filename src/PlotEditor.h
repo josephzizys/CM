@@ -13,8 +13,19 @@
 
 class Plotter;
 class Layer;
+class Transport;
 
-/** the base class for tabbed plotter components. subclasses override
+/** A TabbedComponent that holds various editors for working with plot data. **/
+
+class PlotEditor : public TabbedComponent
+{
+ public:
+  PlotEditor();
+  ~PlotEditor();
+  void currentTabChanged (int newCurrentTabIndex, const String &newCurrentTabName);
+};
+
+/** the base class for tabbed plot editors. subclasses override
     whichever listener definitions they need to implement **/
 
 class PlotterTab : public Component,
@@ -25,8 +36,10 @@ class PlotterTab : public Component,
   static const int margin=8;
   static const int lineheight=24;
   static const int fontsize=15;
+  enum TabTypes {TabEmpty=0, TabWindow, TabAudio, TabExport, TabAxis, TabLayer, TabPoints};
+  int tabType;
   Plotter* plotter;
-  PlotterTab (Plotter* pltr) : plotter (pltr) {}
+  PlotterTab (Plotter* pltr) : plotter (pltr), tabType(TabEmpty) {}
   ~PlotterTab () {}
   void textEditorReturnKeyPressed(TextEditor& editor) {/*std::cout << "return key pressed\n";*/}
   void textEditorTextChanged(TextEditor& editor) {/*std::cout << "text changed\n";*/}
@@ -35,6 +48,7 @@ class PlotterTab : public Component,
   void buttonClicked (Button* buttonThatWasClicked) {/*std::cout << "button clicked\n";*/}
   void sliderValueChanged (Slider* sliderThatWasMoved) {/*std::cout << "slider moved\n";*/}
   void comboBoxChanged(ComboBox* combo) {/*std::cout << "combo box changed\n";*/}
+  TabbedComponent* getTabbedComponent() {return (TabbedComponent*)getParentComponent();}
 };
 
 class TabLabel : public Label
@@ -47,8 +61,8 @@ class TabLabel : public Label
     setJustificationType (Justification::centredLeft);
     setEditable (false, false, false);
     setColour (Label::textColourId, Colours::black);
-    setColour (Label::backgroundColourId, Colour(0x0)); // Colours::red
-    setSize((int)(font.getStringWidthFloat(getText())+10.0), PlotterTab::lineheight);
+    setColour (Label::backgroundColourId, Colour(0x0)); // Colours::red  
+    setSize((int)(font.getStringWidthFloat(getText()+T("  "))), PlotterTab::lineheight);
   }
   ~TabLabel()
   {
@@ -113,7 +127,17 @@ class TabEditor : public TextEditor
     return txt;
   }
 
-  bool isNumericalText()
+  double getDoubleValue()
+  {
+    return getTrimmedText().getDoubleValue();
+  }
+
+  int getIntValue()
+  {
+    return getTrimmedText().getIntValue();
+  }
+
+  bool isNumericText()
   {
     const String num=getTrimmedText();
     int dots=0;
@@ -198,9 +222,59 @@ class LayerTab : public PlotterTab, public ChangeListener
   ColourSelector* colorpicker;
   void resized();
   void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
-  //  void buttonClicked (Button* buttonThatWasClicked);
   void changeListenerCallback(ChangeBroadcaster* source);
   void textEditorReturnKeyPressed(TextEditor& editor);
 };
+
+class ExportPointsEditor : public PlotterTab
+{
+ public:
+  int numfields;
+  bool* include;
+  TabLabel* exportlabel;
+  ComboBox* exportmenu;
+  TabLabel* syntaxlabel;
+  ComboBox* syntaxmenu;
+  TextButton* fieldsbutton;
+  TabLabel* formatlabel;
+  ComboBox* formatmenu;
+  TabLabel* decimalslabel;
+  ComboBox* decimalsmenu;
+  TabLabel* destlabel;
+  ComboBox* destmenu;
+  TabButton* exportbutton;
+  ExportPointsEditor(Plotter* plotter);
+  ~ExportPointsEditor();
+  void resized();
+  void buttonClicked (Button* button);
+  void comboBoxChanged (ComboBox* combobox);
+  void exportPoints();
+  void exportPlot();
+};
+
+class PlotAudioEditor : public PlotterTab
+{
+ public:
+  PlotAudioEditor(Plotter* pltr);
+  ~PlotAudioEditor();
+ private:
+  TabLabel* y0label;
+  TabEditor* y0typein;
+  TabLabel* y1label;
+  TabEditor* y1typein;
+  TabLabel* tempolabel;
+  TabEditor* tempotypein;
+  TabLabel* durlabel;
+  TabEditor* durtypein;
+  TabLabel* amplabel;
+  TabEditor* amptypein;
+  Transport* transport;
+  bool ismidiplot;
+  void resized();
+  void textEditorReturnKeyPressed(TextEditor& editor);
+  void setPlaybackParam(int id, TabEditor* editor);
+};
+
+
 #endif
 

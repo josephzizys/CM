@@ -7,25 +7,34 @@
 #ifndef Transport_h
 #define Transport_h
 
+// ARRRRGGG this namespace nonsense is gross!
+
+#ifdef COMMONMUSIC
 #include "juce.h"
+#define JPRE
+#else
+#include "Libraries.h"
+#define JPRE juce::
+#endif
 
 /** A component for controlling audio/midi playback. Based on Andrew
     Burnson's original Transport class in Chorale Composer I. A
-    Tranport provides 5 buttons: Rewind, Back, Play/Pause, Forward,
-    GoToEnd and a slider for scrolling through the playback
-    sequence. To create a Transport just pass it a Transport::Listener
-    with the required play() pause() and positionChanged() callbacks
-    implemented. These methods will be called whenever the user clicks
-    on the Transport's components.  The Transport can also be trigger
-    procedurally from other objects running in the main message thread
-    by calling the underlying setPlaying(), setPausing() and
-    setPlaybackPosition() methods.  To trigger transport actions from other
-    threads use the sendMessage() method. **/
+    Transport provides 5 buttons: Rewind, Back, Play/Pause, Forward,
+    GoToEnd, a slider for scrolling through the playback sequence and
+    an optional tempo slider. To create a Transport just pass it a
+    Transport::Listener with the required play(), pause() ,
+    positionChanged() and tempoChanged() callbacks implemented. These
+    methods will be triggered whenever the user clicks on the
+    Transport's components.  The Transport can be controlled from
+    other objects in the main message thread by calling the underlying
+    setPlaying(), setPausing() and setPlaybackPosition() and
+    setTempo() methods.  To trigger transport actions from other
+    threads use the asynchronous sendMessage() method. **/
 
-class Transport : public Component, 
-  public AsyncUpdater,
-  public ButtonListener,
-  public SliderListener
+class Transport : public JPRE Component, 
+  public JPRE AsyncUpdater,
+  public JPRE ButtonListener,
+  public JPRE SliderListener
 {
  public:
 
@@ -41,7 +50,7 @@ class Transport : public Component,
 
   enum TransportMessageIds
   {
-    SetPlaying, SetPausing, SetPlaybackPosition
+    SetPlaying, SetPausing, SetPlaybackPosition, SetPlaybackTempo
   };
 
   /** A class for receiving callbacks from a Transport. **/
@@ -65,9 +74,23 @@ class Transport : public Component,
         playing. **/
 
     virtual void positionChanged(double position, bool isPlaying) = 0;
+
+    /** Called when the user moves the tempo slider. Tempo is the new
+        tempo that was just set and and isPlaying is true if the
+        transport is currently marked as playing. **/
+
+    virtual void tempoChanged(double tempo, bool isPlaying) = 0;
+
   };
   
- Transport (Listener& transportListener)
+  /** A component for controlling audio playback. When the user clicks
+      on a Transport's components the Transport::Listener's methods
+      are called to implement the underlying changes in playback
+      state. If tempo is > 0.0 the transport component will provide a
+      tempo slider for conrolling the speed of playback while audio is
+      running. **/
+
+  Transport (Listener* transportListener, double tempo=0.0)
    : listener(transportListener),
     buttonRewind(0),
     buttonBack(0),
@@ -75,67 +98,85 @@ class Transport : public Component,
     buttonForward(0),
     buttonGoToEnd(0),
     sliderPosition(0),
+    sliderTempo(0),
+    labelTempo(0),
     buttonWidth(44),
     buttonHeight(24),
-    buttonColor (Colour(90,90,120)),
-    toggleColor (Colour(60,60,180)),
+    buttonColor (JPRE Colour(90,90,120)),
+    toggleColor (JPRE Colour(60,60,180)),
     playing(false)
     {
-      int connectLeft = Button::ConnectedOnLeft;
-      int connectBoth = Button::ConnectedOnLeft | Button::ConnectedOnRight;
-      int connectRight = Button::ConnectedOnRight;     
-      DrawableButton::ButtonStyle buttonStyle = DrawableButton::ImageOnButtonBackground;
+      int connectLeft = JPRE Button::ConnectedOnLeft;
+      int connectBoth = JPRE Button::ConnectedOnLeft | JPRE Button::ConnectedOnRight;
+      int connectRight = JPRE Button::ConnectedOnRight;     
+      JPRE DrawableButton::ButtonStyle buttonStyle = JPRE DrawableButton::ImageOnButtonBackground;
       
-      addAndMakeVisible(buttonRewind = new DrawableButton(String("Rewind"), buttonStyle));
+      addAndMakeVisible(buttonRewind = new JPRE DrawableButton(JPRE String("Rewind"), buttonStyle));
       buttonRewind->setBackgroundColours(buttonColor, toggleColor);
       buttonRewind->setConnectedEdges(connectRight);
       drawRewind(buttonRewind);
       buttonRewind->addListener(this);
 	
-      addAndMakeVisible(buttonBack = new DrawableButton(String("Back"), buttonStyle));
+      addAndMakeVisible(buttonBack = new JPRE DrawableButton(JPRE String("Back"), buttonStyle));
       buttonBack->setBackgroundColours(buttonColor, toggleColor);
       buttonBack->setConnectedEdges(connectBoth);
       drawBack(buttonBack);
       buttonBack->addListener(this);
 	
-      addAndMakeVisible(buttonPlayPause = new DrawableButton(String("PlayPause"), buttonStyle));
+      addAndMakeVisible(buttonPlayPause = new JPRE DrawableButton(JPRE String("PlayPause"), buttonStyle));
       buttonPlayPause->setBackgroundColours(buttonColor, toggleColor);
       buttonPlayPause->setConnectedEdges(connectBoth);
       drawPlay(buttonPlayPause);
       buttonPlayPause->addListener(this);
 	
-      addAndMakeVisible(buttonForward = new DrawableButton(String("Forward"), buttonStyle));
+      addAndMakeVisible(buttonForward = new JPRE DrawableButton(JPRE String("Forward"), buttonStyle));
       buttonForward->setBackgroundColours(buttonColor, toggleColor);
       buttonForward->setConnectedEdges(connectBoth);
       drawForward(buttonForward);
       buttonForward->addListener(this);
 
-      addAndMakeVisible(buttonGoToEnd = new DrawableButton(String("GoToEnd"), buttonStyle));
+      addAndMakeVisible(buttonGoToEnd = new JPRE DrawableButton(JPRE String("GoToEnd"), buttonStyle));
       buttonGoToEnd->setBackgroundColours(buttonColor, toggleColor);
       buttonGoToEnd->setConnectedEdges(connectLeft);
       drawGoToEnd(buttonGoToEnd);
       buttonGoToEnd->addListener(this);
 	
-      addAndMakeVisible(sliderPosition = new Slider(String("Position")));
-      sliderPosition->setSliderStyle(Slider::LinearHorizontal);
-      sliderPosition->setTextBoxStyle(Slider::NoTextBox, false, 0, 0);
-      sliderPosition->setColour(Slider::thumbColourId,buttonColor);
+      addAndMakeVisible(sliderPosition = new JPRE Slider(JPRE String("Position")));
+      sliderPosition->setSliderStyle(JPRE Slider::LinearHorizontal);
+      sliderPosition->setTextBoxStyle(JPRE Slider::NoTextBox, false, 0, 0);
+      sliderPosition->setColour(JPRE Slider::thumbColourId,buttonColor);
       sliderPosition->setRange(0, 1.0);
       sliderPosition->addListener(this);
-      setVisible(true);
-      // autosize the transport to width of 5 buttons and height of 2
+ 
+      // size the transport to width of 5 buttons and height of 2
       // lines with 4px margins all around
-      setSize((buttonWidth*5)+8, (buttonHeight*2)+8);
+      int width = 4 + (buttonWidth*5)  + 4;
+      int height = 4 + (buttonHeight*2) + 4;
+      if (tempo>0)
+      {
+        // add extra width if we have a tempo slider
+        //width += (buttonHeight + (buttonHeight*2) + (buttonHeight*2));
+        width += ((buttonHeight/2) + (buttonHeight*2) + (buttonHeight*2));
+        addAndMakeVisible(labelTempo = new JPRE Label(JPRE String::empty,JPRE String(tempo) + JPRE String(" BPM")));
+        labelTempo->setColour(JPRE Label::textColourId, buttonColor);
+        addAndMakeVisible(sliderTempo = new JPRE Slider(JPRE String("Tempo")));
+        sliderTempo->setSliderStyle(JPRE Slider::Rotary);
+        sliderTempo->setTextBoxStyle(JPRE Slider::NoTextBox, false, 0, 0);
+        sliderTempo->setColour(JPRE Slider::thumbColourId, buttonColor);
+        sliderTempo->setColour(JPRE Slider::rotarySliderFillColourId, buttonColor);
+        sliderTempo->setColour(JPRE Slider::rotarySliderOutlineColourId, buttonColor);
+        // FIXME: tempo max and min should be customizable!
+        sliderTempo->setRange(6.0, 208.0, 1.0);
+        sliderTempo->setValue(tempo, true, true);
+        sliderTempo->addListener(this);
+      }
+      setVisible(true);
+      setSize(width, height);
     }
   
   ~Transport()
   {
-    delete buttonRewind;
-    delete buttonBack;
-    delete buttonPlayPause;
-    delete buttonForward;
-    delete buttonGoToEnd;
-    delete sliderPosition;
+    deleteAllChildren();
   }
 
  /** Returns true if the transport' state is set to playing otherwise
@@ -144,31 +185,6 @@ class Transport : public Component,
   bool isPlaying()
   {
     return playing;
-  }
-
-  /** Sets the playback position as a normalized value 0.0 to 1.0. If
-      triggerAction is true then the positionChanged() callback will
-      be triggred. This method is not thread safe, use sendMessage()
-      for that. **/
-
-  void setPlaybackPosition(double position, bool triggerAction=true)
-  {
-    if (position<0.0) position=0.0;
-    else if (position>1.0) position=1.0;
-    sliderPosition->setValue(position, triggerAction, false);
-  }
-
-  void incrementPlaybackPosition(double delta, bool triggerAction=true)
-  {
-    setPlaybackPosition(sliderPosition->getValue()+delta);
-  }
-
-  /** Returns the position of the slider on a normalized scale 0.0 to
-      1.0. This function is not thread safe. **/
-
-  double getPlaybackPosition(void)
-  {
-    return sliderPosition->getValue();
   }
 
   /** Marks transport as playing, flips to the "pause" icon for the
@@ -185,7 +201,7 @@ class Transport : public Component,
     if (triggerAction && toggled)
     {
       //      std::cout << "triggering play...\n";
-      listener.play(getPlaybackPosition());
+      listener->play(getPlaybackPosition());
     }
   }
   
@@ -203,8 +219,62 @@ class Transport : public Component,
     if (triggerAction && toggled)
     {
       //      std::cout << "triggering pause...\n";
-      listener.pause();
+      listener->pause();
     }
+  }
+
+  /** Sets the playback position as a normalized value 0.0 to 1.0. If
+      triggerAction is true then the positionChanged() callback will
+      be triggred. This method is not thread safe, use sendMessage()
+      for that. **/
+
+  void setPlaybackPosition(double position, bool triggerAction=true)
+  {
+    sliderPosition->setValue(position, triggerAction, false);
+  }
+
+  /** Increments the playback position by the specified delta. If
+      triggerAction is true then the positionChanged() callback will
+      be triggred. This method is not thread safe, use sendMessage()
+      for that. **/
+
+  void incrementPlaybackPosition(double delta, bool triggerAction=true)
+  {
+    setPlaybackPosition(sliderPosition->getValue()+delta, triggerAction);
+  }
+
+  /** Returns the position of the playback position slider on a
+      normalized scale 0.0 to 1.0. This function is not thread
+      safe. **/
+
+  double getPlaybackPosition(void)
+  {
+    return sliderPosition->getValue();
+  }
+
+  /** Sets the current playback tempo in BPM. If triggerAction is true
+      then the tempoChanged() callback will be triggered. This function
+      is not thread safe. **/
+
+  void setPlaybackTempo(double tempo, bool triggerAction=true)
+  {
+    // tempo components are optional
+    if (sliderTempo)
+    {
+      sliderTempo->setValue(tempo, triggerAction, false);
+      // if we are not triggering the update label display by hand
+      if (!triggerAction)
+        labelTempo->setText(JPRE String(tempo)+JPRE String(" BPM"), false);
+    }
+  }
+
+  /** Returns the current playback tempo. This function is not thread safe. **/
+
+  double getPlaybackTempo(void)
+  {
+    if (sliderTempo)
+      return sliderTempo->getValue();
+    return 0.0;
   }
 
   /** Implements thread-safe transport control. id
@@ -214,7 +284,7 @@ class Transport : public Component,
 
   void sendMessage(int id, double d=0.0, int i=0, bool b=false)
   {
-    ScopedLock mylock(messages.getLock());
+    JPRE ScopedLock mylock(messages.getLock());
     messages.add(new TransportMessage(id, d, i, b));
     triggerAsyncUpdate();
   }
@@ -222,17 +292,19 @@ class Transport : public Component,
  private:
 
   bool playing;
-  Listener& listener; 
-  DrawableButton* buttonPlayPause;
-  DrawableButton* buttonRewind;
-  DrawableButton* buttonBack;
-  DrawableButton* buttonForward;
-  DrawableButton* buttonGoToEnd;
-  Slider*         sliderPosition;
+  Listener* listener; 
+  JPRE DrawableButton* buttonPlayPause;
+  JPRE DrawableButton* buttonRewind;
+  JPRE DrawableButton* buttonBack;
+  JPRE DrawableButton* buttonForward;
+  JPRE DrawableButton* buttonGoToEnd;
+  JPRE Slider*         sliderPosition;
+  JPRE Slider*         sliderTempo;
+  JPRE Label*          labelTempo;
   int buttonWidth;
   int buttonHeight;
-  Colour buttonColor;
-  Colour toggleColor;
+  JPRE Colour buttonColor;
+  JPRE Colour toggleColor;
 
   /** Internal support for messaging from other threads **/
 
@@ -247,11 +319,11 @@ class Transport : public Component,
     ~TransportMessage() {}
   };
 
-  OwnedArray<TransportMessage, CriticalSection> messages;
+  JPRE OwnedArray<TransportMessage, JPRE CriticalSection> messages;
 
   void handleAsyncUpdate ()
   {
-    ScopedLock mylock(messages.getLock());
+    JPRE ScopedLock mylock(messages.getLock());
     int size=messages.size();
     for (int i=0; i<size; i++)
     {
@@ -270,6 +342,10 @@ class Transport : public Component,
         //std::cout << "TransportMessage: SetPosition pos=" << msg->double1 << "\n";
         setPlaybackPosition(msg->double1, msg->bool1);
         break;
+      case SetPlaybackTempo:
+        //std::cout << "TransportMessage: SetPosition pos=" << msg->double1 << "\n";
+        setPlaybackTempo(msg->double1, msg->bool1);
+        break;
       default:
         break;
       }
@@ -286,6 +362,10 @@ class Transport : public Component,
     int viewWidth=getWidth();
     int viewHeight=getHeight();
     int buttonLeft=(viewWidth/2)-(buttonWidth*2.5);  // total of 5 buttons
+    // a tempo slider adds an extra 4.5 lineHeight's of width
+    if (sliderTempo)
+      buttonLeft -= (buttonHeight*2.25);
+
     int buttonTop=(viewHeight/2)-buttonHeight;
     buttonRewind->setBounds(buttonLeft, buttonTop, buttonWidth, buttonHeight);
     buttonBack->setBounds(buttonLeft + buttonWidth, buttonTop, buttonWidth, buttonHeight);      
@@ -293,11 +373,19 @@ class Transport : public Component,
     buttonForward->setBounds(buttonLeft + (buttonWidth*3), buttonTop, buttonWidth, buttonHeight);
     buttonGoToEnd->setBounds(buttonLeft + (buttonWidth*4), buttonTop, buttonWidth, buttonHeight);    
     sliderPosition->setBounds(buttonLeft, buttonTop + buttonHeight, (buttonWidth*5), buttonHeight);
+    if (sliderTempo)
+    {
+      // the optional tempo components are squares of 2 lineheights
+      // per side positioned one lineheight to the right of the
+      // rightmost transport button.
+      sliderTempo->setBounds(buttonGoToEnd->getRight()+(buttonHeight/2), buttonTop , buttonHeight*2,  buttonHeight*2);
+      labelTempo->setBounds(sliderTempo->getRight(), sliderTempo->getY(), buttonHeight*2,  buttonHeight*2);
+    }
   }
 
   /** Internal function implements button clicked actions. **/
 
-  virtual void buttonClicked(Button* button)
+  virtual void buttonClicked(JPRE Button* button)
   {
     static bool isShowingPlayNotPause = true;
     
@@ -333,94 +421,100 @@ class Transport : public Component,
     }
   }
   
-  /** Internal function implements slider moved actions by calling the
-      source's postionChanged() method. **/
+  /** Internal slider function invokes the source's postionChanged()
+      or tempoChanged() method. **/
 
-  virtual void sliderValueChanged(Slider *slider)
+  virtual void sliderValueChanged(JPRE Slider *slider)
   {
     if (slider == sliderPosition)
-      listener.positionChanged(sliderPosition->getValue(), isPlaying());
+      listener->positionChanged(sliderPosition->getValue(), isPlaying());
+    else if (slider == sliderTempo)
+    {
+      double val=sliderTempo->getValue();
+      labelTempo->setText(JPRE String(val)+JPRE String(" BPM"), false);
+      listener->tempoChanged(val, isPlaying());
+    }
   }
  
   /** Internal button drawing. **/
 
-  void drawRewind(DrawableButton* b)
+  void drawRewind(JPRE DrawableButton* b)
   {
-    DrawablePath imageRewind;
-    Path pathRewind;
+    JPRE DrawablePath imageRewind;
+    JPRE Path pathRewind;
     pathRewind.addRectangle(-1.8f,0,0.3f,2.0f);
     pathRewind.addTriangle(0,0, 0,2.0f, -1.2f,1.0f);
     imageRewind.setPath(pathRewind);
-    FillType ft (Colours::white);
+    JPRE FillType ft (JPRE Colours::white);
     imageRewind.setFill(ft);
     b->setImages(&imageRewind);
   }
 
   /** Internal button drawing. **/
 
-  void drawBack(DrawableButton* b)
+  void drawBack(JPRE DrawableButton* b)
   {
-    DrawablePath imageBack;
-    Path pathBack;
+    JPRE DrawablePath imageBack;
+    JPRE Path pathBack;
     pathBack.addTriangle(0,0,0,2.0f,-1.2f,1.0f);
     pathBack.addTriangle(1.2f,0,1.2f,2.0f,0,1.0f);
     imageBack.setPath(pathBack);
-    FillType ft (Colours::white);
+    JPRE FillType ft (JPRE Colours::white);
     imageBack.setFill(ft);
     b->setImages(&imageBack);
   }
   
   /** Internal button drawing. **/
 
-  void drawPlay(DrawableButton* b)
+  void drawPlay(JPRE DrawableButton* b)
   {
-    DrawablePath imagePlay;
-    Path pathPlay;
+    JPRE DrawablePath imagePlay;
+    JPRE Path pathPlay;
     pathPlay.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     imagePlay.setPath(pathPlay);
-    FillType ft (Colours::white);
+    JPRE FillType ft (JPRE Colours::white);
     imagePlay.setFill(ft);
     b->setImages(&imagePlay);
   }
   
   /** Internal button drawing. **/
 
-  void drawPause(DrawableButton* b)
+  void drawPause(JPRE DrawableButton* b)
   {
-    DrawablePath imagePause;
-    Path pathPause;
+    JPRE DrawablePath imagePause;
+    JPRE Path pathPause;
     pathPause.addRectangle(0,0,0.3f,1.0f);
     pathPause.addRectangle(0.6f,0,0.3f,1.0f);
     imagePause.setPath(pathPause);
-    FillType ft (Colours::white);
+    JPRE FillType ft (JPRE Colours::white);
     imagePause.setFill(ft);
     b->setImages(&imagePause);
   }
   
   /** Internal button drawing. **/
 
-  void drawForward(DrawableButton* b)
+  void drawForward(JPRE DrawableButton* b)
   {
-    DrawablePath imageForward;
-    Path pathForward;
+    JPRE DrawablePath imageForward;
+    JPRE Path pathForward;
     pathForward.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     pathForward.addTriangle(-1.2f,0,-1.2f,2.0f,0,1.0f);
     imageForward.setPath(pathForward);
-    FillType ft (Colours::white);
+    JPRE FillType ft (JPRE Colours::white);
     imageForward.setFill(ft);
     b->setImages(&imageForward);
   }
     
   /** Internal button drawing. **/
 
-  void drawGoToEnd(DrawableButton* b)
+  void drawGoToEnd(JPRE DrawableButton* b)
   {
-    DrawablePath imageGoToEnd;
-    Path pathGoToEnd;
-    pathGoToEnd.addTriangle(-1.4f,0, -1.4f,2.0f, -0.2,1.0f);
-    pathGoToEnd.addRectangle(0.1f,0, 0.3f,2.0f);
+    JPRE DrawablePath imageGoToEnd;
+    JPRE Path pathGoToEnd;
+    pathGoToEnd.addTriangle(-1.4f, 0, -1.4f,2.0f, -0.2f,1.0f);
+    pathGoToEnd.addRectangle(0.1f, 0, 0.3f, 2.0f);
     imageGoToEnd.setPath(pathGoToEnd);
-    FillType ft (Colours::white);
+    JPRE FillType ft (JPRE Colours::white);
     imageGoToEnd.setFill(ft);
     b->setImages(&imageGoToEnd);
   }

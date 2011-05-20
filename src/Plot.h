@@ -9,6 +9,7 @@
 #define PLOTTER_H
 
 #include "juce.h"
+#include "MidiPlaybackThread.h"
 
 // LayerPoint: a point with a (variable) number of plottable double fields.
 
@@ -415,6 +416,8 @@ class Layer
 class PlotView;         // defined in Plotter.cpp
 class BackView;
 class PlotViewport;
+class Transport;
+class PlotEditor;
 
 ///
 /// Axis View
@@ -569,7 +572,10 @@ class PointClipboard
   void add(LayerPoint* p) {points.add(p);}
 };
 
-class Plotter  : public Component, public ScrollBarListener 
+class Plotter : public Component,
+  public ScrollBarListener,
+  public Transport::Listener,
+  public MidiPlaybackThread::MidiMessageSource
 {
  private:
   class Field
@@ -594,15 +600,18 @@ class Plotter  : public Component, public ScrollBarListener
  public:
   enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
   enum Orientation {horizontal = 1, vertical };
+  enum PlaybackParam {PlaybackMinKey=1, PlaybackMaxKey, PlaybackDuration, PlaybackAmplitude, PlaybackChannel, PlaybackTempo};
 
   AxisView* haxview;
   AxisView* vaxview;
   PlotViewport* viewport;
   PlotView* plotview;
   BackView* backview;
+  PlotEditor* editor;
   OwnedArray <Layer> layers;
   OwnedArray <Axis> axes;
   OwnedArray <Field> fields;
+  double playbackparams[6];
 
   UndoManager actions;
   Font font;
@@ -611,11 +620,13 @@ class Plotter  : public Component, public ScrollBarListener
   int flags;
   PlotID plottype;
   bool changed;
+  bool playing;
 
   Plotter (int pt) ;
   Plotter (XmlElement* plot) ;
   Plotter (MidiFile& midifile);
   ~Plotter () ;
+
   bool hasUnsavedChanges ();
   void setUnsavedChanges(bool isUnsaved);
   void createPlottingComponents();
@@ -716,6 +727,17 @@ class Plotter  : public Component, public ScrollBarListener
   } 
   void paint(Graphics& g); 
 
+  // Audio playback methods
+
+  void pause();
+  void play(double pos);
+  void positionChanged(double position, bool isPlaying);
+  void tempoChanged(double tempo, bool isPlaying);
+  void addMidiPlaybackMessages(MidiPlaybackThread::MidiMessageQueue& queue, MidiPlaybackThread::PlaybackPosition& position);
+  bool isPlaying();
+  void setPlaying(bool p);
+  void setPlaybackParameter(PlaybackParam id, double value);
+  double getPlaybackParameter(PlaybackParam id);
 };
 
 ///
@@ -738,7 +760,7 @@ class PlotWindow : public DocumentWindow,
   };
   PlotWindowListener listener;
   Plotter* plotter;
-  TabbedComponent* tabview;
+  PlotEditor* tabview;
   File plotfile;
   MenuBarComponent* menubar;
   PlotWindow (XmlElement* plot);

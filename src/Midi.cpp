@@ -22,7 +22,6 @@ juce_ImplementSingleton(MidiOutPort)
 
 juce_ImplementSingleton(MidiInPort)
 
-
 //
 //  Nodes
 //
@@ -3244,17 +3243,15 @@ public:
       midiFile(File::nonexistent)
   {
     setName(T("Midi File Player"));
-    // create label for midi file chooser
-    //    addAndMakeVisible(midiFileLabel = new Label(String::empty, T("Midi File:")));
     midiFileChooser=new FilenameComponent(String::empty, File::nonexistent, true, false, false, 
                                           T("*.mid;*.midi"), String::empty, T(""));
     addAndMakeVisible(midiFileChooser);
     midiFileChooser->addListener(this);
     midiFileChooser->setBrowseButtonText(T("File..."));
-    addAndMakeVisible(transport=new Transport(*this));
+    addAndMakeVisible(transport=new Transport(this, 60.0));
 
     // create the playback thread with this object as the source.
-    pbthread=new MidiPlaybackThread(*this, 0, transport);
+    pbthread=new MidiPlaybackThread(this, 100, 60.0, NULL, transport);
     // start the thread running, this will put its run loop in pause mode.
     pbthread->startThread();
 
@@ -3312,7 +3309,7 @@ public:
 
   void positionChanged(double position, bool isPlaying)
   {
-    std::cout << "MidiFilePlayer::positionChanged(pos=" << position << ", isPlaying=" << isPlaying << ")\n" ;
+    std::cout << "MidiFilePlayer::positionChanged(" << position << ", " << isPlaying << ")\n" ;
     // convert the normalized position into a real position in the
     // playback sequence and update the MidiPlaybackThread's playback
     // position
@@ -3329,6 +3326,14 @@ public:
     {
       pbthread->play();
     }
+  }
+
+  // this function is called by the transport when the tempo slider is moved
+
+  void tempoChanged(double tempo, bool isPlaying)
+  {
+    std::cout << "MidiFilePlayer::tempoChanged(" << tempo << ", " << isPlaying << ")\n" ;
+    pbthread->setTempo(tempo);
   }
 
   double getFileDuration()
@@ -3416,8 +3421,8 @@ public:
       }
     // set the playback range to our upper bounds, note that the
     // length may include meta message
-    pbthread->setPlaybackLimits(fileDuration, sequence.getNumEvents());
-    pbthread->setPlaybackPort(MidiOutPort::getInstance()->device);
+    pbthread->setPlaybackLimit(fileDuration, sequence.getNumEvents());
+    pbthread->setMidiOutputPort(MidiOutPort::getInstance()->device);
     std::cout << "MidiFilePlayer::setFileToPlay: " << midiFile.getFullPathName().toUTF8() 
               << " tracks=" << numtracks << " duration=" << fileDuration << "\n";
   }
@@ -3439,7 +3444,7 @@ public:
       // skip over noteOffs because we add by pairs with noteOns
       if (ev->message.isNoteOff())
         continue;
-      if (ev->message.getTimeStamp() <= position.time)
+      if (ev->message.getTimeStamp() <= position.beat)
       {
         queue.addMessage(new MidiMessage(ev->message));
         //MidiPlaybackThread::printMessage(ev->message);
@@ -3484,7 +3489,7 @@ public:
   midiPortMenu->setBounds(x, y, 200, lineheight);
   x=margin;
   y=y+margin+(lineheight * 1.5);
-  transport->setTopLeftPosition((width/2)-(44*2.5),y);
+  transport->setTopLeftPosition((width/2)-(transport->getWidth()/2),y);
   }
 
   void buttonClicked (Button* button)
@@ -3521,11 +3526,11 @@ public:
   void comboBoxChanged (ComboBox* combobox)
   {
     int index=combobox->getSelectedItemIndex();
-    pbthread->setPlaybackPort(0);
+    pbthread->setMidiOutputPort(0);
     deleteAndZero(midiPort);
     midiPort=MidiOutput::openDevice(index);
     if (midiPort)
-      pbthread->setPlaybackPort(midiPort);      
+      pbthread->setMidiOutputPort(midiPort);      
   }
 };
 

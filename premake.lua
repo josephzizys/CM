@@ -116,6 +116,7 @@ for i = 1,numtargets do
    mypackage.buildflags = {"static-runtime", "no-main"}
    mypackage.language = "c++"
    add(mypackage.defines, juce_config)
+   add(mypackage.defines, "COMMONMUSIC=1")
 
    if amalgamated then 
       add(mypackage.libpaths, "obj/juce")
