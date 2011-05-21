@@ -9,8 +9,6 @@
 #include "Console.h"
 #include "Preferences.h"
 //#include "Scheme.h"
-//#include "lo/lo.h"
-#include <iostream>
 
 juce_ImplementSingleton(OscPort) ;
 

@@ -26,7 +26,7 @@
 #ifndef Alerts_h
 #define Alerts_h
 
-#include "juce.h"
+#include "Libraries.h"
 
 namespace juce
 {

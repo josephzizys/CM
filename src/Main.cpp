@@ -5,11 +5,8 @@
   of this agreement is available at http://www.cliki.net/LLGPL
  *=======================================================================*/
 
-// sdif header has to come before juce.h or i get an error :(
-#ifdef WITH_SDIF
-#include "sdif.h"
-#endif
-#include "juce.h"
+#include "Libraries.h"
+
 #include "Enumerations.h"
 #include "CmSupport.h"
 #include "Console.h"
@@ -20,16 +17,13 @@
 #include "Syntax.h"
 #include "CodeEditor.h"
 #include "Plot.h"
-#ifdef LIBLO
-#include "Osc.h"
-#endif
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
 #include "Fomus.h"
 #endif
+#ifdef WITH_LIBLO
+#include "Osc.h"
+#endif
 
-#include <string>
-#include <iostream>
- 
 #ifdef GRACE
 
 /*=======================================================================*
@@ -104,7 +98,7 @@ void Grace::initialise(const juce::String& commandLine)
       << T("\n");
   con->printOutput(str);
 
-#ifdef WITHFOMUS  
+#ifdef WITH_FOMUS  
   // Initialize fomus
   initfomus();
 #endif  
@@ -235,10 +229,10 @@ void Grace::shutdown()
   MidiOutPort::deleteInstance();
   std::cout << "Deleting MidiIn\n";
   MidiInPort::deleteInstance();
-#ifdef LIBLO
+#ifdef WITH_LIBLO
   OscPort::deleteInstance();
 #endif
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
   std::cout << "Deleting Fomus\n";
   Fomus::deleteInstance();
 #endif

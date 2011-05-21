@@ -8,7 +8,7 @@
 #ifndef HELP_H
 #define HELP_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 class Help
 {

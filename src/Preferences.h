@@ -8,7 +8,7 @@
 #ifndef PREFERENCES_H
 #define PREFERENCES_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 class Preferences
 {

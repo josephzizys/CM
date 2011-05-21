@@ -8,7 +8,8 @@
 #ifndef TEXTEDITOR_H
 #define TEXTEDITOR_H
 
-#include "juce.h"
+#include "Libraries.h"
+
 #include "Triggers.h"
 
 class Syntax;

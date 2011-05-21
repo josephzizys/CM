@@ -5,14 +5,9 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-#include <juce.h>
-
+#include "Libraries.h"
 #include "Console.h"
 #include "Syntax.h"
-
-#define FOMUS_TYPESONLY
-#include <fomus/fomusapi.h>
-#include <fomus/infoapi.h>
 
 extern bool fomus_exists;
 

@@ -15,11 +15,9 @@
 #include "Scheme.h"
 #include "Main.h"
 #include "Help.h"
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
 #include "Fomus.h"
 #endif
-#include <iostream>
-#include <limits>
 
 /*=======================================================================*
                                CodeEditorWindow
@@ -64,7 +62,7 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
     case TextIDs::Sal1: syntax=SalSyntax::getInstance(); break;
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
     case TextIDs::Fomus:
       if (fomus_exists) syntax=FomusSyntax::getInstance(); else syntax=TextSyntax::getInstance();
       break;
@@ -834,7 +832,7 @@ void CodeEditorWindow::switchBufferSyntax(int newtype)
     case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
     case TextIDs::Sal1: syntax=SalSyntax::getInstance(); break;
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
     case TextIDs::Fomus: syntax=FomusSyntax::getInstance(); break;
 #endif
     default: syntax=TextSyntax::getInstance(); break;

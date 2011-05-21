@@ -251,7 +251,7 @@ for i = 1,numtargets do
    
    if options["sndlib"] then
       sndlib = insure_slash(options["sndlib"])
-      add(mypackage.defines, "SNDLIB=1")
+      add(mypackage.defines, "WITH_SNDLIB=1")
       if os.fileexists(sndlib .. "mus-config.h") then
          add(mypackage.includepaths, sndlib)
          add(mypackage.libpaths, sndlib )
@@ -294,7 +294,7 @@ for i = 1,numtargets do
 
    if options["fomus"] then
       fomus = insure_slash(options["fomus"])
-      add(mypackage.defines, "WITHFOMUS=1")
+      add(mypackage.defines, "WITH_FOMUS=1")
       add(mypackage.defines, "FOMUSLIBPATH=\\\"" .. fomus .. "lib\\\"")
       if os.fileexists(fomus .. "include/fomus.h") then
          add(mypackage.includepaths, fomus .. "include")
@@ -336,7 +336,7 @@ for i = 1,numtargets do
 
    if options["liblo"] then
       liblo = insure_slash(options["liblo"])
-      add(mypackage.defines, "LIBLO")
+      add(mypackage.defines, "WITH_LIBLO")
       if os.fileexists(liblo .. "include/lo/lo.h") then
          add(mypackage.includepaths, liblo .. "include")
          add(mypackage.libpaths, liblo .. "lib")

@@ -8,11 +8,7 @@
 #ifndef SCHEME_H
 #define SCHEME_H
 
-#include "juce.h"
-
-#ifdef SNDLIB
-#include "s7.h"
-#endif
+#include "Libraries.h"
 
 #include "Syntax.h"
 

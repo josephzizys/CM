@@ -8,7 +8,7 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 // a global command mananger for holding app-wide commands. component
 // windows have their own managers as well...

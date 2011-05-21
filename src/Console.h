@@ -8,10 +8,8 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-#include "juce.h"
+#include "Libraries.h"
 #include "Messages.h"
-#include <iostream>
-
 
 class ConsoleTheme
 {

@@ -5,27 +5,26 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-#ifdef WITH_SDIF
-#include "sdif.h"
-#endif
+#include "Libraries.h"
+
 #include "Enumerations.h"
 #include "Scheme.h"
 #include "Console.h"
 #include "Midi.h"
 #include "Csound.h"
 #include "CmSupport.h"
-#ifdef SNDLIB
 #include "SndLib.h"
-#endif
-#ifdef WITHFOMUS
+#include "Scheme.h"
+
+#ifdef WITH_FOMUS
 #include "Fomus.h"
 #endif
+
 #ifdef GRACE
-#include "Preferences.h"
+  #include "Preferences.h"
 #endif
+
 #include "Syntax.h"
-#include <iostream>
-#include <string>
 
 juce_ImplementSingleton(SchemeThread)
 
@@ -771,7 +770,7 @@ void SchemeThread::printBanner()
          << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n")
          << getLispVersion() 
          << T("\n");
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
   if (fomus_exists) 
     banner << Fomus::getFomusVersion() 
            << T("\n");
@@ -872,11 +871,11 @@ void SchemeThread::closeScore()
   // processing the file output
   if (isScoreMode(ScoreTypes::Midi))
     MidiOutPort::getInstance()->performCommand(CommandIDs::SchedulerScoreComplete);
-#ifdef SNDLIB
+#ifdef WITH_SNDLIB
   else if (isScoreMode(ScoreTypes::SndLib))
     SndLib::getInstance()->performCommand(CommandIDs::SchedulerScoreComplete);
 #endif	  
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
   else if (isScoreMode(ScoreTypes::Fomus))
     Fomus::getInstance()->closeScore();
 #endif	  

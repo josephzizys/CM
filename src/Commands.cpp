@@ -18,27 +18,17 @@
 #include "Csound.h"
 #include "Plot.h"
 #include "CodeEditor.h"
-
+#include "SndLib.h"
+#ifdef WITH_FOMUS
+#include "Fomus.h"
+#endif
+#ifdef WITH_LIBLO
+#include "Osc.h"
+#endif
 #include "Cells.h"
-
 #ifdef GRACECL
 #include "CommonLisp.h"
 #endif
-
-#ifdef WITHFOMUS
-#include "Fomus.h"
-//#include "Plot.h"
-#endif
-
-#ifdef LIBLO
-#include "Osc.h"
-#endif
-
-#ifdef SNDLIB
-#include "SndLib.h"
-#endif
-
-#include <iostream>
 
 /*=======================================================================*
                      Application wide commands             
@@ -225,7 +215,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::CsoundClearScore,
     CommandIDs::CsoundOpenSettings,
 
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
     CommandIDs::FomusNewScore,
     CommandIDs::FomusRenameScore,
     CommandIDs::FomusDeleteScore,
@@ -247,7 +237,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::FomusRunCurr,
 #endif
 
-#ifdef LIBLO
+#ifdef WITH_LIBLO
     CommandIDs::OscOpen,
     CommandIDs::OscTraceInput,
     CommandIDs::OscTraceOutput,
@@ -696,7 +686,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       //
       // Fomus Commands
       //
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
     case CommandIDs::FomusNewScore:
       info.shortName=T("New Score...");
       break;
@@ -748,7 +738,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 
       // OSC
 
-#ifdef LIBLO
+#ifdef WITH_LIBLO
     case CommandIDs::OscOpen:
       if (OscPort::getInstance()->isOpen)
         info.shortName=T("Close Connection");
@@ -1067,7 +1057,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       // Sndlib Commands
       //
 
-#ifdef SNDLIB
+#ifdef WITH_SNDLIB
 
     case CommandIDs::SndLibSrate:
       SndLib::getInstance()->setSrate(SrateIDs::toSrate(data));
@@ -1125,7 +1115,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       // Fomus Commands
       //
 
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
     case CommandIDs::FomusSelectScore:
       Fomus::getInstance()->setScoreActive(data);
       break;
@@ -1178,7 +1168,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       // OSC Commands
       //
 
-#ifdef LIBLO
+#ifdef WITH_LIBLO
 
     case CommandIDs::OscOpen:
       if (OscPort::getInstance()->isOpen)

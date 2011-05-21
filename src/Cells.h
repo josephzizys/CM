@@ -8,7 +8,7 @@
 #ifndef CELLS_H
 #define CELLS_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 class CellView : public Component 
 {

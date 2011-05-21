@@ -8,8 +8,9 @@
 #ifndef SYNTAX_H
 #define SYNTAX_H
 
-#include <map>
+#include "Libraries.h"
 #include "Enumerations.h"
+
 
 class Syntax : public CodeTokeniser
 {

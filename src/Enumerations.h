@@ -8,7 +8,7 @@
 #ifndef ENUMERATIONS_H
 #define ENUMERATIONS_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 class SysInfo
 {

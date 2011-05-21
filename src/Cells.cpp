@@ -8,7 +8,6 @@
 #include "Enumerations.h"
 #include "Cells.h"
 #include "Console.h"
-#include <iostream>
 
 CellView::CellView(String statesandcolors, int rows, int cols, int cellsize, int bordersize, Colour bgcolor, int gens)
   : cellRows (rows),

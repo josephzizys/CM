@@ -14,7 +14,7 @@
 #include <signal.h>
 
 #if LINUX || MACOSX
-#include <unistd.h>
+  #include <unistd.h>
 #endif
 
 juce_ImplementSingleton(CommonLisp)

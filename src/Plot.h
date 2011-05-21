@@ -8,7 +8,8 @@
 #ifndef PLOTTER_H
 #define PLOTTER_H
 
-#include "juce.h"
+#include "Libraries.h"
+
 #include "MidiPlaybackThread.h"
 
 // LayerPoint: a point with a (variable) number of plottable double fields.

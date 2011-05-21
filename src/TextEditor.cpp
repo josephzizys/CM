@@ -13,10 +13,6 @@
 #include "Syntax.h"
 #include "Help.h"
 #include "Alerts.h"
-#include <iostream>
-#ifdef WITHFOMUS
-#include "Fomus.h"
-#endif
 
 /*=======================================================================*
                              TextEditorWindow
@@ -451,7 +447,7 @@ void TextBuffer::setSyntax(int synt)
     case TextIDs::Sal2:
       syntax=Sal2Syntax::getInstance();
       break;
-#ifdef WITHFOMUS      
+#ifdef WITH_FOMUS      
     case TextIDs::Fomus:
       if (fomus_exists) syntax=FomusSyntax::getInstance(); else syntax=TextSyntax::getInstance();
       break;
@@ -942,7 +938,7 @@ void TextBuffer::lookupHelpAtPoint()
     default:
       return;
     }
-#ifdef SNDLIB
+#ifdef WITH_SNDLIB
   helppath<<T(":SndLib");
 #endif
   helppath<<T(":Scheme");

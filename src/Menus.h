@@ -8,7 +8,7 @@
 #ifndef MENUS_H
 #define MENUS_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 class CommandMenus
 {

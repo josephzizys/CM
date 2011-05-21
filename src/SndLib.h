@@ -8,7 +8,7 @@
 #ifndef CMSNDLIB_H
 #define CMSNDLIB_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 class SndLib
 {

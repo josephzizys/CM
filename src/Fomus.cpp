@@ -11,18 +11,11 @@
 // Make sure this line is in the ConsoleWindow class in Console.h:
 // TooltipWindow xxx;
 
-#include "juce.h"
+#include "Libraries.h"
 
 #ifdef JUCE_WIN32
-#include "loadlibrary.h"
+  #include "loadlibrary.h"
 #endif
-
-#include <cstdlib>
-#include <vector>
-#include <sstream>
-#include <limits>
-#include <stack>
-#include <cctype>
 
 #include "Enumerations.h"
 #include "Fomus.h"
@@ -31,12 +24,9 @@
 #include "CmSupport.h"
 #include "Alerts.h"
 
-#define FOMUS_TYPESONLY
-#include <fomus/infoapi.h>
-
 // juce defines JUCE_LINUX, JUCE_MAC or JUCE_WIN32 already
 #if defined(JUCE_LINUX) || defined(JUCE_MAC)
-#include <dlfcn.h>
+  #include <dlfcn.h>
 #endif
 
 /*=======================================================================*

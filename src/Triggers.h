@@ -8,7 +8,7 @@
 #ifndef TRIGGERS_H
 #define TRIGGERS_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 class Trigger  : public Component,
   public SliderListener,

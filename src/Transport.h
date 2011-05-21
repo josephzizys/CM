@@ -7,15 +7,7 @@
 #ifndef Transport_h
 #define Transport_h
 
-// ARRRRGGG this namespace nonsense is gross!
-
-#ifdef COMMONMUSIC
-#include "juce.h"
-#define JPRE
-#else
 #include "Libraries.h"
-#define JPRE juce::
-#endif
 
 /** A component for controlling audio/midi playback. Based on Andrew
     Burnson's original Transport class in Chorale Composer I. A
@@ -31,10 +23,10 @@
     setTempo() methods.  To trigger transport actions from other
     threads use the asynchronous sendMessage() method. **/
 
-class Transport : public JPRE Component, 
-  public JPRE AsyncUpdater,
-  public JPRE ButtonListener,
-  public JPRE SliderListener
+class Transport : public juce::Component, 
+  public juce::AsyncUpdater,
+  public juce::ButtonListener,
+  public juce::SliderListener
 {
  public:
 
@@ -102,49 +94,49 @@ class Transport : public JPRE Component,
     labelTempo(0),
     buttonWidth(44),
     buttonHeight(24),
-    buttonColor (JPRE Colour(90,90,120)),
-    toggleColor (JPRE Colour(60,60,180)),
+    buttonColor (juce::Colour(90,90,120)),
+    toggleColor (juce::Colour(60,60,180)),
     playing(false)
     {
-      int connectLeft = JPRE Button::ConnectedOnLeft;
-      int connectBoth = JPRE Button::ConnectedOnLeft | JPRE Button::ConnectedOnRight;
-      int connectRight = JPRE Button::ConnectedOnRight;     
-      JPRE DrawableButton::ButtonStyle buttonStyle = JPRE DrawableButton::ImageOnButtonBackground;
+      int connectLeft = juce::Button::ConnectedOnLeft;
+      int connectBoth = juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight;
+      int connectRight = juce::Button::ConnectedOnRight;     
+      juce::DrawableButton::ButtonStyle buttonStyle = juce::DrawableButton::ImageOnButtonBackground;
       
-      addAndMakeVisible(buttonRewind = new JPRE DrawableButton(JPRE String("Rewind"), buttonStyle));
+      addAndMakeVisible(buttonRewind = new juce::DrawableButton(juce::String("Rewind"), buttonStyle));
       buttonRewind->setBackgroundColours(buttonColor, toggleColor);
       buttonRewind->setConnectedEdges(connectRight);
       drawRewind(buttonRewind);
       buttonRewind->addListener(this);
 	
-      addAndMakeVisible(buttonBack = new JPRE DrawableButton(JPRE String("Back"), buttonStyle));
+      addAndMakeVisible(buttonBack = new juce::DrawableButton(juce::String("Back"), buttonStyle));
       buttonBack->setBackgroundColours(buttonColor, toggleColor);
       buttonBack->setConnectedEdges(connectBoth);
       drawBack(buttonBack);
       buttonBack->addListener(this);
 	
-      addAndMakeVisible(buttonPlayPause = new JPRE DrawableButton(JPRE String("PlayPause"), buttonStyle));
+      addAndMakeVisible(buttonPlayPause = new juce::DrawableButton(juce::String("PlayPause"), buttonStyle));
       buttonPlayPause->setBackgroundColours(buttonColor, toggleColor);
       buttonPlayPause->setConnectedEdges(connectBoth);
       drawPlay(buttonPlayPause);
       buttonPlayPause->addListener(this);
 	
-      addAndMakeVisible(buttonForward = new JPRE DrawableButton(JPRE String("Forward"), buttonStyle));
+      addAndMakeVisible(buttonForward = new juce::DrawableButton(juce::String("Forward"), buttonStyle));
       buttonForward->setBackgroundColours(buttonColor, toggleColor);
       buttonForward->setConnectedEdges(connectBoth);
       drawForward(buttonForward);
       buttonForward->addListener(this);
 
-      addAndMakeVisible(buttonGoToEnd = new JPRE DrawableButton(JPRE String("GoToEnd"), buttonStyle));
+      addAndMakeVisible(buttonGoToEnd = new juce::DrawableButton(juce::String("GoToEnd"), buttonStyle));
       buttonGoToEnd->setBackgroundColours(buttonColor, toggleColor);
       buttonGoToEnd->setConnectedEdges(connectLeft);
       drawGoToEnd(buttonGoToEnd);
       buttonGoToEnd->addListener(this);
 	
-      addAndMakeVisible(sliderPosition = new JPRE Slider(JPRE String("Position")));
-      sliderPosition->setSliderStyle(JPRE Slider::LinearHorizontal);
-      sliderPosition->setTextBoxStyle(JPRE Slider::NoTextBox, false, 0, 0);
-      sliderPosition->setColour(JPRE Slider::thumbColourId,buttonColor);
+      addAndMakeVisible(sliderPosition = new juce::Slider(juce::String("Position")));
+      sliderPosition->setSliderStyle(juce::Slider::LinearHorizontal);
+      sliderPosition->setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+      sliderPosition->setColour(juce::Slider::thumbColourId,buttonColor);
       sliderPosition->setRange(0, 1.0);
       sliderPosition->addListener(this);
  
@@ -157,14 +149,14 @@ class Transport : public JPRE Component,
         // add extra width if we have a tempo slider
         //width += (buttonHeight + (buttonHeight*2) + (buttonHeight*2));
         width += ((buttonHeight/2) + (buttonHeight*2) + (buttonHeight*2));
-        addAndMakeVisible(labelTempo = new JPRE Label(JPRE String::empty,JPRE String(tempo) + JPRE String(" BPM")));
-        labelTempo->setColour(JPRE Label::textColourId, buttonColor);
-        addAndMakeVisible(sliderTempo = new JPRE Slider(JPRE String("Tempo")));
-        sliderTempo->setSliderStyle(JPRE Slider::Rotary);
-        sliderTempo->setTextBoxStyle(JPRE Slider::NoTextBox, false, 0, 0);
-        sliderTempo->setColour(JPRE Slider::thumbColourId, buttonColor);
-        sliderTempo->setColour(JPRE Slider::rotarySliderFillColourId, buttonColor);
-        sliderTempo->setColour(JPRE Slider::rotarySliderOutlineColourId, buttonColor);
+        addAndMakeVisible(labelTempo = new juce::Label(juce::String::empty,juce::String(tempo) + juce::String(" BPM")));
+        labelTempo->setColour(juce::Label::textColourId, buttonColor);
+        addAndMakeVisible(sliderTempo = new juce::Slider(juce::String("Tempo")));
+        sliderTempo->setSliderStyle(juce::Slider::Rotary);
+        sliderTempo->setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+        sliderTempo->setColour(juce::Slider::thumbColourId, buttonColor);
+        sliderTempo->setColour(juce::Slider::rotarySliderFillColourId, buttonColor);
+        sliderTempo->setColour(juce::Slider::rotarySliderOutlineColourId, buttonColor);
         // FIXME: tempo max and min should be customizable!
         sliderTempo->setRange(6.0, 208.0, 1.0);
         sliderTempo->setValue(tempo, true, true);
@@ -264,7 +256,7 @@ class Transport : public JPRE Component,
       sliderTempo->setValue(tempo, triggerAction, false);
       // if we are not triggering the update label display by hand
       if (!triggerAction)
-        labelTempo->setText(JPRE String(tempo)+JPRE String(" BPM"), false);
+        labelTempo->setText(juce::String(tempo)+juce::String(" BPM"), false);
     }
   }
 
@@ -284,7 +276,7 @@ class Transport : public JPRE Component,
 
   void sendMessage(int id, double d=0.0, int i=0, bool b=false)
   {
-    JPRE ScopedLock mylock(messages.getLock());
+    juce::ScopedLock mylock(messages.getLock());
     messages.add(new TransportMessage(id, d, i, b));
     triggerAsyncUpdate();
   }
@@ -293,18 +285,18 @@ class Transport : public JPRE Component,
 
   bool playing;
   Listener* listener; 
-  JPRE DrawableButton* buttonPlayPause;
-  JPRE DrawableButton* buttonRewind;
-  JPRE DrawableButton* buttonBack;
-  JPRE DrawableButton* buttonForward;
-  JPRE DrawableButton* buttonGoToEnd;
-  JPRE Slider*         sliderPosition;
-  JPRE Slider*         sliderTempo;
-  JPRE Label*          labelTempo;
+  juce::DrawableButton* buttonPlayPause;
+  juce::DrawableButton* buttonRewind;
+  juce::DrawableButton* buttonBack;
+  juce::DrawableButton* buttonForward;
+  juce::DrawableButton* buttonGoToEnd;
+  juce::Slider*         sliderPosition;
+  juce::Slider*         sliderTempo;
+  juce::Label*          labelTempo;
   int buttonWidth;
   int buttonHeight;
-  JPRE Colour buttonColor;
-  JPRE Colour toggleColor;
+  juce::Colour buttonColor;
+  juce::Colour toggleColor;
 
   /** Internal support for messaging from other threads **/
 
@@ -319,11 +311,11 @@ class Transport : public JPRE Component,
     ~TransportMessage() {}
   };
 
-  JPRE OwnedArray<TransportMessage, JPRE CriticalSection> messages;
+  juce::OwnedArray<TransportMessage, juce::CriticalSection> messages;
 
   void handleAsyncUpdate ()
   {
-    JPRE ScopedLock mylock(messages.getLock());
+    juce::ScopedLock mylock(messages.getLock());
     int size=messages.size();
     for (int i=0; i<size; i++)
     {
@@ -385,7 +377,7 @@ class Transport : public JPRE Component,
 
   /** Internal function implements button clicked actions. **/
 
-  virtual void buttonClicked(JPRE Button* button)
+  virtual void buttonClicked(juce::Button* button)
   {
     static bool isShowingPlayNotPause = true;
     
@@ -424,97 +416,97 @@ class Transport : public JPRE Component,
   /** Internal slider function invokes the source's postionChanged()
       or tempoChanged() method. **/
 
-  virtual void sliderValueChanged(JPRE Slider *slider)
+  virtual void sliderValueChanged(juce::Slider *slider)
   {
     if (slider == sliderPosition)
       listener->positionChanged(sliderPosition->getValue(), isPlaying());
     else if (slider == sliderTempo)
     {
       double val=sliderTempo->getValue();
-      labelTempo->setText(JPRE String(val)+JPRE String(" BPM"), false);
+      labelTempo->setText(juce::String(val)+juce::String(" BPM"), false);
       listener->tempoChanged(val, isPlaying());
     }
   }
  
   /** Internal button drawing. **/
 
-  void drawRewind(JPRE DrawableButton* b)
+  void drawRewind(juce::DrawableButton* b)
   {
-    JPRE DrawablePath imageRewind;
-    JPRE Path pathRewind;
+    juce::DrawablePath imageRewind;
+    juce::Path pathRewind;
     pathRewind.addRectangle(-1.8f,0,0.3f,2.0f);
     pathRewind.addTriangle(0,0, 0,2.0f, -1.2f,1.0f);
     imageRewind.setPath(pathRewind);
-    JPRE FillType ft (JPRE Colours::white);
+    juce::FillType ft (juce::Colours::white);
     imageRewind.setFill(ft);
     b->setImages(&imageRewind);
   }
 
   /** Internal button drawing. **/
 
-  void drawBack(JPRE DrawableButton* b)
+  void drawBack(juce::DrawableButton* b)
   {
-    JPRE DrawablePath imageBack;
-    JPRE Path pathBack;
+    juce::DrawablePath imageBack;
+    juce::Path pathBack;
     pathBack.addTriangle(0,0,0,2.0f,-1.2f,1.0f);
     pathBack.addTriangle(1.2f,0,1.2f,2.0f,0,1.0f);
     imageBack.setPath(pathBack);
-    JPRE FillType ft (JPRE Colours::white);
+    juce::FillType ft (juce::Colours::white);
     imageBack.setFill(ft);
     b->setImages(&imageBack);
   }
   
   /** Internal button drawing. **/
 
-  void drawPlay(JPRE DrawableButton* b)
+  void drawPlay(juce::DrawableButton* b)
   {
-    JPRE DrawablePath imagePlay;
-    JPRE Path pathPlay;
+    juce::DrawablePath imagePlay;
+    juce::Path pathPlay;
     pathPlay.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     imagePlay.setPath(pathPlay);
-    JPRE FillType ft (JPRE Colours::white);
+    juce::FillType ft (juce::Colours::white);
     imagePlay.setFill(ft);
     b->setImages(&imagePlay);
   }
   
   /** Internal button drawing. **/
 
-  void drawPause(JPRE DrawableButton* b)
+  void drawPause(juce::DrawableButton* b)
   {
-    JPRE DrawablePath imagePause;
-    JPRE Path pathPause;
+    juce::DrawablePath imagePause;
+    juce::Path pathPause;
     pathPause.addRectangle(0,0,0.3f,1.0f);
     pathPause.addRectangle(0.6f,0,0.3f,1.0f);
     imagePause.setPath(pathPause);
-    JPRE FillType ft (JPRE Colours::white);
+    juce::FillType ft (juce::Colours::white);
     imagePause.setFill(ft);
     b->setImages(&imagePause);
   }
   
   /** Internal button drawing. **/
 
-  void drawForward(JPRE DrawableButton* b)
+  void drawForward(juce::DrawableButton* b)
   {
-    JPRE DrawablePath imageForward;
-    JPRE Path pathForward;
+    juce::DrawablePath imageForward;
+    juce::Path pathForward;
     pathForward.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     pathForward.addTriangle(-1.2f,0,-1.2f,2.0f,0,1.0f);
     imageForward.setPath(pathForward);
-    JPRE FillType ft (JPRE Colours::white);
+    juce::FillType ft (juce::Colours::white);
     imageForward.setFill(ft);
     b->setImages(&imageForward);
   }
     
   /** Internal button drawing. **/
 
-  void drawGoToEnd(JPRE DrawableButton* b)
+  void drawGoToEnd(juce::DrawableButton* b)
   {
-    JPRE DrawablePath imageGoToEnd;
-    JPRE Path pathGoToEnd;
+    juce::DrawablePath imageGoToEnd;
+    juce::Path pathGoToEnd;
     pathGoToEnd.addTriangle(-1.4f, 0, -1.4f,2.0f, -0.2f,1.0f);
     pathGoToEnd.addRectangle(0.1f, 0, 0.3f, 2.0f);
     imageGoToEnd.setPath(pathGoToEnd);
-    JPRE FillType ft (JPRE Colours::white);
+    juce::FillType ft (juce::Colours::white);
     imageGoToEnd.setFill(ft);
     b->setImages(&imageGoToEnd);
   }

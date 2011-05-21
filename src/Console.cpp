@@ -10,17 +10,16 @@
 #include "Scheme.h"
 #include "Midi.h"
 #include "Preferences.h"
-#ifdef GRACE
-#include "Commands.h"
-#include "Audio.h"
-#include "Images.h"
-#include "Plot.h"
-//#include "TextEditor.h"
-#include "CodeEditor.h"
-#include "Alerts.h"
-#endif
 
-#include <iostream>
+#ifdef GRACE
+  #include "Commands.h"
+  #include "Audio.h"
+  #include "Images.h"
+  #include "Plot.h"
+  //#include "TextEditor.h"
+  #include "CodeEditor.h"
+  #include "Alerts.h"
+#endif
 
 Console* Console::globalInstance = 0;
 

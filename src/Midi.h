@@ -8,7 +8,7 @@
 #ifndef MIDI_H
 #define MIDI_H
 
-#include <juce.h>
+#include "Libraries.h"
 
 class MidiOutPort;
 class ConsoleWindow;

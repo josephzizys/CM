@@ -8,12 +8,10 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+
 
 #ifndef NOJUCE
-#include "juce.h"
+#include "Libraries.h"
 #endif
 
 #ifdef NOJUCE

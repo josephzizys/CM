@@ -8,7 +8,7 @@
 #ifndef CSOUND_H
 #define CSOUND_H
 
-#include <juce.h>
+#include "Libraries.h"
 
 class CsoundScoreEv
 {

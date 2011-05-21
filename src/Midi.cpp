@@ -11,12 +11,11 @@
 #include "Console.h"
 #include "Midi.h"
 #ifdef GRACE
-#include "Preferences.h"
-#include "CodeEditor.h"
-#include "Alerts.h"
-#include "MidiPlaybackThread.h"
+  #include "Preferences.h"
+  #include "CodeEditor.h"
+  #include "Alerts.h"
+  #include "MidiPlaybackThread.h"
 #endif
-#include <iostream>
 
 juce_ImplementSingleton(MidiOutPort)
 

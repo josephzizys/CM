@@ -8,8 +8,7 @@
 #ifndef OSC_H
 #define OSC_H
 
-#include "juce.h"
-#include "lo/lo.h"
+#include "Libraries.h"
 #include "Scheme.h"
 
 class OscPort 

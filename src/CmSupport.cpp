@@ -4,15 +4,8 @@
   it under the terms of the Lisp Lesser Gnu Public License. The text of 
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
+#include "Libraries.h"
 
-#include <iostream>
-#include <string>
-#include <math.h>
-// sdif header has to come before juce.h or i get an error :(
-#ifdef WITH_SDIF
-#include "sdif.h"
-#endif
-#include "juce.h"
 #include "Enumerations.h"
 #include "CmSupport.h"
 #include "Midi.h"
@@ -20,27 +13,13 @@
 #include "SndLib.h"
 #include "Console.h"
 #include "Syntax.h"
-
-#ifdef WITHFOMUS
-#define FOMUS_TYPESONLY
-#include "Fomus.h"
-#include "fomus/infoapi.h"
-#endif
-
-#ifdef GRACE
 #include "Plot.h"
 #include "Cells.h"
+#ifdef WITH_FOMUS
+#include "Fomus.h"
 #endif
-
-#ifdef LIBLO
+#ifdef WITH_LIBLO
 #include "Osc.h"
-#endif
-
-#ifdef _MSC_VER
-#define strdup _strdup
-#define jn _jn
-double log2(double n) {return log(n)/log(2.0);}
-int round(double n) {return (int)(n+.5);}
 #endif
 
 void cm_quit()
@@ -1166,14 +1145,14 @@ s7_pointer sal_token_position(s7_pointer ptr)
 double cm_mouse_x(double minval, double maxval, double base)
 {
   Rectangle<int> monitor=Desktop::getInstance().getMainMonitorArea(false);  	
-  Point<int> mouse=Desktop::getInstance().getMousePosition();
+  juce::Point<int> mouse=Desktop::getInstance().getMousePosition();
   return cm_rescale(mouse.getX(), 0, monitor.getWidth(), minval, maxval, base);
 }
 
 double cm_mouse_y(double minval, double maxval, double base)
 {
   Rectangle<int> monitor=Desktop::getInstance().getMainMonitorArea(false);  	
-  Point<int> mouse=Desktop::getInstance().getMousePosition();
+  juce::Point<int> mouse=Desktop::getInstance().getMousePosition();
   return cm_rescale(mouse.getY(), 0, monitor.getHeight(), minval, maxval, base);
 }
 
@@ -1262,7 +1241,7 @@ void mp_send_note(s7_pointer time, s7_pointer dur, s7_pointer key, s7_pointer am
 {
   SchemeThread* scm=SchemeThread::getInstance();
   // if a Fomus score is open reroute the midi data as an fms:note.
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
   if (scm->scoremode==ScoreTypes::Fomus)
   {
     if (!check_fomus_exists()) return;
@@ -1773,7 +1752,7 @@ void cs_close_score()
 // FOMUS Support
 //
 
-#ifdef WITHFOMUS // defined(WITHFOMUS) && defined(GRACE)
+#ifdef WITH_FOMUS // defined(WITH_FOMUS) && defined(GRACE)
 
 void fms_close_score()
 {
@@ -2055,7 +2034,7 @@ void sw_draw(char* w, s7_pointer obj, int a, int b){}
                              Open Sound Control
  *=======================================================================*/
 
-#ifdef LIBLO
+#ifdef WITH_LIBLO
 
 void toTimeTag(double ahead, lo_timetag& tag)
 {

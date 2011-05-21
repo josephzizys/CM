@@ -8,8 +8,7 @@
 #ifndef PLOTTERTABS_H
 #define PLOTTERTABS_H
 
-#include "juce.h"
-#include <iostream>
+#include "Libraries.h"
 
 class Plotter;
 class Layer;

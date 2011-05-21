@@ -8,7 +8,7 @@
 #ifndef PLOTTERWINDOW_H
 #define PLOTTERWINDOW_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 #endif
 

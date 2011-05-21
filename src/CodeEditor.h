@@ -8,7 +8,7 @@
 #ifndef CmCodeEditor_h
 #define CmCodeEditor_h
 
-#include "juce.h"
+#include "Libraries.h"
 
 class Syntax;
 class SynTok;

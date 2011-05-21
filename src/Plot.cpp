@@ -12,12 +12,9 @@
 #include "Plot.h"
 #include "Midi.h"
 #include "Scheme.h"
-#include <limits>
 #include "CmSupport.h"
 #include "Alerts.h"
 #include "PlotEditor.h"
-//#include <cmath>
-#include <iostream>
 
 /*=======================================================================*
                                     Axis
@@ -540,7 +537,7 @@ public:
   Plotter * plotter;
   BackView * backview;
   double pad; // pix per inc, pix per point, margin pad
-  Point<float> mousedown, mousemove;
+  juce::Point<float> mousedown, mousemove;
   SelectedItemSet<LayerPoint*> selection;
   Region region;
   Layer * focuslayer; // cached focus layer for fast acesss

@@ -9,7 +9,6 @@
 #include "TextEditor.h"
 #include "Syntax.h"
 #include "Triggers.h"
-#include <iostream>
 
 Trigger::Trigger (int typ)
     : button (0),

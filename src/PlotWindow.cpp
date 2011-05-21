@@ -13,10 +13,9 @@
 #include "PlotEditor.h"
 #include "Midi.h"
 #include "Scheme.h"
-#include <limits>
+
 #include "CmSupport.h"
 #include "Alerts.h"
-#include <iostream>
 
 /*=======================================================================*
            PlotWindowComponent: window's content component that

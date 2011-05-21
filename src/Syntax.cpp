@@ -8,12 +8,11 @@
 #include "Syntax.h"
 #include "Console.h"
 #include "Scheme.h"
+
 #ifdef GRACE
 #include "Preferences.h"
 #include "CommonLisp.h"
 #endif
-#include <cctype>
-#include <iostream>
 
 juce_ImplementSingleton(TextSyntax) ;
 juce_ImplementSingleton(LispSyntax) ;

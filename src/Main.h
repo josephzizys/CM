@@ -8,7 +8,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "juce.h"
+#include "Libraries.h"
 
 class Grace : public JUCEApplication
 {

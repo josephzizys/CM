@@ -12,7 +12,6 @@
 #include "Documentation.h"
 #include "Preferences.h"
 #include "Resources.h"
-#include <iostream>
 
 juce_ImplementSingleton (Help) ;
 

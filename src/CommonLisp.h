@@ -8,7 +8,8 @@
 #ifndef CL_H
 #define CL_H
 
-#include "juce.h"
+#include "Libraries.h"
+
 #include "Console.h"
 
 class CLProcessThread : public Thread, private MessageListener

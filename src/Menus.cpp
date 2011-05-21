@@ -12,10 +12,12 @@
 #include "Commands.h"
 #include "Help.h"
 #include "Scheme.h"
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
 #include "Fomus.h"
 #endif
-#include <iostream>
+#ifdef WITH_LIBLO
+#include "Osc.h"
+#endif
 
 /*=======================================================================*
                              Global Menu Building
@@ -114,7 +116,7 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   inmenu.addSubMenu(T("Message Filter"), opfilt);
   menu.addSubMenu(T("Midi In"), inmenu);
 
-#ifdef LIBLO
+#ifdef WITH_LIBLO
   {
     PopupMenu osc;
     osc.addCommandItem(comm, CommandIDs::OscOpen);
@@ -129,7 +131,7 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   }
 #endif
 
-#ifdef SNDLIB
+#ifdef WITH_SNDLIB
   PopupMenu sndlib,chans,srate, fmats;
   for (int i=0; i<SrateIDs::NumSrates; i++)
     srate.addCommandItem(comm, CommandIDs::SndLibSrate+i);
@@ -153,7 +155,7 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   csound.addSeparator();
   csound.addCommandItem(comm, CommandIDs::CsoundOpenSettings);
   menu.addSubMenu(T("Csound"), csound);
-#ifdef WITHFOMUS
+#ifdef WITH_FOMUS
   if (fomus_exists) {
     PopupMenu fomus;
     if (isfms) {

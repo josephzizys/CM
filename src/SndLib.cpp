@@ -5,19 +5,13 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#ifndef _MSC_VER
-#include <unistd.h>
-#endif
-#include "mus-config.h" // in SndLib.h
+#include "Libraries.h"
+
+#include "mus-config.h" //In SndLib.h
 #include "s7.h"
 #include "clm.h"
 #include "clm2xen.h"
 
-#include <iostream>
-#include "juce.h"
 #include "Enumerations.h"
 #include "SndLibBridge.h"
 #include "CmSupport.h"
