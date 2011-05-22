@@ -15,7 +15,7 @@
 ///
 
 class Plotter;
-class PlotEditor;
+class PlotTabbedEditor;
 
 class PlotWindow : public DocumentWindow, public MenuBarModel
 {
@@ -31,7 +31,7 @@ class PlotWindow : public DocumentWindow, public MenuBarModel
   };
   PlotWindowListener listener;
   Plotter* plotter;
-  PlotEditor* tabview;
+  PlotTabbedEditor* tabview;
   File plotfile;
   MenuBarComponent* menubar;
   PlotWindow (XmlElement* plot);

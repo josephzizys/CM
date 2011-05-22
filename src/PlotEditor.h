@@ -16,18 +16,18 @@ class Transport;
 
 /** A TabbedComponent that holds various editors for working with plot data. **/
 
-class PlotEditor : public TabbedComponent
+class PlotTabbedEditor : public TabbedComponent
 {
  public:
-  PlotEditor();
-  ~PlotEditor();
+  PlotTabbedEditor();
+  ~PlotTabbedEditor();
   void currentTabChanged (int newCurrentTabIndex, const String &newCurrentTabName);
 };
 
 /** the base class for tabbed plot editors. subclasses override
     whichever listener definitions they need to implement **/
 
-class PlotterTab : public Component,
+class PlotEditor : public Component,
   public Button::Listener, public TextEditor::Listener,
   public Slider::Listener, public ComboBox::Listener
 {
@@ -38,8 +38,8 @@ class PlotterTab : public Component,
   enum TabTypes {TabEmpty=0, TabWindow, TabAudio, TabExport, TabAxis, TabLayer, TabPoints};
   int tabType;
   Plotter* plotter;
-  PlotterTab (Plotter* pltr) : plotter (pltr), tabType(TabEmpty) {}
-  ~PlotterTab () {}
+  PlotEditor (Plotter* pltr) : plotter (pltr), tabType(TabEmpty) {}
+  ~PlotEditor () {}
   void textEditorReturnKeyPressed(TextEditor& editor) {/*std::cout << "return key pressed\n";*/}
   void textEditorTextChanged(TextEditor& editor) {/*std::cout << "text changed\n";*/}
   void textEditorEscapeKeyPressed(TextEditor& editor) {/*std::cout << "escape key pressed\n";*/}
@@ -50,32 +50,34 @@ class PlotterTab : public Component,
   TabbedComponent* getTabbedComponent() {return (TabbedComponent*)getParentComponent();}
 };
 
-class TabLabel : public Label
+// GUI componets used in the various editors
+
+class EditorLabel : public Label
 {
  public:
- TabLabel(String text) : Label(String::empty, text)
+ EditorLabel(String text) : Label(String::empty, text)
   {
-    Font font (PlotterTab::fontsize, Font::plain);
+    Font font (PlotEditor::fontsize, Font::plain);
     setFont (font);
     setJustificationType (Justification::centredLeft);
     setEditable (false, false, false);
     setColour (Label::textColourId, Colours::black);
     setColour (Label::backgroundColourId, Colour(0x0)); // Colours::red  
-    setSize((int)(font.getStringWidthFloat(getText()+T("  "))), PlotterTab::lineheight);
+    setSize((int)(font.getStringWidthFloat(getText()+T("  "))), PlotEditor::lineheight);
   }
-  ~TabLabel()
+  ~EditorLabel()
   {
   }
 };
 
-class TabButton : public TextButton
+class EditorButton : public TextButton
 {
  public:
 
- TabButton(String text, int width=0, int height=0) : TextButton(text)
+ EditorButton(String text, int width=0, int height=0) : TextButton(text)
   {
     if (height==0)
-      height=PlotterTab::lineheight;
+      height=PlotEditor::lineheight;
     if (width==0)
     {
       changeWidthToFitText(height);
@@ -85,19 +87,19 @@ class TabButton : public TextButton
     setSize(width, height);
   }
 
-  ~TabButton()
+  ~EditorButton()
   {
   }
 };
 
 /** a one-line text buffer component with some extra methods for text handling **/
 
-class TabEditor : public TextEditor
+class EditorTextBox : public TextEditor
 {
 
  public:
 
- TabEditor(String text=String::empty)
+ EditorTextBox(String text=String::empty)
    : TextEditor()
   {
     setText(text);
@@ -110,7 +112,7 @@ class TabEditor : public TextEditor
     setFont(Font(15.0000f, Font::plain));
   }
 
-  ~TabEditor()
+  ~EditorTextBox()
   {
   }
 
@@ -159,64 +161,64 @@ class TabEditor : public TextEditor
   }
 };
 
-class PlotWindowTab : public PlotterTab
+class PlotWindowEditor : public PlotEditor
 {
  public:
-  PlotWindowTab (Plotter* pltr, TopLevelWindow* win);
-  ~PlotWindowTab();
+  PlotWindowEditor (Plotter* pltr, TopLevelWindow* win);
+  ~PlotWindowEditor();
  private:
-  TabLabel* namelabel;
-  TabEditor* namebuffer;
-  TabButton* savebutton;
-  TabButton* layerbutton;
+  EditorLabel* namelabel;
+  EditorTextBox* namebuffer;
+  EditorButton* savebutton;
+  EditorButton* layerbutton;
   void resized ();
   void buttonClicked (Button* buttonThatWasClicked);
   void textEditorReturnKeyPressed(TextEditor& editor);
 };
 
-class PlotterAxisTab : public PlotterTab 
+class PlotAxisEditor : public PlotEditor 
 {
  private:
   int orientation;
   bool axistypechanged;
  public:
-  PlotterAxisTab (Plotter* pl, int orient);
-  ~PlotterAxisTab();
+  PlotAxisEditor (Plotter* pl, int orient);
+  ~PlotAxisEditor();
   void resized();
   void comboBoxChanged(ComboBox* combo);
   void textEditorReturnKeyPressed(TextEditor& editor);
   void sliderValueChanged (Slider* sliderThatWasMoved);
   void buttonClicked (Button* buttonThatWasClicked);
  private:
-  TabLabel* namelabel;
-  TabLabel* fromlabel;
-  TabLabel* tolabel;
-  TabLabel* bylabel;
-  TabLabel* typelabel;
-  TabLabel* decimalslabel;
-  TabLabel* tickslabel;
+  EditorLabel* namelabel;
+  EditorLabel* fromlabel;
+  EditorLabel* tolabel;
+  EditorLabel* bylabel;
+  EditorLabel* typelabel;
+  EditorLabel* decimalslabel;
+  EditorLabel* tickslabel;
   ComboBox* typemenu;
-  TabEditor* namebuffer;
-  TabEditor* frombuffer;
-  TabEditor* tobuffer;
-  TabEditor* bybuffer;
-  TabEditor* ticksbuffer;
+  EditorTextBox* namebuffer;
+  EditorTextBox* frombuffer;
+  EditorTextBox* tobuffer;
+  EditorTextBox* bybuffer;
+  EditorTextBox* ticksbuffer;
   ComboBox* decimalsmenu;
-  TabLabel* zoomlabel;
+  EditorLabel* zoomlabel;
   Slider* zoomslider;
   ToggleButton* fitcheckbox;
 };
 
-class LayerTab : public PlotterTab, public ChangeListener
+class PlotLayerEditor : public PlotEditor, public ChangeListener
 {
  public:
-  LayerTab (Plotter* pltr, Layer* layr);
-  ~LayerTab();
+  PlotLayerEditor (Plotter* pltr, Layer* layr);
+  ~PlotLayerEditor();
  private:
   Layer* layer;
-  TabLabel* namelabel;
-  TabEditor* namebuffer;
-  TabLabel* stylelabel;
+  EditorLabel* namelabel;
+  EditorTextBox* namebuffer;
+  EditorLabel* stylelabel;
   ComboBox* stylemenu;
   ColourSelector* colorpicker;
   void resized();
@@ -225,25 +227,25 @@ class LayerTab : public PlotterTab, public ChangeListener
   void textEditorReturnKeyPressed(TextEditor& editor);
 };
 
-class ExportPointsEditor : public PlotterTab
+class PlotExportEditor : public PlotEditor
 {
  public:
   int numfields;
   bool* include;
-  TabLabel* exportlabel;
+  EditorLabel* exportlabel;
   ComboBox* exportmenu;
-  TabLabel* syntaxlabel;
+  EditorLabel* syntaxlabel;
   ComboBox* syntaxmenu;
   TextButton* fieldsbutton;
-  TabLabel* formatlabel;
+  EditorLabel* formatlabel;
   ComboBox* formatmenu;
-  TabLabel* decimalslabel;
+  EditorLabel* decimalslabel;
   ComboBox* decimalsmenu;
-  TabLabel* destlabel;
+  EditorLabel* destlabel;
   ComboBox* destmenu;
-  TabButton* exportbutton;
-  ExportPointsEditor(Plotter* plotter);
-  ~ExportPointsEditor();
+  EditorButton* exportbutton;
+  PlotExportEditor(Plotter* plotter);
+  ~PlotExportEditor();
   void resized();
   void buttonClicked (Button* button);
   void comboBoxChanged (ComboBox* combobox);
@@ -251,27 +253,27 @@ class ExportPointsEditor : public PlotterTab
   void exportPlot();
 };
 
-class PlotAudioEditor : public PlotterTab
+class PlotAudioEditor : public PlotEditor
 {
  public:
   PlotAudioEditor(Plotter* pltr);
   ~PlotAudioEditor();
  private:
-  TabLabel* y0label;
-  TabEditor* y0typein;
-  TabLabel* y1label;
-  TabEditor* y1typein;
-  TabLabel* tempolabel;
-  TabEditor* tempotypein;
-  TabLabel* durlabel;
-  TabEditor* durtypein;
-  TabLabel* amplabel;
-  TabEditor* amptypein;
+  EditorLabel* y0label;
+  EditorTextBox* y0typein;
+  EditorLabel* y1label;
+  EditorTextBox* y1typein;
+  EditorLabel* tempolabel;
+  EditorTextBox* tempotypein;
+  EditorLabel* durlabel;
+  EditorTextBox* durtypein;
+  EditorLabel* amplabel;
+  EditorTextBox* amptypein;
   Transport* transport;
   bool ismidiplot;
   void resized();
   void textEditorReturnKeyPressed(TextEditor& editor);
-  void setPlaybackParam(int id, TabEditor* editor);
+  void setPlaybackParam(int id, EditorTextBox* editor);
 };
 
 

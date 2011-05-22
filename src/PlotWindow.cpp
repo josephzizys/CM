@@ -61,7 +61,7 @@ PlotWindow::PlotWindow(XmlElement* plot)
     plot->getStringAttribute(T("title"), T("Untitled Plot"));
   setName(title);
   plotter = new Plotter(plot) ;
-  tabview = new PlotEditor();
+  tabview = new PlotTabbedEditor();
   plotter->editor=tabview;
   init();
 }
@@ -73,7 +73,7 @@ PlotWindow::PlotWindow(String title, MidiFile& midifile)
   listener.window=this;
   setName(title);
   plotter=new Plotter(midifile);
-  tabview = new PlotEditor();
+  tabview = new PlotTabbedEditor();
   plotter->editor=tabview;
   init();
 }
@@ -92,21 +92,21 @@ void PlotWindow::init()
   //  std::cout << "PlotWindow::init (sizing plotter)\n";
   plotter->setSize(PlotWindowComponent::plotviewwidth,PlotWindowComponent::plotviewwidth); // extra 24 in veritical because of menu
   //  std::cout << "PlotWindow::init (adding window tab)\n";
-  tabview->addTab(T("Window"), Colour(0xffe5e5e5), new PlotWindowTab(plotter, this), true);
+  tabview->addTab(T("Window"), Colour(0xffe5e5e5), new PlotWindowEditor(plotter, this), true);
   //  std::cout << "PlotWindow::init (adding audio tab)\n";
   tabview->addTab(T("Audio"), Colour(0xffe5e5e5), new PlotAudioEditor(plotter), false);
   //  std::cout << "PlotWindow::init (adding export tab)\n";
-  tabview->addTab(T("Export"), Colour(0xffe5e5e5), new ExportPointsEditor(plotter), false);
+  tabview->addTab(T("Export"), Colour(0xffe5e5e5), new PlotExportEditor(plotter), false);
   //  std::cout << "PlotWindow::init (adding X Axis tab)\n";
-  tabview->addTab(T("X Axis"), Colour(0xffe5e5e5), new PlotterAxisTab(plotter, Plotter::horizontal), true);
+  tabview->addTab(T("X Axis"), Colour(0xffe5e5e5), new PlotAxisEditor(plotter, Plotter::horizontal), true);
   //  std::cout << "PlotWindow::init (adding Y Axis tab)\n";
-  tabview->addTab(T("Y Axis"), Colour(0xffe5e5e5), new PlotterAxisTab(plotter, Plotter::vertical), true);
+  tabview->addTab(T("Y Axis"), Colour(0xffe5e5e5), new PlotAxisEditor(plotter, Plotter::vertical), true);
 
   for (int i=0; i<plotter->numLayers(); i++)
   {
     Layer* layer=plotter->getLayer(i);
     //    std::cout << "PlotWindow::init (adding layer tab)\n";
-    tabview->addTab(layer->getLayerName(), Colour(0xffe5e5e5), new LayerTab(plotter,layer), true);
+    tabview->addTab(layer->getLayerName(), Colour(0xffe5e5e5), new PlotLayerEditor(plotter,layer), true);
   }
   //  std::cout << "PlotWindow::init (creating PlotWindowComponent)\n";
   PlotWindowComponent* content=new PlotWindowComponent(this);

@@ -16,7 +16,7 @@
 class PlotView;         
 class BackView;
 class PlotViewport;
-class PlotEditor;
+class PlotTabbedEditor;
 
 /** An axis contains all the non-gui data for a graphical axis
     display. **/
@@ -828,7 +828,7 @@ class Plotter : public Component,
   PlotViewport* viewport;
   PlotView* plotview;
   BackView* backview;
-  PlotEditor* editor;
+  PlotTabbedEditor* editor;
   MidiPlaybackThread* pbthread;
   CriticalSection pblock;
   OwnedArray <Layer> layers;

@@ -16,36 +16,36 @@
                                 Plot Editor
  *=======================================================================*/
 
-PlotEditor::PlotEditor()
+PlotTabbedEditor::PlotTabbedEditor()
   : TabbedComponent(TabbedButtonBar::TabsAtTop) 
 {
 }
 
-PlotEditor::~PlotEditor()
+PlotTabbedEditor::~PlotTabbedEditor()
 {
 }
   
-void PlotEditor::currentTabChanged (int newCurrentTabIndex, const String &newCurrentTabName)
+void PlotTabbedEditor::currentTabChanged (int newCurrentTabIndex, const String &newCurrentTabName)
 {
-  PlotterTab* editor=(PlotterTab*)getTabContentComponent(newCurrentTabIndex);
+  PlotEditor* editor=(PlotEditor*)getTabContentComponent(newCurrentTabIndex);
   switch (editor->tabType)
   {
-  case PlotterTab::TabWindow:
+  case PlotEditor::TabWindow:
     std::cout << "window editor!\n";    
     break;
-  case PlotterTab::TabAudio:
+  case PlotEditor::TabAudio:
     std::cout << "audio editor!\n";    
     break;
-  case PlotterTab::TabAxis:
+  case PlotEditor::TabAxis:
     std::cout << "axis editor!\n";    
     break;
-  case PlotterTab::TabLayer:
+  case PlotEditor::TabLayer:
     std::cout << "layer editor!\n";    
     break;
-  case PlotterTab::TabExport:
+  case PlotEditor::TabExport:
     std::cout << "export editor!\n";    
     break;
-  case PlotterTab::TabPoints:
+  case PlotEditor::TabPoints:
     std::cout << "points editor!\n";    
     break;
   default:
@@ -57,28 +57,28 @@ void PlotEditor::currentTabChanged (int newCurrentTabIndex, const String &newCur
                                 Window Editor
  *=======================================================================*/
 
-PlotWindowTab::PlotWindowTab (Plotter* pltr, TopLevelWindow* win)
-  : PlotterTab(pltr),
+PlotWindowEditor::PlotWindowEditor (Plotter* pltr, TopLevelWindow* win)
+  : PlotEditor(pltr),
     namelabel(0),
     namebuffer (0),
     savebutton (0),
     layerbutton (0)
 {
   tabType=TabWindow;
-  addAndMakeVisible(namelabel = new TabLabel(T("Title:")));
-  addAndMakeVisible(namebuffer = new TabEditor(win->getName()));
+  addAndMakeVisible(namelabel = new EditorLabel(T("Title:")));
+  addAndMakeVisible(namebuffer = new EditorTextBox(win->getName()));
   namebuffer->addListener(this);
-  addAndMakeVisible(savebutton = new TabButton (T("Save...")));
-  addAndMakeVisible(layerbutton = new TabButton (T("New Layer")));
+  addAndMakeVisible(savebutton = new EditorButton (T("Save...")));
+  addAndMakeVisible(layerbutton = new EditorButton (T("New Layer")));
   setVisible(true);
 }
 
-PlotWindowTab::~PlotWindowTab ()
+PlotWindowEditor::~PlotWindowEditor ()
 {
   deleteAllChildren();
 }
 
-void PlotWindowTab::resized ()
+void PlotWindowEditor::resized ()
 {
   int y=margin;
   namelabel->setTopLeftPosition(margin, y);
@@ -88,12 +88,12 @@ void PlotWindowTab::resized ()
   savebutton->setTopLeftPosition(margin, y);
 }
 
-void PlotWindowTab::buttonClicked (Button* buttonThatWasClicked)
+void PlotWindowEditor::buttonClicked (Button* buttonThatWasClicked)
 {
   std::cout << "Button clicked\n";
 }
 
-void PlotWindowTab::textEditorReturnKeyPressed(TextEditor& editor) 
+void PlotWindowEditor::textEditorReturnKeyPressed(TextEditor& editor) 
 {
   if (&editor == namebuffer)
   {
@@ -108,8 +108,8 @@ void PlotWindowTab::textEditorReturnKeyPressed(TextEditor& editor)
                                  Axis Tab
  *=======================================================================*/
 
-PlotterAxisTab::PlotterAxisTab (Plotter* pl, int orient)
-  : PlotterTab(pl),
+PlotAxisEditor::PlotAxisEditor (Plotter* pl, int orient)
+  : PlotEditor(pl),
     namelabel (0),
     fromlabel (0),
     tolabel (0),
@@ -133,27 +133,27 @@ PlotterAxisTab::PlotterAxisTab (Plotter* pl, int orient)
   tabType=TabAxis;
   AxisView* axisview = plotter->getAxisView(orientation);
   Axis* axis=axisview->getAxis();
-  addAndMakeVisible(namelabel = new TabLabel(T("Name:")));
+  addAndMakeVisible(namelabel = new EditorLabel(T("Name:")));
 
-  addAndMakeVisible(namebuffer = new TabEditor(String(axis->getName())));
+  addAndMakeVisible(namebuffer = new EditorTextBox(String(axis->getName())));
   namebuffer->addListener(this);
 
-  addAndMakeVisible(fromlabel = new TabLabel(T("From:")));
+  addAndMakeVisible(fromlabel = new EditorLabel(T("From:")));
   
-  addAndMakeVisible(frombuffer = new TabEditor(String(axis->getMinimum())));
+  addAndMakeVisible(frombuffer = new EditorTextBox(String(axis->getMinimum())));
   frombuffer->addListener(this);
 
-  addAndMakeVisible(tolabel = new TabLabel(T("To:")));
+  addAndMakeVisible(tolabel = new EditorLabel(T("To:")));
   
-  addAndMakeVisible(tobuffer = new TabEditor(String(axis->getMaximum())));
+  addAndMakeVisible(tobuffer = new EditorTextBox(String(axis->getMaximum())));
   tobuffer->addListener(this);
 
-  addAndMakeVisible (bylabel = new TabLabel (T("By:")));
+  addAndMakeVisible (bylabel = new EditorLabel (T("By:")));
   
-  addAndMakeVisible (bybuffer = new TabEditor(String(axis->getIncrement())));
+  addAndMakeVisible (bybuffer = new EditorTextBox(String(axis->getIncrement())));
   bybuffer->addListener(this);
 
-  addAndMakeVisible(typelabel = new TabLabel(T("Type:")));
+  addAndMakeVisible(typelabel = new EditorLabel(T("Type:")));
   
   addAndMakeVisible (typemenu = new ComboBox (String::empty));
   typemenu->setEditableText (false);
@@ -169,12 +169,12 @@ PlotterAxisTab::PlotterAxisTab (Plotter* pl, int orient)
   typemenu->setSelectedId(axis->getType(), false);
   typemenu->addListener (this);
 
-  addAndMakeVisible(tickslabel = new TabLabel(T("Ticks:")));
+  addAndMakeVisible(tickslabel = new EditorLabel(T("Ticks:")));
   
-  addAndMakeVisible(ticksbuffer = new TabEditor(String(axis->getTicks())));
+  addAndMakeVisible(ticksbuffer = new EditorTextBox(String(axis->getTicks())));
   ticksbuffer->addListener(this);
   
-  addAndMakeVisible(decimalslabel=new TabLabel(T("Decimals:")));
+  addAndMakeVisible(decimalslabel=new EditorLabel(T("Decimals:")));
   
   addAndMakeVisible (decimalsmenu = new ComboBox (String::empty));
   decimalsmenu->setEditableText (false);
@@ -188,7 +188,7 @@ PlotterAxisTab::PlotterAxisTab (Plotter* pl, int orient)
   decimalsmenu->setSelectedId(axis->getDecimals()+1, false);
   decimalsmenu->addListener (this);
 
-  addAndMakeVisible(zoomlabel = new TabLabel (T("Zoom:")));
+  addAndMakeVisible(zoomlabel = new EditorLabel (T("Zoom:")));
   
   addAndMakeVisible(zoomslider = new Slider (String::empty));
   zoomslider->setSliderStyle(Slider::LinearHorizontal);
@@ -203,7 +203,7 @@ PlotterAxisTab::PlotterAxisTab (Plotter* pl, int orient)
   fitcheckbox->addListener(this);
 }
 
-PlotterAxisTab::~PlotterAxisTab()
+PlotAxisEditor::~PlotAxisEditor()
 {
   deleteAndZero (namelabel);
   deleteAndZero (fromlabel);
@@ -224,7 +224,7 @@ PlotterAxisTab::~PlotterAxisTab()
   deleteAndZero (fitcheckbox);
 }
 
-void PlotterAxisTab::resized()
+void PlotAxisEditor::resized()
 {
   // line 1
   int y=margin;
@@ -251,7 +251,7 @@ void PlotterAxisTab::resized()
   fitcheckbox->setBounds (zoomslider->getRight()+margin, y, 180, 24);
 }
 
-void PlotterAxisTab::comboBoxChanged (ComboBox* cbox)
+void PlotAxisEditor::comboBoxChanged (ComboBox* cbox)
 {
   if (cbox == typemenu)
   {
@@ -274,7 +274,7 @@ void PlotterAxisTab::comboBoxChanged (ComboBox* cbox)
   } 
 }
 
-void PlotterAxisTab::sliderValueChanged (Slider* sliderThatWasMoved)
+void PlotAxisEditor::sliderValueChanged (Slider* sliderThatWasMoved)
 {
   AxisView* axisview = plotter->getAxisView(orientation);
   if (sliderThatWasMoved == zoomslider)
@@ -306,7 +306,7 @@ void PlotterAxisTab::sliderValueChanged (Slider* sliderThatWasMoved)
   }
 }
 
-void PlotterAxisTab::buttonClicked (Button* buttonThatWasClicked)
+void PlotAxisEditor::buttonClicked (Button* buttonThatWasClicked)
 {
   AxisView* axisview = plotter->getAxisView(orientation);
   if (buttonThatWasClicked == fitcheckbox)
@@ -331,7 +331,7 @@ void PlotterAxisTab::buttonClicked (Button* buttonThatWasClicked)
   }
 }
 
-void PlotterAxisTab::textEditorReturnKeyPressed (TextEditor& editor)
+void PlotAxisEditor::textEditorReturnKeyPressed (TextEditor& editor)
 {
   double val;
   AxisView* axisview = plotter->getAxisView(orientation);
@@ -414,8 +414,8 @@ void PlotterAxisTab::textEditorReturnKeyPressed (TextEditor& editor)
                                 Layer Editor
  *=======================================================================*/
 
-LayerTab::LayerTab (Plotter* pltr, Layer* layr)
-  : PlotterTab(pltr),
+PlotLayerEditor::PlotLayerEditor (Plotter* pltr, Layer* layr)
+  : PlotEditor(pltr),
     layer (layr),
     namelabel (0),
     namebuffer (0),
@@ -424,13 +424,13 @@ LayerTab::LayerTab (Plotter* pltr, Layer* layr)
     colorpicker (0)
 {
   tabType=TabLayer;
-  addAndMakeVisible (namelabel = new TabLabel( T("Name:")));
-  addAndMakeVisible (namebuffer = new TabEditor (layer->getLayerName()));
+  addAndMakeVisible (namelabel = new EditorLabel( T("Name:")));
+  addAndMakeVisible (namebuffer = new EditorTextBox (layer->getLayerName()));
   namebuffer->addListener(this);
   //namebuffer->setColour (TextEditor::textColourId, Colours::black);
   //namebuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
   
-  addAndMakeVisible (stylelabel = new TabLabel (T("Style:")));
+  addAndMakeVisible (stylelabel = new EditorLabel (T("Style:")));
   addAndMakeVisible(stylemenu = new ComboBox (String::empty));
   stylemenu->setEditableText(false);
   stylemenu->setJustificationType(Justification::centredLeft);
@@ -455,7 +455,7 @@ LayerTab::LayerTab (Plotter* pltr, Layer* layr)
   colorpicker->addChangeListener(this);
 }
 
-LayerTab::~LayerTab()
+PlotLayerEditor::~PlotLayerEditor()
 {
   deleteAndZero (namelabel);
   deleteAndZero (namebuffer);
@@ -464,7 +464,7 @@ LayerTab::~LayerTab()
   deleteAndZero (colorpicker);
 }
 
-void LayerTab::resized()
+void PlotLayerEditor::resized()
 {
   int space=150-(margin*5);
   int y=margin;
@@ -477,7 +477,7 @@ void LayerTab::resized()
   stylemenu->setBounds(56, y, 120, lineheight);
 }
 
-void LayerTab::comboBoxChanged (ComboBox* cbox)
+void PlotLayerEditor::comboBoxChanged (ComboBox* cbox)
 {
   if (cbox == stylemenu)
   {
@@ -486,7 +486,7 @@ void LayerTab::comboBoxChanged (ComboBox* cbox)
   }
 }
 
-void LayerTab::changeListenerCallback (ChangeBroadcaster* source)
+void PlotLayerEditor::changeListenerCallback (ChangeBroadcaster* source)
 {
   if (source == colorpicker)
   {
@@ -495,7 +495,7 @@ void LayerTab::changeListenerCallback (ChangeBroadcaster* source)
   }
 }
 
-void LayerTab::textEditorReturnKeyPressed(TextEditor& editor)
+void PlotLayerEditor::textEditorReturnKeyPressed(TextEditor& editor)
 {
   if (&editor == namebuffer)
   {
@@ -517,7 +517,7 @@ void LayerTab::textEditorReturnKeyPressed(TextEditor& editor)
  *=======================================================================*/
 
 PlotAudioEditor::PlotAudioEditor(Plotter* pltr)
-  : PlotterTab(pltr),
+  : PlotEditor(pltr),
     y0label (0),
     y0typein (0),
     y1label (0),
@@ -532,20 +532,20 @@ PlotAudioEditor::PlotAudioEditor(Plotter* pltr)
     ismidiplot (false)
 {
   tabType=TabAudio;
-  addAndMakeVisible (y0label = new TabLabel( T("Y(0) Key:")));
-  addAndMakeVisible (y0typein = new TabEditor (String(plotter->getPlaybackParameter(Plotter::PlaybackMinKey))));
+  addAndMakeVisible (y0label = new EditorLabel( T("Y(0) Key:")));
+  addAndMakeVisible (y0typein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackMinKey))));
   y0typein->addListener(this);
-  addAndMakeVisible (y1label = new TabLabel( T("Y(1) Key:")));
-  addAndMakeVisible (y1typein = new TabEditor (String(plotter->getPlaybackParameter(Plotter::PlaybackMaxKey))));
+  addAndMakeVisible (y1label = new EditorLabel( T("Y(1) Key:")));
+  addAndMakeVisible (y1typein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackMaxKey))));
   y1typein->addListener(this);
-  //  addAndMakeVisible (tempolabel = new TabLabel( T("X rate:")));
-  //  addAndMakeVisible (tempotypein = new TabEditor (String(plotter->getPlaybackParameter(Plotter::PlaybackTempo))));
+  //  addAndMakeVisible (tempolabel = new EditorLabel( T("X rate:")));
+  //  addAndMakeVisible (tempotypein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackTempo))));
   //  tempotypein->addListener(this);
-  addAndMakeVisible (durlabel = new TabLabel( T("Dur:")));
-  addAndMakeVisible (durtypein = new TabEditor (String(plotter->getPlaybackParameter(Plotter::PlaybackDuration))));
+  addAndMakeVisible (durlabel = new EditorLabel( T("Dur:")));
+  addAndMakeVisible (durtypein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackDuration))));
   durtypein->addListener(this);
-  addAndMakeVisible (amplabel = new TabLabel( T("Amp:")));
-  addAndMakeVisible (amptypein = new TabEditor (String(plotter->getPlaybackParameter(Plotter::PlaybackAmplitude))));
+  addAndMakeVisible (amplabel = new EditorLabel( T("Amp:")));
+  addAndMakeVisible (amptypein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackAmplitude))));
   amptypein->addListener(this);
   // create a Transport for the Plotter
   addAndMakeVisible (transport = new Transport (plotter, 60.0));
@@ -631,7 +631,7 @@ void PlotAudioEditor::textEditorReturnKeyPressed(TextEditor& editor)
   //  }
 }
 
-void PlotAudioEditor::setPlaybackParam(int param, TabEditor* editor)
+void PlotAudioEditor::setPlaybackParam(int param, EditorTextBox* editor)
 {
   bool ok=false;
   double doub;
@@ -717,8 +717,8 @@ void PlayPlotDialog::playPlot(bool write)
                                 Export Editor
  *=======================================================================*/
 
-ExportPointsEditor::ExportPointsEditor (Plotter* pltr)
-  : PlotterTab(pltr),
+PlotExportEditor::PlotExportEditor (Plotter* pltr)
+  : PlotEditor(pltr),
     exportlabel (0),
     exportmenu (0),
     syntaxlabel (0),
@@ -738,7 +738,7 @@ ExportPointsEditor::ExportPointsEditor (Plotter* pltr)
   include=new bool[numfields];
   for (int i=0;i<numfields; i++) include[i]=true;
 
-  addAndMakeVisible(exportlabel = new TabLabel( T("Export:")));
+  addAndMakeVisible(exportlabel = new EditorLabel( T("Export:")));
 
   addAndMakeVisible (exportmenu = new ComboBox (String::empty));
   exportmenu->setEditableText (false);
@@ -747,7 +747,7 @@ ExportPointsEditor::ExportPointsEditor (Plotter* pltr)
   exportmenu->setSelectedId(1);
   exportmenu->addListener(this);
 
-  addAndMakeVisible(syntaxlabel=new TabLabel(T("Syntax:")));
+  addAndMakeVisible(syntaxlabel=new EditorLabel(T("Syntax:")));
 
   addAndMakeVisible(syntaxmenu = new ComboBox (String::empty));
   syntaxmenu->setEditableText(false);
@@ -756,10 +756,10 @@ ExportPointsEditor::ExportPointsEditor (Plotter* pltr)
   syntaxmenu->addItem(T("XML"), TextIDs::Xml);
   syntaxmenu->setSelectedId(TextIDs::Lisp);
 
-  addAndMakeVisible(fieldsbutton = new TabButton (T("Fields...")));
+  addAndMakeVisible(fieldsbutton = new EditorButton (T("Fields...")));
   fieldsbutton->addListener(this);
 
-  addAndMakeVisible(formatlabel = new TabLabel(T("Format:")));
+  addAndMakeVisible(formatlabel = new EditorLabel(T("Format:")));
 
   addAndMakeVisible(formatmenu = new ComboBox(String::empty));
   formatmenu->setEditableText (false);
@@ -767,7 +767,7 @@ ExportPointsEditor::ExportPointsEditor (Plotter* pltr)
   formatmenu->addItem(T("Point Records"), 2);
   formatmenu->setSelectedId(1);
 
-  addAndMakeVisible(decimalslabel=new TabLabel(T("Precision:")));
+  addAndMakeVisible(decimalslabel=new EditorLabel(T("Precision:")));
   addAndMakeVisible(decimalsmenu = new ComboBox(String::empty));
   decimalsmenu->addItem(T("Integer"), 1);
   decimalsmenu->addItem(T("0.0"), 2);
@@ -775,7 +775,7 @@ ExportPointsEditor::ExportPointsEditor (Plotter* pltr)
   decimalsmenu->addItem(T("0.000"), 4);
   decimalsmenu->setSelectedId(3);
 
-  addAndMakeVisible(destlabel=new TabLabel(T("Destination:")));
+  addAndMakeVisible(destlabel=new EditorLabel(T("Destination:")));
 
   addAndMakeVisible(destmenu = new ComboBox(String::empty));
   destmenu->addItem(T("New Edit Window"), 1);
@@ -783,11 +783,11 @@ ExportPointsEditor::ExportPointsEditor (Plotter* pltr)
   destmenu->addItem(T("Clipboard"), 3);
   destmenu->setSelectedId(1);
 
-  addAndMakeVisible(exportbutton = new TabButton(T("Export")));
+  addAndMakeVisible(exportbutton = new EditorButton(T("Export")));
   exportbutton->addListener(this);
 }
 
-ExportPointsEditor::~ExportPointsEditor()
+PlotExportEditor::~PlotExportEditor()
 {
   delete[] include;
   deleteAndZero (exportlabel);
@@ -804,7 +804,7 @@ ExportPointsEditor::~ExportPointsEditor()
   deleteAndZero (exportbutton);
 }
 
-void ExportPointsEditor::resized()
+void PlotExportEditor::resized()
 {
   int x=margin;
   int y=margin;
@@ -829,7 +829,7 @@ void ExportPointsEditor::resized()
 }
 
 
-void ExportPointsEditor::buttonClicked (Button* button)
+void PlotExportEditor::buttonClicked (Button* button)
 {
   if (button == exportbutton)
     {
@@ -854,7 +854,7 @@ void ExportPointsEditor::buttonClicked (Button* button)
     }
 }
 
-void ExportPointsEditor::comboBoxChanged(ComboBox* cbox)
+void PlotExportEditor::comboBoxChanged(ComboBox* cbox)
 {
   if (cbox==exportmenu)
   {
@@ -885,7 +885,7 @@ void ExportPointsEditor::comboBoxChanged(ComboBox* cbox)
   }      
 }
 
-void ExportPointsEditor::exportPlot() 
+void PlotExportEditor::exportPlot() 
 {
   PlotWindow* p=(PlotWindow*)plotter->getTopLevelComponent();
   String text=p->toXmlString();
@@ -904,7 +904,7 @@ void ExportPointsEditor::exportPlot()
     SystemClipboard::copyTextToClipboard(text);
 }
 
-void ExportPointsEditor::exportPoints() 
+void PlotExportEditor::exportPoints() 
 {
   bool layerexport=true; //(exportmenu->getSelectedId()==1);
   int exportid=syntaxmenu->getSelectedId();
