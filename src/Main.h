@@ -5,8 +5,8 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef Main_h
+#define Main_h
 
 #include "Libraries.h"
 

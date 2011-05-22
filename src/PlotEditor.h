@@ -5,8 +5,8 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-#ifndef PLOTTERTABS_H
-#define PLOTTERTABS_H
+#ifndef PlotEditor_h
+#define PlotEditor_h
 
 #include "Libraries.h"
 

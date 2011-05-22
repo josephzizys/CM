@@ -11,6 +11,7 @@
 #include "CodeEditor.h"
 #include "Plot.h"
 #include "PlotEditor.h"
+#include "PlotWindow.h"
 #include "Midi.h"
 #include "Scheme.h"
 
@@ -32,13 +33,14 @@ public:
   ~PlotWindowComponent () 
   {
     // this deletes the Plotter and the TabbedEditor
+    std::cout << "deleting PlotWindowComponent\n";
     deleteAllChildren();
   }
   void resized ()
   {
     int w=getWidth();
     int h=getHeight();
-    std::cout << "PlotWindowComponent: w=" << w << ", h=" << h << "\n";
+    std::cout << "PlotWindowComponent::resized(" << w << ", " << h << ")\n";
     plotwin->plotter->setBounds(0,0,w,h-tabviewheight);
     plotwin->tabview->setBounds(0,h-tabviewheight,w,tabviewheight);
   }
@@ -87,31 +89,49 @@ void PlotWindow::init()
   menubar = new MenuBarComponent(this);
   setMenuBar(this);
   setUsingNativeTitleBar(true);    
+  //  std::cout << "PlotWindow::init (sizing plotter)\n";
   plotter->setSize(PlotWindowComponent::plotviewwidth,PlotWindowComponent::plotviewwidth); // extra 24 in veritical because of menu
-  tabview->addTab(T("Plot"), Colour(0xffe5e5e5), new PlotWindowTab(plotter, this), true);
+  //  std::cout << "PlotWindow::init (adding window tab)\n";
+  tabview->addTab(T("Window"), Colour(0xffe5e5e5), new PlotWindowTab(plotter, this), true);
+  //  std::cout << "PlotWindow::init (adding audio tab)\n";
   tabview->addTab(T("Audio"), Colour(0xffe5e5e5), new PlotAudioEditor(plotter), false);
+  //  std::cout << "PlotWindow::init (adding export tab)\n";
   tabview->addTab(T("Export"), Colour(0xffe5e5e5), new ExportPointsEditor(plotter), false);
+  //  std::cout << "PlotWindow::init (adding X Axis tab)\n";
   tabview->addTab(T("X Axis"), Colour(0xffe5e5e5), new PlotterAxisTab(plotter, Plotter::horizontal), true);
+  //  std::cout << "PlotWindow::init (adding Y Axis tab)\n";
   tabview->addTab(T("Y Axis"), Colour(0xffe5e5e5), new PlotterAxisTab(plotter, Plotter::vertical), true);
 
   for (int i=0; i<plotter->numLayers(); i++)
   {
     Layer* layer=plotter->getLayer(i);
+    //    std::cout << "PlotWindow::init (adding layer tab)\n";
     tabview->addTab(layer->getLayerName(), Colour(0xffe5e5e5), new LayerTab(plotter,layer), true);
   }
-
+  //  std::cout << "PlotWindow::init (creating PlotWindowComponent)\n";
   PlotWindowComponent* content=new PlotWindowComponent(this);
-  setContentComponent(content, true, true);
-  content->addChildComponent(plotter);
-  content->addChildComponent(tabview);
+  //  std::cout << "PlotWindow::init (set plotter visible)\n";
   plotter->setVisible(true);
+  //  std::cout << "PlotWindow::init (set tabview visible)\n";
   tabview->setVisible(true);
+  //  std::cout << "PlotWindow::init (set content visible)\n";
   content->setVisible(true);
+  //  std::cout << "PlotWindow::init (add child plotter)\n";
+  content->addChildComponent(plotter);
+  //  std::cout << "PlotWindow::init (add child tabview)\n";
+  content->addChildComponent(tabview);
+  //  std::cout << "PlotWindow::init (center with size)\n";
   centreWithSize (PlotWindowComponent::plotviewwidth, PlotWindowComponent::plotviewwidth + PlotWindowComponent::tabviewheight + 24);
+  //  std::cout << "PlotWindow::init (set resizable)\n";
   setResizable(true, true); 
-  setVisible(true);
   WindowTypes::setWindowType(this, WindowTypes::PlotWindow);
+  //  std::cout << "PlotWindow::init (insure points visible)\n";
   plotter->insurePointsVisible();
+  //  std::cout << "PlotWindow::init (set content component)\n";
+  setContentComponent(content, false, false);
+  //  std::cout << "PlotWindow::init (set visible)\n";
+  setVisible(true);
+  //  std::cout << "PlotWindow::init (DONE)\n";
 }
 
 PlotWindow* PlotWindow::getPlotWindow(String title)
@@ -652,69 +672,7 @@ String PlotWindow::toXmlString()
   return text;
 }
 
-String Layer::toString(int exportid, int decimals,
-		       bool asrecords, int parammask) 
-{
-  String text=String::empty;
-  String lpar=String::empty;
-  String rpar=String::empty;
-  String done=String::empty;
-  String spce=T(" ");
-  if (exportid==TextIDs::Lisp)
-    {
-      text=T("(");
-      if (asrecords)
-	{
-	  lpar=T("(");
-	  rpar=T(")");
-	}
-      done=T(")");
-    }
-  else if (exportid==TextIDs::Sal2)
-    {
-      text=T("{");
-      if (asrecords)
-	{
-	  lpar=T("{");
-	  rpar=T("}");
-	}
-      done=T("}");
-    }
-  else if (exportid==TextIDs::Xml)
-    {
-      text << T("<points title=")
-	   << getLayerName().quoted()
-	   << T(" style=")
-	   << toLayerTypeString(getLayerStyle()).quoted()
-	   << T(" color=")
-	   << getLayerColor().toString().quoted();
-      // add non-default access
-      if (getXField()!=0 || getYField()!=1 ||
-	  (getLayerArity()>2 && getYField()!=2))
-	text << T(" access=\"")
-	     << getXField() << T(" ") << getYField()
-	     << T(" ") << getZField() << T("\"");
-      text << T(">");
-      lpar=T("<point>");
-      rpar=T("</point>");
-      done=T("</points>\n");
-      spce=String::empty;
-    }
-  LayerPoint* point;
-  int length=numPoints();
-  for (int i=0; i<length; i++)
-    {
-      point=getPoint(i);
-      if (i>0 && spce!=String::empty) text << spce;
-      text << lpar
-	   << exportPoint(point, parammask, decimals)
-	   << rpar;
-    }
-  // add appropriate close parens...
-  text << done ;
-  //std::cout << text.toUTF8() << "\n";
-  return text;
-}
+
 
 /*=======================================================================*
 
@@ -806,7 +764,7 @@ EditPointsDialog::EditPointsDialog(Plotter* plotr)
   plotter=plotr;
   StringArray fields;
   plotter->getFieldNames(fields);
-  LayerPoint* p=(plotter->numSelected()==1)
+  Layer::NPoint* p=(plotter->numSelected()==1)
     ? plotter->getSelected(0) : NULL ;
   for (int i=0; i<fields.size(); i++)
     {

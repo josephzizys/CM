@@ -17,139 +17,6 @@
 #include "PlotEditor.h"
 
 /*=======================================================================*
-                                    Axis
- *=======================================================================*/
-
-Axis::Axis (AxisType t) 
-{
-  type=t;
-  init(t);
-}
-
-Axis::Axis (AxisType t, double f, double e) 
-{
-  type=t;
-  init(t);
-  from=f;
-  to=e;
-}
-
-Axis::Axis (XmlElement* ax) 
-  : name (String::empty),
-    decimals (2),
-    type (unspecified),
-    from (0),
-    to (1.0),
-    by (.25),
-    ticks (5)
-{
-  StringArray range;
-  String str=(ax) ? ax->getStringAttribute(T("axis")) : String::empty;
-  range.addTokens(str,false);
-  if (range.size()>0)
-    {
-      int arg=1;
-      if (range[0]==T("percent") || range[0]==T("percentage") || range[0]==T("pct"))
-        init(percentage);
-      else if (range[0]==T("keynum") || range[0]==T("notes"))
-        init(keynum);
-      else if (range[0]==T("seconds"))
-        init(seconds);
-      else if (range[0]==T("hertz")) 
-        init(hertz);
-      else if (range[0]==T("unitcircle") || range[0]==T("circle"))
-        init(circle);
-      else if (range[0]==T("ordinal"))
-        init(ordinal);
-      else if (range[0]==T("unit") || range[0]==T("normalized") || 
-               range[0]==T("normal"))
-        init(normalized);
-      else if (range[0]==T("midi"))
-        init(midi);
-      else if (('0' <= str[0]) && ( str[0] <= '9')) // is number
-        arg--;
-      // parse out optional <from> <to> <by> <ticks> these can
-      // appear with or without axis type specifier
-      int num=range.size()-arg;
-      if (num>=2)
-        {
-          double f, t, b, k;
-          if (num==2)
-            {
-              f=range[arg].getFloatValue();
-              t=range[arg+1].getFloatValue();
-              if (type==unspecified)
-                {
-                  b=t-f;
-                  k=5;
-                }
-            }
-          else if (num==3)
-            {
-              f=range[arg].getFloatValue();
-              t=range[arg+1].getFloatValue();
-              b=range[arg+2].getFloatValue();
-              if (type==unspecified)
-                {
-                  k=5;
-                }
-            }
-          else if (num==4)
-            {
-              f=range[arg].getFloatValue();
-              t=range[arg+1].getFloatValue();
-              b=range[arg+2].getFloatValue();
-              k=range[arg+3].getIntValue();
-            }
-          
-          if ((f<t) && (b>0) && (k>-1))
-            {
-              from=f; to=t; by=b; ticks=(int)k;
-              if (type==unspecified)
-                type=generic;
-            }
-        }
-    }
-}
-
-void Axis::init (AxisType typ) 
-{
-  // init axis data according to common "templates"
-  name=String::empty;
-  decimals=2;
-  type=typ;
-  switch (typ)
-    {
-    case percentage :
-      from=0.0; to=100.0; by=25.0; ticks=5; decimals=0;
-      break;
-    case keynum :
-      from=0.0; to=127; by=12.0; ticks=12; decimals=0;
-      break;
-    case seconds :
-      from=0.0; to=60.0; by=1.0; ticks=4;
-      break;
-    case hertz :  // log freq
-      from=8.175798; to=16744.035; by=2.0; ticks=6; 
-      break;
-    case circle :
-      from=-1.0; to=1.0; by=.25; ticks=4;
-      break;
-    case ordinal :
-      from=0; to=1; by=1; ticks=1; decimals=0;
-      break;
-    case normalized :
-      from=0.0; to=1.0; by=0.25; ticks=5;
-      break;
-    case midi :
-      from=0.0; to=127.0; by=16; ticks=2; decimals=0;
-      break;
-    default :
-      break;
-    }
-}
-
-/*=======================================================================*
                           Plot Viewport (scrolling)
  *=======================================================================*/
 
@@ -342,57 +209,6 @@ void AxisView::paint (Graphics& g)
   g.setColour(Colours::black);
 }
 
-/*
-void AxisView::mouseDown(const MouseEvent &e) 
-{
-  viewport->plotter->setBackViewCaching(false);
-  _sweep=_spread;
-}
-
-void AxisView::mouseDrag(const MouseEvent &e)
-{
-  double a,b;
-  setAutosized(false); // drag cancels fit in windows
-  if (isHorizontal())
-    {
-      a=e.getDistanceFromDragStartX();
-      b=getWidth();
-      setSpread(jlimit(.25, 4.0, _sweep+((a/b)*1)));
-      viewport->plotter->resizeForSpread();
-      // now have to update the size of the Axis' view -- this is NOT
-      // the size of the axis!
-      setSize(viewport->getViewWidth(), getHeight());
-      // if spread has gotten larger then the size of the axis view
-      // doenst actually change, in which case we have to force a
-      // repaint to see the axis content drawn at the new spread.
-      if (b==getWidth())
-	repaint();
-    }
-  else
-    {
-      a=e.getDistanceFromDragStartY();
-      b=getHeight();
-      setSpread(jlimit(.25, 4.0, _sweep+((a/b)*1)));
-      viewport->plotter->resizeForSpread();
-      setSize(getWidth(), viewport->getViewHeight()) ;
-      if (b==getHeight())
-	repaint();
-    }
-}
-
-void AxisView::mouseUp(const MouseEvent &e)
-{
-  //std::cout << "mouseup\n";
-  viewport->plotter->setBackViewCaching(true);
-}
-
-void AxisView::mouseDoubleClick(const MouseEvent &e)
-{
-  PlotWindow* w=(PlotWindow*)getTopLevelComponent();
-  w->openAxisDialog(getOrientation());
-}
-*/
-
 /*=======================================================================*
                     Region and selection, sweeping and editing
  *=======================================================================*/
@@ -452,7 +268,7 @@ public:
 
 void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, 
 	       AxisView* vaxview, double ppp, double spread, bool isFoc, 
-	       SelectedItemSet<LayerPoint*> * sel);
+	       SelectedItemSet<Layer::NPoint*> * sel);
 
 void drawGrid(Graphics& g, AxisView * haxview, AxisView * vaxview, 
 	      Colour c1, Colour c2) ;
@@ -460,7 +276,7 @@ void drawGrid(Graphics& g, AxisView * haxview, AxisView * vaxview,
 class BackView : public Component 
 {
 public:
-  Plotter * plotter;
+  Plotter* plotter;
   Colour bgcolors[6];
   Plotter::BGStyle bgstyle;
   bool bgplots;
@@ -519,7 +335,7 @@ public:
       layer = plotter->getLayer(i);
       if (! plotter->isFocusLayer(layer) ) 
 	drawLayer(g, layer, haxview, vaxview, psize, 1.0, false, 
-		  (SelectedItemSet<LayerPoint*> *)NULL);
+		  (SelectedItemSet<Layer::NPoint*> *)NULL);
       }
     }
   }
@@ -534,13 +350,13 @@ public:
 class PlotView : public Component 
 {
 public:
-  Plotter * plotter;
-  BackView * backview;
+  Plotter* plotter;
+  BackView* backview;
   double pad; // pix per inc, pix per point, margin pad
   juce::Point<float> mousedown, mousemove;
-  SelectedItemSet<LayerPoint*> selection;
+  SelectedItemSet<Layer::NPoint*> selection;
   Region region;
-  Layer * focuslayer; // cached focus layer for fast acesss
+  Layer* focuslayer; // cached focus layer for fast acesss
   
   PlotView (Plotter * p) : pad (8.0) 
   {
@@ -580,7 +396,7 @@ public:
   bool isSelection() {return (selection.getNumSelected() > 0);}
   int numSelected() {return selection.getNumSelected();}
 
-  bool isSelected(LayerPoint* p) {return selection.isSelected(p);}
+  bool isSelected(Layer::NPoint* p) {return selection.isSelected(p);}
   bool isSelected(int h) {return isSelected(focuslayer->getPoint(h));}
 
   void selectAll (bool redraw=true)
@@ -601,13 +417,13 @@ public:
       }
   }
 
-  void removeSelection(LayerPoint* p) {selection.deselect(p);}
+  void removeSelection(Layer::NPoint* p) {selection.deselect(p);}
   void removeSelection(int h) {removeSelection(focuslayer->getPoint(h));}
 
-  void setSelection(LayerPoint* p) ;
+  void setSelection(Layer::NPoint* p) ;
   void setSelection(int h) {setSelection(focuslayer->getPoint(h));}
 
-  void addSelection(LayerPoint* p) {
+  void addSelection(Layer::NPoint* p) {
     selection.addToSelection(p);
   }
   void addSelection(int h) {addSelection(focuslayer->getPoint(h));}
@@ -619,7 +435,7 @@ public:
     repaint();
   }
 
-  LayerPoint* getSelected(int i) {return selection.getSelectedItem(i);}
+  Layer::NPoint* getSelected(int i) {return selection.getSelectedItem(i);}
   int getSelectedIndex(int i) {
     return focuslayer->getPointIndex(selection.getSelectedItem(i));
   }
@@ -645,14 +461,14 @@ public:
   }
 };
 
-void PlotView::setSelection(LayerPoint* p) {
+void PlotView::setSelection(Layer::NPoint* p) {
   selection.selectOnly(p);
 }
 
 double PlotView::getSelectionMin(Plotter::Orientation orient)
 {
   std::numeric_limits<double> info;
-  double (Layer::*getter) (LayerPoint* p) ;
+  double (Layer::*getter) (Layer::NPoint* p) ;
   double lim=info.max();
   info; // keep ms compiler from complaining
 
@@ -702,7 +518,7 @@ void PlotView::shiftSelection(int orient, double delta)
 {
   if (delta==0.0) return;
   int n=numSelected();
-  LayerPoint* p;
+  Layer::NPoint* p;
   if (orient==Plotter::vertical)
     for (int i=0; i<n; i++)
       {
@@ -723,7 +539,7 @@ void PlotView::shiftSelection(int orient, double delta)
 
 void PlotView::rescaleSelection (int orient, double newmin, double newmax)
 {
-  LayerPoint* p;
+  Layer::NPoint* p;
   double oldmin, oldmax;
   double v;
   getSelectionRange(orient, oldmin, oldmax);
@@ -771,7 +587,7 @@ void PlotView::resizeForDrawing() {
 
 void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview, 
 	       double ppp, double zoom, bool isFoc, 
-	       SelectedItemSet<LayerPoint*> * sel) 
+	       SelectedItemSet<Layer::NPoint*> * sel) 
 {
   double half=(ppp/2);
   double ax, ay, px, py, lx, ly, ox, oy;
@@ -793,7 +609,7 @@ void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview,
 
   g.setColour(color);
   for (int i=0; i<ndraw; i++) {
-    LayerPoint* p = layer->getPoint(i);
+    Layer::NPoint* p = layer->getPoint(i);
     ax=layer->getPointX(p);
     ay=layer->getPointY(p);  
     px=haxview->toPixel(ax);   // pixel coords
@@ -1082,11 +898,12 @@ void PlotView::mouseUp(const MouseEvent &e)
 
 void PlotView::mouseDoubleClick(const MouseEvent &e)
 {
-  PlotWindow* w=(PlotWindow*)getTopLevelComponent();
+  /*  PlotWindow* w=(PlotWindow*)getTopLevelComponent();
   if (isSelection()) 
     w->openEditPointsDialog();
   else
     w->openLayerDialog();
+  */
 }
 
 bool PlotView::keyPressed (const KeyPress& key)
@@ -1122,6 +939,7 @@ Plotter::Plotter (XmlElement* plot)
     plotview (0),
     backview (0),
     editor (0),
+    pbthread (0),
     changed (false),
     playing (false),
     flags (0)
@@ -1200,6 +1018,7 @@ Plotter::Plotter(MidiFile& midifile)
     plotview (0),
     backview (0),
     editor (0),
+    pbthread (0),
     changed(false),
     playing (false),
     flags (0)
@@ -1244,13 +1063,13 @@ Plotter::Plotter(MidiFile& midifile)
 	      double k=h->message.getNoteNumber();
 	      double a=(double)(h->message.getFloatVelocity());
 	      double c=h->message.getChannel()-1;
-	      LayerPoint* p=new LayerPoint(arity);
+	      Layer::NPoint* p=new Layer::NPoint(arity);
 	      p->setVal(0,t);
 	      p->setVal(1,d);
 	      p->setVal(2,k);
 	      p->setVal(3,a);
 	      p->setVal(4,c);
-	      lay->_points.add(p);  // add same order as seq
+	      lay->points.add(p);  // add same order as seq
 	      if (k<minkey) minkey=k;
 	      if (k>maxkey) maxkey=k;
 	      t+=d;
@@ -1328,7 +1147,10 @@ void Plotter::createPlottingComponents()
   playbackparams[PlaybackDuration]=.25;
   playbackparams[PlaybackAmplitude]=.5;
   playbackparams[PlaybackChannel]=0;
-  playbackparams[PlaybackTempo]=1.0;
+  // NB: the Plotter owns the playback thread and creates it but the
+  // Editor is responsible for providing a transport, an output device
+  // and starting playback.
+  pbthread = new MidiPlaybackThread(this,50,60);
 }
 
 void Plotter::setPlottingFields(int xax, int yax)
@@ -1340,6 +1162,10 @@ void Plotter::setPlottingFields(int xax, int yax)
 
 Plotter::~Plotter()
 {
+  if (pbthread->isPlaying())
+    pbthread->pause();
+  pbthread->stopThread(-1);
+  deleteAndZero(pbthread);
   // zero out shared axis before deleting
   deleteAndZero(haxview);
   deleteAndZero(vaxview);
@@ -1614,34 +1440,6 @@ void Plotter::setFocusLayer(Layer * layr)
     }
 }
 
-void Layer::addXmlPoints(XmlElement* points)
-{
-  StringArray pts;
-  int ind=0;
-  int cur=_points.size();
-  forEachXmlChildElement(*points, p)
-    {
-      LayerPoint* f=new LayerPoint(arity);
-      pts.addTokens(p->getAllSubText(), false);
-      if (pts.size()==1) // just provided a Y value
-	{
-	  f->setVal(0, ind);
-	  f->setVal(1, pts[0].getFloatValue());
-	}
-      else
-	for (int i=0; i<pts.size() && i<arity; i++)
-	  f->setVal(i,pts[i].getFloatValue());
-      // init unspecified fields with 0.0
-      for (int i=pts.size(); i<arity; i++) 
-	f->setVal(i, 0.0);
-      _points.addSorted(*this,f);
-      cur++;
-      pts.clear();
-    }
-  if (cur > _points.size())
-    changed=true;
-}
-
 Layer* Plotter::newLayer(XmlElement* points)
 {
   Colour col = Layer::defaultColor(layers.size());
@@ -1731,7 +1529,7 @@ int Plotter::numSelected()
   return getPlotView()->numSelected();
 }
 
-LayerPoint* Plotter::getSelected(int i) 
+Layer::NPoint* Plotter::getSelected(int i) 
 {
   return getPlotView()->getSelected(i);
 }
@@ -1819,36 +1617,53 @@ void Plotter::setPlaying(bool p)
 
 void Plotter::setPlaybackParameter(PlaybackParam id, double value)
 {
+  ScopedLock mylock (pblock);
+  std::cout << "Plotter::setPlaybackParameter(" << id << ", " << value << ")\n";
   playbackparams[id]=value;
 }
 
 double Plotter::getPlaybackParameter(PlaybackParam id)
 {
+  ScopedLock mylock (pblock);
   return playbackparams[id];
 }
 
 void Plotter::pause()
 {
-  std::cout << "plot pause()\n";
+  std::cout << "Plotter::pause()\n";
+  pbthread->setPaused(true);
 }
 
 void Plotter::play(double pos)
 {
-  std::cout << "plotter play("<<pos<<")\n ";
+  std::cout << "Plotter::play(" << pos << ")\n";
+  pbthread->setPaused(false);
 }
 
 void Plotter::tempoChanged(double tempo, bool isPlaying)
 {
-  std::cout << "plotter tempoChanged(" << tempo << ", " << isPlaying << ")\n";
+  std::cout << "Plotter::tempoChanged(" << tempo << ", " << isPlaying << ")\n";
+  pbthread->setTempo(tempo);
 }
 
 void Plotter::positionChanged(double position, bool isPlaying)
 {
-  //  double xInUnits=(position*getHorizontalAxis()->getMax());
-  // iterate the layers finding the last index whose X value is <= unit.
-  //  for (int i=0;i<numLayers(); i++)
-  //    closestIndex(xInUnits);
-  std::cout << "plotter positionChanged(" << position << ", " << isPlaying << ")\n";
+  std::cout << "Plotter::positionChanged(" << position << ", " << isPlaying << ")\n";
+  ScopedLock mylock (pblock);
+  double tobeat = position * getHorizontalAxis()->getMaximum();
+  setPlaybackIndexes(tobeat);
+}
+
+void Plotter::setPlaybackIndexes(const double beat)
+{
+  // FIXME: this could be optimized check for no points OR if the beat
+  // is past the maximum X of the axis
+  const int n=numLayers();
+  for (int i=0; i<n; i++)
+  {
+    Layer* l=getLayer(i);
+    l->pbindex=l->getNextPlaybackIndex(beat);
+  }
 }
 
 void Plotter::addMidiPlaybackMessages(MidiPlaybackThread::MidiMessageQueue& queue,

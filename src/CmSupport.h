@@ -5,8 +5,8 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-#ifndef CMSUPPORT_H
-#define CMSUPPORT_H
+#ifndef CmSupport_h
+#define CmSupport_h
 
 #include "Scheme.h"
 

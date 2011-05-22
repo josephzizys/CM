@@ -16,7 +16,7 @@
 #include "Preferences.h"
 #include "Audio.h"
 #include "Csound.h"
-#include "Plot.h"
+#include "PlotWindow.h"
 #include "CodeEditor.h"
 #include "SndLib.h"
 #ifdef WITH_FOMUS

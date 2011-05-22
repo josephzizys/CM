@@ -16,7 +16,7 @@
 #include "Audio.h"
 #include "Syntax.h"
 #include "CodeEditor.h"
-#include "Plot.h"
+#include "PlotWindow.h"
 #ifdef WITH_FOMUS
 #include "Fomus.h"
 #endif
@@ -148,7 +148,6 @@ void Grace::systemRequestedQuit()
                                          );
   }
   // flag: -1=quit (no changes), 0=cancel, 1=discard and quit, 2=review changes
-  std::cout << "flag=" << flag << "\n";
   if (flag==-1 || flag==1 || (flag==2 && queryUnsavedWindows()))
     quit();
 }

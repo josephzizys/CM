@@ -5,8 +5,8 @@
   of this agreement is available at http://www.cliki.net/LLGPL
  *=======================================================================*/
 
-#ifndef COMMANDS_H
-#define COMMANDS_H
+#ifndef Commands_h
+#define Commands_h
 
 #include "Libraries.h"
 

@@ -557,8 +557,6 @@ PlotAudioEditor::~PlotAudioEditor()
   deleteAndZero(y0typein);
   deleteAndZero(y1label);
   deleteAndZero(y1typein);
-  //  deleteAndZero(tempolabel);
-  //  deleteAndZero(tempotypein);
   deleteAndZero(durlabel);
   deleteAndZero(durtypein);
   deleteAndZero(amplabel);
@@ -584,12 +582,7 @@ void PlotAudioEditor::resized()
   x = y1label->getRight()+z;
   y1typein->setBounds(x,y,w,lineheight);  
   x = y1typein->getRight()+(margin*1);
-  // tempo
-  //  tempolabel->setTopLeftPosition(x,y);
-  //  x = tempolabel->getRight()+z;
-  //  tempotypein->setBounds(x,y,w,lineheight);  
   // dur
-  // x = tempotypein->getRight()+(margin*1);
   durlabel->setTopLeftPosition(x,y);
   x = durlabel->getRight()+z;
   durtypein->setBounds(x,y,w,lineheight);  

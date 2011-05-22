@@ -14,6 +14,7 @@
 #include "Console.h"
 #include "Syntax.h"
 #include "Plot.h"
+#include "PlotWindow.h"
 #include "Cells.h"
 #ifdef WITH_FOMUS
 #include "Fomus.h"

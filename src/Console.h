@@ -5,8 +5,8 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-#ifndef CONSOLE_H
-#define CONSOLE_H
+#ifndef Console_h
+#define Console_h
 
 #include "Libraries.h"
 #include "Messages.h"
