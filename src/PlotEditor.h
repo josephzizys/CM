@@ -14,18 +14,32 @@ class Plotter;
 class Layer;
 class Transport;
 
+/*=======================================================================*
+                                 Tabbed Plot Editor
+ *=======================================================================*/
+
 /** A TabbedComponent that holds various editors for working with plot data. **/
 
 class PlotTabbedEditor : public TabbedComponent
 {
  public:
+  Colour bgcolor;
   PlotTabbedEditor();
   ~PlotTabbedEditor();
+
+  void addEditor(Component* editor)
+  {
+    addTab(editor->getName(), bgcolor, editor, true);
+  }
   void currentTabChanged (int newCurrentTabIndex, const String &newCurrentTabName);
 };
 
-/** the base class for tabbed plot editors. subclasses override
-    whichever listener definitions they need to implement **/
+/*=======================================================================*
+                                 GraceEditor
+ *=======================================================================*/
+
+/** The base class for the various plot editors. Subclasses override
+    the listener definitions they need to implement. **/
 
 class PlotEditor : public Component,
   public Button::Listener, public TextEditor::Listener,
@@ -35,10 +49,11 @@ class PlotEditor : public Component,
   static const int margin=8;
   static const int lineheight=24;
   static const int fontsize=15;
-  enum TabTypes {TabEmpty=0, TabWindow, TabAudio, TabExport, TabAxis, TabLayer, TabPoints};
+  enum EditorType {Empty=0, WindowEditor, AudioEditor, ExportEditor, AxisEditor,
+                   LayerEditor, PointsEditor};
   int tabType;
   Plotter* plotter;
-  PlotEditor (Plotter* pltr) : plotter (pltr), tabType(TabEmpty) {}
+  PlotEditor (Plotter* pltr) : plotter (pltr), tabType(Empty) {}
   ~PlotEditor () {}
   void textEditorReturnKeyPressed(TextEditor& editor) {/*std::cout << "return key pressed\n";*/}
   void textEditorTextChanged(TextEditor& editor) {/*std::cout << "text changed\n";*/}
@@ -47,10 +62,29 @@ class PlotEditor : public Component,
   void buttonClicked (Button* buttonThatWasClicked) {/*std::cout << "button clicked\n";*/}
   void sliderValueChanged (Slider* sliderThatWasMoved) {/*std::cout << "slider moved\n";*/}
   void comboBoxChanged(ComboBox* combo) {/*std::cout << "combo box changed\n";*/}
-  TabbedComponent* getTabbedComponent() {return (TabbedComponent*)getParentComponent();}
+
+  PlotTabbedEditor* getPlotTabbedEditor()
+  {
+    return (PlotTabbedEditor*)getParentComponent();
+  }
+
+  TabBarButton* getTabButton()
+  {
+    PlotTabbedEditor* editor=getPlotTabbedEditor();
+    std::cout << "editor=" << editor << "\n";
+    std::cout << "tabs=" << editor->getNumTabs() << "\n";
+    for (int i=0; i<editor->getNumTabs(); i++)
+      if (this==editor->getTabContentComponent(i))
+      {
+        std::cout << "foundme!" << editor << "\n";
+        return editor->getTabbedButtonBar().getTabButton(i);
+      }
+    return NULL;
+  }
 };
 
-// GUI componets used in the various editors
+/** Label component with consistent self-sizing of label around
+    text. **/
 
 class EditorLabel : public Label
 {
@@ -62,13 +96,16 @@ class EditorLabel : public Label
     setJustificationType (Justification::centredLeft);
     setEditable (false, false, false);
     setColour (Label::textColourId, Colours::black);
-    setColour (Label::backgroundColourId, Colour(0x0)); // Colours::red  
+    setColour (Label::backgroundColourId, Colour(0x0));
     setSize((int)(font.getStringWidthFloat(getText()+T("  "))), PlotEditor::lineheight);
   }
   ~EditorLabel()
   {
   }
 };
+
+/** Button component with consistent self-sizing of button around
+    text. **/
 
 class EditorButton : public TextButton
 {
@@ -92,7 +129,8 @@ class EditorButton : public TextButton
   }
 };
 
-/** a one-line text buffer component with some extra methods for text handling **/
+/** A single line TextEditor with some extra methods for text
+    handling **/
 
 class EditorTextBox : public TextEditor
 {
@@ -161,6 +199,63 @@ class EditorTextBox : public TextEditor
   }
 };
 
+/** A popup menu containing avaliable MidiOut devices to choose
+    from. See getSelectedMidiOut() for more information. **/
+
+class MidiOutPopupMenu : public ComboBox
+{
+ public:
+
+ MidiOutPopupMenu(ComboBox::Listener* listener, bool populate, int idToSelect=-1)
+   : ComboBox(String::empty)
+  {
+    setEditableText(false);
+    setTextWhenNoChoicesAvailable(T("No Midi Outs"));
+    setTextWhenNothingSelected(T("Midi Outs"));
+    if (listener)
+      addListener(listener);
+    if (populate)
+      fill(idToSelect);
+  }
+
+  ~MidiOutPopupMenu()
+  {
+    clear();
+  }
+
+  /** returns the MidiOut device index or -1 if no device is selected. **/
+
+  int getSelectedMidiOutputIndex()
+  {
+    // subtract 1 because ComboBox ids always greater than zero.
+    return getSelectedId() - 1;
+  }
+
+  /** Populates the menu with all the MidiOut devices. If idToSelect
+      is greater than -1 it will become the selected device in the
+      menu. **/
+
+  void fill(int idToSelect=-1)
+  {
+    clear();
+    StringArray devnames = MidiOutput::getDevices();    
+    // add 1 to devnums because ComboBox ids must be greater than zero
+    for (int i=0; i<devnames.size(); i++)
+      addItem(devnames[i], i + 1);
+    if (idToSelect>-1)
+      setSelectedId(idToSelect + 1);     
+  }
+  // private:
+  //mouseDown(const MouseEvent& e){} 	
+};
+
+/*=======================================================================*
+                                Plot Editor Pages
+ *=======================================================================*/
+
+
+/** The Window tab editor **/
+
 class PlotWindowEditor : public PlotEditor
 {
  public:
@@ -175,6 +270,8 @@ class PlotWindowEditor : public PlotEditor
   void buttonClicked (Button* buttonThatWasClicked);
   void textEditorReturnKeyPressed(TextEditor& editor);
 };
+
+/** The Axis tab editor **/
 
 class PlotAxisEditor : public PlotEditor 
 {
@@ -209,6 +306,8 @@ class PlotAxisEditor : public PlotEditor
   ToggleButton* fitcheckbox;
 };
 
+/** The Layer tab editor **/
+
 class PlotLayerEditor : public PlotEditor, public ChangeListener
 {
  public:
@@ -226,6 +325,8 @@ class PlotLayerEditor : public PlotEditor, public ChangeListener
   void changeListenerCallback(ChangeBroadcaster* source);
   void textEditorReturnKeyPressed(TextEditor& editor);
 };
+
+/** The Export tab editor. **/
 
 class PlotExportEditor : public PlotEditor
 {
@@ -253,6 +354,8 @@ class PlotExportEditor : public PlotEditor
   void exportPlot();
 };
 
+/** The Audio tab editor. **/
+ 
 class PlotAudioEditor : public PlotEditor
 {
  public:
@@ -270,10 +373,12 @@ class PlotAudioEditor : public PlotEditor
   EditorLabel* amplabel;
   EditorTextBox* amptypein;
   Transport* transport;
+  MidiOutPopupMenu* midioutmenu;
   bool ismidiplot;
   void resized();
   void textEditorReturnKeyPressed(TextEditor& editor);
   void setPlaybackParam(int id, EditorTextBox* editor);
+  void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
 };
 
 

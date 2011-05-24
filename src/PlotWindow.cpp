@@ -28,7 +28,9 @@ class PlotWindowComponent : public Component
   PlotWindow* plotwin;
 public:
   static const int plotviewwidth=500;
-  static const int tabviewheight=150;
+  //static const int tabviewheight=150;
+  // total height: 5 lines plus 5 margins (extra line height is for tab button)
+  static const int tabviewheight=(PlotEditor::lineheight*5)+(PlotEditor::margin*5);
   PlotWindowComponent (PlotWindow* win) : plotwin (win) {}
   ~PlotWindowComponent () 
   {
@@ -53,8 +55,7 @@ public:
 PointClipboard pointClipboard;
 
 PlotWindow::PlotWindow(XmlElement* plot)
-  : DocumentWindow (String::empty, Colours::white, 
-		    DocumentWindow::allButtons, true)
+  : DocumentWindow (String::empty, Colours::white, DocumentWindow::allButtons, true)
 {
   listener.window=this;
   String title=(plot==NULL) ? T("Untitled Plot") :
@@ -67,8 +68,7 @@ PlotWindow::PlotWindow(XmlElement* plot)
 }
 
 PlotWindow::PlotWindow(String title, MidiFile& midifile)
-  : DocumentWindow (title, Colours::white, 
-		    DocumentWindow::allButtons, true)
+  : DocumentWindow (title, Colours::white, DocumentWindow::allButtons, true)
 {
   listener.window=this;
   setName(title);
@@ -90,23 +90,23 @@ void PlotWindow::init()
   setMenuBar(this);
   setUsingNativeTitleBar(true);    
   //  std::cout << "PlotWindow::init (sizing plotter)\n";
-  plotter->setSize(PlotWindowComponent::plotviewwidth,PlotWindowComponent::plotviewwidth); // extra 24 in veritical because of menu
+  plotter->setSize(PlotWindowComponent::plotviewwidth, PlotWindowComponent::plotviewwidth); // extra 24 in veritical because of menu
   //  std::cout << "PlotWindow::init (adding window tab)\n";
-  tabview->addTab(T("Window"), Colour(0xffe5e5e5), new PlotWindowEditor(plotter, this), true);
+  tabview->addEditor(new PlotWindowEditor(plotter, this));
   //  std::cout << "PlotWindow::init (adding audio tab)\n";
-  tabview->addTab(T("Audio"), Colour(0xffe5e5e5), new PlotAudioEditor(plotter), false);
+  tabview->addEditor(new PlotAudioEditor(plotter));
   //  std::cout << "PlotWindow::init (adding export tab)\n";
-  tabview->addTab(T("Export"), Colour(0xffe5e5e5), new PlotExportEditor(plotter), false);
+  tabview->addEditor(new PlotExportEditor(plotter));
   //  std::cout << "PlotWindow::init (adding X Axis tab)\n";
-  tabview->addTab(T("X Axis"), Colour(0xffe5e5e5), new PlotAxisEditor(plotter, Plotter::horizontal), true);
+  tabview->addEditor(new PlotAxisEditor(plotter, Plotter::horizontal));
   //  std::cout << "PlotWindow::init (adding Y Axis tab)\n";
-  tabview->addTab(T("Y Axis"), Colour(0xffe5e5e5), new PlotAxisEditor(plotter, Plotter::vertical), true);
+  tabview->addEditor(new PlotAxisEditor(plotter, Plotter::vertical));
 
   for (int i=0; i<plotter->numLayers(); i++)
   {
     Layer* layer=plotter->getLayer(i);
     //    std::cout << "PlotWindow::init (adding layer tab)\n";
-    tabview->addTab(layer->getLayerName(), Colour(0xffe5e5e5), new PlotLayerEditor(plotter,layer), true);
+    tabview->addEditor(new PlotLayerEditor(plotter,layer));
   }
   //  std::cout << "PlotWindow::init (creating PlotWindowComponent)\n";
   PlotWindowComponent* content=new PlotWindowComponent(this);

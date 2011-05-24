@@ -198,10 +198,13 @@ class Axis
   int getDecimals() {return decimals;}
   void setDecimals(int v) {decimals=v;}
   double getRange() {return to-from;}
-  double rescale(double val, Axis* orig){
-    return (getMinimum() + 
-	    (getRange() * ((val - orig->getMinimum()) / 
-			   orig->getRange())));
+
+  double rescale(const double val, const double newMin, const double newMax)
+  {
+    if (newMin == from && newMax == to) return val;
+    if (val >= to) return newMax;
+    if (val <= from) return newMin;
+    return newMin + (((newMax - newMin) / (to - from)) * (val - from));
   }
 
   const String toAxisTypeString()
@@ -830,6 +833,7 @@ class Plotter : public Component,
   BackView* backview;
   PlotTabbedEditor* editor;
   MidiPlaybackThread* pbthread;
+  MidiOutput* midiout;
   CriticalSection pblock;
   OwnedArray <Layer> layers;
   OwnedArray <Axis> axes;
@@ -840,9 +844,10 @@ class Plotter : public Component,
   Font font;
   double zoom;
   double ppp;  // point size (pixels per point)
-  int flags;
+
   bool changed;
-  bool playing;
+  //  int flags;
+  //  bool playing;
 
   Plotter (int pt) ;
   Plotter (XmlElement* plot) ;
@@ -869,9 +874,7 @@ class Plotter : public Component,
   /** returns the axis view for the specified orientation, either Plotter::horizontal or Plotter:vertical **/
 
   AxisView* getAxisView(int orient);
-
   Axis* getVerticalAxis();
-
   Axis* getHorizontalAxis();
 
   BackView* getBackView();
@@ -887,7 +890,7 @@ class Plotter : public Component,
   void setFocusLayer(Layer* l);
   void setFocusVerticalField(int i);
   void addLayer(Layer* l);
-  Layer* newLayer(XmlElement* e);
+  Layer* newLayer(XmlElement* e, bool redraw=false);
   void removeLayer(Layer* l);
 
   void resized () ;
@@ -947,18 +950,42 @@ class Plotter : public Component,
   } 
   void paint(Graphics& g); 
 
-  // Audio playback methods
+  //----------------------//
+  //Audio playback methods//
+  //----------------------//
 
+  /** opens the midi out device for the given index and assigns it to
+      the playback thread. An index less than zero closes any device
+      and clears it in the thread. **/
+  void setMidiOut(int id);
+
+  /** Pauses the playback thread **/
   void pause();
+
+  /** Starts the playback thread playing **/
   void play(double pos);
+
+  /** Changes the beat position of the playback **/
   void positionChanged(double position, bool isPlaying);
+
+  /** Changes the tempo of the playback **/
   void tempoChanged(double tempo, bool isPlaying);
+
+  /** Traverses plaot layers adding midi messages to the playback
+      thread. **/
   void addMidiPlaybackMessages(MidiPlaybackThread::MidiMessageQueue& queue, MidiPlaybackThread::PlaybackPosition& position);
-  bool isPlaying();
-  void setPlaying(bool p);
+
+  /** Sets message values for playback of non-midi plots. **/
   void setPlaybackParameter(PlaybackParam id, double value);
+
+  /** Returns current playback value for the specified
+      PlaybackParam. **/
   double getPlaybackParameter(PlaybackParam id);
-  void setPlaybackIndexes(const double beat);
+
+  /** Traverse layers setting their playback indexes to the nearest
+      point index equal to or later than the given beat or -1 if there
+      is no such point. **/
+  void setPlaybackIndexes(double beat);
 };
 
 #endif

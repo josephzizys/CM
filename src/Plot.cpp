@@ -608,25 +608,29 @@ void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview,
   else ox=haxview->toPixel(haxview->axisMinimum());
 
   g.setColour(color);
-  for (int i=0; i<ndraw; i++) {
+  for (int i=0; i<ndraw; i++) 
+  {
     Layer::NPoint* p = layer->getPoint(i);
     ax=layer->getPointX(p);
     ay=layer->getPointY(p);  
     px=haxview->toPixel(ax);   // pixel coords
     py=vaxview->toPixel(ay);
 
-    if ( layer->isDrawStyle(Layer::line)  ) {
+    if ( layer->isDrawStyle(Layer::line)  )
+    {
       if (layer->isDrawStyle(Layer::vertical))
 	g.drawLine( (float)px, (float)oy, (float)px, (float)py); // vertical line from orign
       else if (layer->isDrawStyle(Layer::horizontal) )
 	g.drawLine( (float)ox, (float)py, (float)px, (float)py); // horizontal line from origin
       else if (i>0)  // normal line between points
 	g.drawLine( (float)lx, (float)ly, (float)px, (float)py);
-      }
+    }
 
-    if (layer->isDrawStyle(Layer::point)) {
+    if (layer->isDrawStyle(Layer::point)) 
+    {
       // if we are moving selection then draw selected point gray
-      if ( isFoc && sel->isSelected(p) ) {
+      if ( isFoc && sel->isSelected(p) ) 
+      {
 	g.setColour(selcolor);
 	g.fillEllipse((float)(px-half), (float)(py-half), (float)ppp, (float)ppp);
 	g.setColour(color);
@@ -634,7 +638,8 @@ void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview,
       else
 	g.fillEllipse((float)(px-half), (float)(py-half), (float)ppp, (float)ppp);
     } 
-    else if (layer->isDrawStyle(Layer::hbox)) {
+    else if (layer->isDrawStyle(Layer::hbox))
+    {
       // to get pixel width of Z, get absolute axis position of Z,
       // convert to pixel and then subtract out px
       double az=ax + layer->getPointZ(p);
@@ -940,9 +945,10 @@ Plotter::Plotter (XmlElement* plot)
     backview (0),
     editor (0),
     pbthread (0),
-    changed (false),
-    playing (false),
-    flags (0)
+    midiout (0),
+    changed (false)
+    //    playing (false),
+    //    flags (0)
 {
   createPlottingComponents();
   OwnedArray<XmlElement> xmlfields;
@@ -1019,9 +1025,10 @@ Plotter::Plotter(MidiFile& midifile)
     backview (0),
     editor (0),
     pbthread (0),
-    changed(false),
-    playing (false),
-    flags (0)
+    midiout (0),
+    changed(false)
+    //    playing (false),
+    //    flags (0)
 {
   createPlottingComponents();
   // juce time format is postive for beats and negative for SMTPE
@@ -1166,6 +1173,8 @@ Plotter::~Plotter()
     pbthread->pause();
   pbthread->stopThread(-1);
   deleteAndZero(pbthread);
+  if (midiout)
+    deleteAndZero(midiout);
   // zero out shared axis before deleting
   deleteAndZero(haxview);
   deleteAndZero(vaxview);
@@ -1440,7 +1449,7 @@ void Plotter::setFocusLayer(Layer * layr)
     }
 }
 
-Layer* Plotter::newLayer(XmlElement* points)
+Layer* Plotter::newLayer(XmlElement* points, bool redraw)
 {
   Colour col = Layer::defaultColor(layers.size());
   int sty=Layer::lineandpoint;
@@ -1477,6 +1486,15 @@ Layer* Plotter::newLayer(XmlElement* points)
   else
     layer=new Layer(num, nam, col, sty);
   addLayer(layer);
+
+  // optional update of display after adding the plot
+  if (redraw)
+  {
+    redrawBackView();
+    redrawHorizontalAxisView();
+    redrawVerticalAxisView();
+  }
+
   return layer;
 }
 
@@ -1605,14 +1623,23 @@ void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
                                 Audio Playback
  *=======================================================================*/
 
-bool Plotter::isPlaying()
+void Plotter::setMidiOut(int id)
 {
-  return playing;
-}
-
-void Plotter::setPlaying(bool p)
-{
-  playing=p;
+  ScopedLock mylock (pblock);
+  std::cout << "Plotter::setMidiOut(" << id << ")\n";
+  if (midiout)
+  {
+    pbthread->setMidiOutputPort(NULL);
+    delete midiout;
+    midiout=NULL;
+  }
+  if (id>-1)
+    midiout=MidiOutput::openDevice(id);
+  if (midiout)
+  {
+    std::cout << "Tranport::setMidiOutputPort(" << midiout << ")\n";
+    pbthread->setMidiOutputPort(midiout);
+  }
 }
 
 void Plotter::setPlaybackParameter(PlaybackParam id, double value)
@@ -1636,7 +1663,13 @@ void Plotter::pause()
 
 void Plotter::play(double pos)
 {
-  std::cout << "Plotter::play(" << pos << ")\n";
+  //  std::cout << "Plotter::play(" << pos << ")\n";
+  // since we are managing our own playback indexes we need to know when to update 
+  if (true)//pos==0.0
+  {
+    //    pbthread->setPlaybackLimit( getHorizontalAxis()->getMaximum());
+    positionChanged(0.0, false);
+  }
   pbthread->setPaused(false);
 }
 
@@ -1648,42 +1681,51 @@ void Plotter::tempoChanged(double tempo, bool isPlaying)
 
 void Plotter::positionChanged(double position, bool isPlaying)
 {
-  std::cout << "Plotter::positionChanged(" << position << ", " << isPlaying << ")\n";
+  // NB: POINT, LAYER AND AXIS EDITING SHOULD BE DISABLED DURING THIS OPERATION!
   ScopedLock mylock (pblock);
+  //  std::cout << "Plotter::positionChanged(" << position << ", " << isPlaying << ")\n";
   double tobeat = position * getHorizontalAxis()->getMaximum();
-  setPlaybackIndexes(tobeat);
+  if (isPlaying)
+    pbthread->pause();
+  pbthread->clear();
+  for (int i=0; i<numLayers(); i++)
+  {
+    Layer* layer=getLayer(i);
+    int next=layer->getNextPlaybackIndex(tobeat);
+    //    std::cout << "setting pbindex in layer " << i << " to " << next <<"\n";
+    layer->pbindex=next;
+  } 
+  pbthread->setPlaybackPosition(tobeat);
+  if (isPlaying)
+    pbthread->play();
 }
 
-void Plotter::setPlaybackIndexes(const double beat)
-{
-  // FIXME: this could be optimized check for no points OR if the beat
-  // is past the maximum X of the axis
-  const int n=numLayers();
-  for (int i=0; i<n; i++)
-  {
-    Layer* l=getLayer(i);
-    l->pbindex=l->getNextPlaybackIndex(beat);
-  }
-}
+// this is called by our playback thread to add midi messages to the
+// queue. the position's beat is actually an X axis value.
 
 void Plotter::addMidiPlaybackMessages(MidiPlaybackThread::MidiMessageQueue& queue,
                                       MidiPlaybackThread::PlaybackPosition& position)
 {
-  /*  double x=(position*getHorizontalAxis()->getAxisMaximum());
-  Layer* focus=getFocusLayer();
-  for (int i=0; i<getNumLayers(); i++)
+  // NB: POINT, LAYER AND AXIS EDITING SHOULD BE DISABLED DURING THIS OPERATION!
+  ScopedLock mylock (pblock);
+  for (int i=0; i<numLayers(); i++)
   {
     Layer* layer=getLayer(i);
-    if (layer!=focus && layer->isMuted()) continue;
-    int index=layer->getStartingIndexforX(x);
-    while (index<=layer->getNumPoints() && layer->getPointX(index)<=x)
+    if (layer->pbindex < 0) continue;
+    int num=layer->numPoints();
+    int chan=0;
+    double amp=0.5;
+    if (layer->pbindex >= num) continue;
+    while ((layer->pbindex < num) && layer->getPointX(layer->pbindex) <= position.beat)
     {
-      ADDMIDI();
-      index+=1;
-    }
+      // add messages
+      double key=getVerticalAxis()->rescale(layer->getPointY(layer->pbindex), playbackparams[PlaybackMinKey], playbackparams[PlaybackMaxKey]);
+      queue.addMessage(new juce::MidiMessage((0x90 | chan), (int)key, 64, position.beat));
+      queue.addMessage(new juce::MidiMessage((0x80 | chan), (int)key, 0, position.beat + .25));
+      layer->pbindex++;
+    }      
   }
-  */
-  std::cout << "plotter addMidiPlaybackMessages("<<position.beat<<")\n";
+  //  std::cout << "plotter addMidiPlaybackMessages("<<position.beat<<")\n";
 }
 
 

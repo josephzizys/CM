@@ -10,7 +10,7 @@
 #include "PlotEditor.h"
 #include "PlotWindow.h"
 #include "CodeEditor.h"
-//#include "Transport.h"
+#include "Midi.h"
 
 /*=======================================================================*
                                 Plot Editor
@@ -19,6 +19,7 @@
 PlotTabbedEditor::PlotTabbedEditor()
   : TabbedComponent(TabbedButtonBar::TabsAtTop) 
 {
+  bgcolor=Colour(0xffe5e5e5);
 }
 
 PlotTabbedEditor::~PlotTabbedEditor()
@@ -30,22 +31,22 @@ void PlotTabbedEditor::currentTabChanged (int newCurrentTabIndex, const String &
   PlotEditor* editor=(PlotEditor*)getTabContentComponent(newCurrentTabIndex);
   switch (editor->tabType)
   {
-  case PlotEditor::TabWindow:
+  case PlotEditor::WindowEditor:
     std::cout << "window editor!\n";    
     break;
-  case PlotEditor::TabAudio:
+  case PlotEditor::AudioEditor:
     std::cout << "audio editor!\n";    
     break;
-  case PlotEditor::TabAxis:
+  case PlotEditor::AxisEditor:
     std::cout << "axis editor!\n";    
     break;
-  case PlotEditor::TabLayer:
+  case PlotEditor::LayerEditor:
     std::cout << "layer editor!\n";    
     break;
-  case PlotEditor::TabExport:
+  case PlotEditor::ExportEditor:
     std::cout << "export editor!\n";    
     break;
-  case PlotEditor::TabPoints:
+  case PlotEditor::PointsEditor:
     std::cout << "points editor!\n";    
     break;
   default:
@@ -64,12 +65,15 @@ PlotWindowEditor::PlotWindowEditor (Plotter* pltr, TopLevelWindow* win)
     savebutton (0),
     layerbutton (0)
 {
-  tabType=TabWindow;
+  tabType=WindowEditor;
+  setName(T("Window"));
   addAndMakeVisible(namelabel = new EditorLabel(T("Title:")));
   addAndMakeVisible(namebuffer = new EditorTextBox(win->getName()));
   namebuffer->addListener(this);
-  addAndMakeVisible(savebutton = new EditorButton (T("Save...")));
   addAndMakeVisible(layerbutton = new EditorButton (T("New Layer")));
+  layerbutton->addListener(this);
+  addAndMakeVisible(savebutton = new EditorButton (T("Save...")));
+  savebutton->addListener(this);
   setVisible(true);
 }
 
@@ -83,14 +87,24 @@ void PlotWindowEditor::resized ()
   int y=margin;
   namelabel->setTopLeftPosition(margin, y);
   namebuffer->setBounds(namelabel->getRight()+margin, y, 220, lineheight);
-  layerbutton->setTopLeftPosition(namebuffer->getRight()+24, y);
-  y += (lineheight + margin);
-  savebutton->setTopLeftPosition(margin, y);
-}
+  layerbutton->setTopLeftPosition(namebuffer->getRight()+(margin*2), y);
+  //  y += (lineheight + margin);
+  savebutton->setTopLeftPosition(layerbutton->getRight()+(margin*2), y);
+
+  }
 
 void PlotWindowEditor::buttonClicked (Button* buttonThatWasClicked)
 {
-  std::cout << "Button clicked\n";
+  if (buttonThatWasClicked == savebutton)
+  {
+    PlotWindow* window=(PlotWindow *)getTopLevelComponent();
+    window->save();
+  }
+  else if (buttonThatWasClicked == layerbutton)
+  {
+    Layer* layer=plotter->newLayer(NULL, true);
+    getPlotTabbedEditor()->addEditor(new PlotLayerEditor(plotter, layer));
+  }
 }
 
 void PlotWindowEditor::textEditorReturnKeyPressed(TextEditor& editor) 
@@ -130,7 +144,11 @@ PlotAxisEditor::PlotAxisEditor (Plotter* pl, int orient)
     orientation(orient),
     axistypechanged (false)
 {
-  tabType=TabAxis;
+  tabType=AxisEditor;
+  if (orientation==Plotter::horizontal)
+    setName(T("X Axis"));
+  else
+    setName(T("Y Axis"));
   AxisView* axisview = plotter->getAxisView(orientation);
   Axis* axis=axisview->getAxis();
   addAndMakeVisible(namelabel = new EditorLabel(T("Name:")));
@@ -411,7 +429,7 @@ void PlotAxisEditor::textEditorReturnKeyPressed (TextEditor& editor)
 }
 
 /*=======================================================================*
-                                Layer Editor
+                                Layer Tab
  *=======================================================================*/
 
 PlotLayerEditor::PlotLayerEditor (Plotter* pltr, Layer* layr)
@@ -423,12 +441,15 @@ PlotLayerEditor::PlotLayerEditor (Plotter* pltr, Layer* layr)
     stylemenu (0),
     colorpicker (0)
 {
-  tabType=TabLayer;
+  tabType=LayerEditor;
+  setName(layer->getLayerName());
   addAndMakeVisible (namelabel = new EditorLabel( T("Name:")));
-  addAndMakeVisible (namebuffer = new EditorTextBox (layer->getLayerName()));
+  addAndMakeVisible (namebuffer = new EditorTextBox (String::empty));
+  ////  namebuffer->setColour(TextEditor::textColourId, layer->getLayerColor());
+  ////namebuffer->setColour (TextEditor::backgroundColourId, layer->getLayerColor());
+  // have to add text AFTER the color changes.
+  ////  namebuffer->setText(layer->getLayerName(), false);
   namebuffer->addListener(this);
-  //namebuffer->setColour (TextEditor::textColourId, Colours::black);
-  //namebuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
   
   addAndMakeVisible (stylelabel = new EditorLabel (T("Style:")));
   addAndMakeVisible(stylemenu = new ComboBox (String::empty));
@@ -449,7 +470,6 @@ PlotLayerEditor::PlotLayerEditor (Plotter* pltr, Layer* layr)
   stylemenu->setSelectedId(layer->getLayerStyle());
   stylemenu->addListener (this);
 
-  //addAndMakeVisible(colorpicker = new ColourSelector(ColourSelector::showSliders | ColourSelector::showColourAtTop,4,0));
   addAndMakeVisible(colorpicker = new ColourSelector( ColourSelector::showColourspace,4,0));
   colorpicker->setCurrentColour(layer->getLayerColor());
   colorpicker->addChangeListener(this);
@@ -490,8 +510,16 @@ void PlotLayerEditor::changeListenerCallback (ChangeBroadcaster* source)
 {
   if (source == colorpicker)
   {
-    layer->setLayerColor(colorpicker->getCurrentColour());
-    plotter->redrawPlotView();
+    Colour color=colorpicker->getCurrentColour();
+    //namebuffer->setColour (TextEditor::backgroundColourId, color);
+    String name=namebuffer->getText();
+    // have to re-add text after color change :(
+    ////    namebuffer->setText(String::empty, false);
+    ////    namebuffer->setColour(TextEditor::textColourId, color);
+    ////    namebuffer->setText(name, false); 
+    layer->setLayerColor(color);
+    if (layer->isPoints())
+      plotter->redrawPlotView();
   }
 }
 
@@ -528,27 +556,31 @@ PlotAudioEditor::PlotAudioEditor(Plotter* pltr)
     durtypein(0),
     amplabel (0),
     amptypein (0),
+    midioutmenu (0),
     transport (0),
     ismidiplot (false)
 {
-  tabType=TabAudio;
+  tabType=AudioEditor;
+  setName(T("Audio"));
   addAndMakeVisible (y0label = new EditorLabel( T("Y(0) Key:")));
   addAndMakeVisible (y0typein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackMinKey))));
   y0typein->addListener(this);
   addAndMakeVisible (y1label = new EditorLabel( T("Y(1) Key:")));
   addAndMakeVisible (y1typein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackMaxKey))));
   y1typein->addListener(this);
-  //  addAndMakeVisible (tempolabel = new EditorLabel( T("X rate:")));
-  //  addAndMakeVisible (tempotypein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackTempo))));
-  //  tempotypein->addListener(this);
   addAndMakeVisible (durlabel = new EditorLabel( T("Dur:")));
   addAndMakeVisible (durtypein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackDuration))));
   durtypein->addListener(this);
   addAndMakeVisible (amplabel = new EditorLabel( T("Amp:")));
   addAndMakeVisible (amptypein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackAmplitude))));
   amptypein->addListener(this);
+  addAndMakeVisible (midioutmenu = new MidiOutPopupMenu (this, true, MidiOutPort::getInstance()->devid));
   // create a Transport for the Plotter
   addAndMakeVisible (transport = new Transport (plotter, 60.0));
+  // create a Transport for the Plotter
+  plotter->pbthread->setTransport(transport);
+  plotter->pbthread->startThread();
+  plotter->pbthread->setPlaybackLimit( plotter->getHorizontalAxis()->getMaximum());
 }
 
 PlotAudioEditor::~PlotAudioEditor()
@@ -561,6 +593,7 @@ PlotAudioEditor::~PlotAudioEditor()
   deleteAndZero(durtypein);
   deleteAndZero(amplabel);
   deleteAndZero(amptypein);
+  deleteAndZero(midioutmenu);
   deleteAndZero(transport);
 }
 
@@ -570,9 +603,7 @@ void PlotAudioEditor::resized()
   int y=margin;
   int z=0;
   int w=y0typein->getFont().getStringWidthFloat(T("XXXXX"));
-  transport->setTopLeftPosition((getWidth()/2)-(transport->getWidth()/2),4);
-  y=transport->getBottom()+margin;
-  // Y(0)
+
   y0label->setTopLeftPosition(x,y);
   x = y0label->getRight()+z;
   y0typein->setBounds(x,y,w,lineheight);  
@@ -591,21 +622,22 @@ void PlotAudioEditor::resized()
   amplabel->setTopLeftPosition(x,y);
   x = amplabel->getRight()+z;
   amptypein->setBounds(x,y,w,lineheight);  
+
+  x=margin;
+  y=y0label->getBottom()+margin;
+  // center transport buttons (ignore width of tempo display)
+  transport->setTopLeftPosition((getWidth()/2)-(Transport::TransportWidthNoTempo/2), y);
+  y=getHeight()-(lineheight+margin);
+  midioutmenu->setBounds(x, y, 200, lineheight);
 }
 
-/*void PlotAudioEditor::enableMidiConfig(bool enabled)
+void PlotAudioEditor::comboBoxChanged (ComboBox* comboBoxThatHasChanged)
 {
-  y0label->setEnabled(enabled);
-  y0typein->setEnabled(enabled);
-  y1label->setEnabled(enabled);
-  y1typein->setEnabled(enabled);
-  tempolabel->setEnabled(enabled);
-  tempotypein->setEnabled(enabled);
-  durlabel->setEnabled(enabled);
-  durtypein->setEnabled(enabled);
-  amplabel->setEnabled(enabled);
-  amptypein->setEnabled(enabled);
-  }*/
+  if (comboBoxThatHasChanged == midioutmenu)
+  {
+    plotter->setMidiOut(midioutmenu->getSelectedMidiOutputIndex());
+  }
+}
 
 void PlotAudioEditor::textEditorReturnKeyPressed(TextEditor& editor)
 {
@@ -625,10 +657,6 @@ void PlotAudioEditor::textEditorReturnKeyPressed(TextEditor& editor)
   {
     setPlaybackParam(Plotter::PlaybackAmplitude, amptypein);
   }
-  //  else if (&editor == tempotypein)
-  //  {
-  //    setPlaybackParam(Plotter::PlaybackTempo, tempotypein);
-  //  }
 }
 
 void PlotAudioEditor::setPlaybackParam(int param, EditorTextBox* editor)
@@ -650,9 +678,6 @@ void PlotAudioEditor::setPlaybackParam(int param, EditorTextBox* editor)
     case Plotter::PlaybackAmplitude:
       ok=(doub > 0.0 && doub <= 1.0);
       break;
-      //    case Plotter::PlaybackTempo:
-      //      ok=(doub > 0.0);
-      //      break;
     default:
       break;
     }
@@ -662,56 +687,6 @@ void PlotAudioEditor::setPlaybackParam(int param, EditorTextBox* editor)
   else
     editor->setText(String(plotter->getPlaybackParameter((Plotter::PlaybackParam)param)), false);
 }
-
-/*
-void PlayPlotDialog::playPlot(bool write)
-{
-  double len=startinc->getDoubleValue();
-  double dur=durtypein->getDoubleValue();
-  double amp=amptypein->getDoubleValue();
-  double tempo=tempotypein->getDoubleValue();
-  int chan=0;
-  double key0=y0typein->getDoubleValue();
-  double key1=y1typein->getDoubleValue();
-  Axis* axis=plotter->getHorizontalAxisView()->getAxis();
-  double xmin=axis->getMinimum();
-  double xmax=axis->getMaximum();
-  axis=plotter->getVerticalAxisView()->getAxis();  
-  double ymin=axis->getMinimum();
-  double ymax=axis->getMaximum();
-
-  for (int i=0;i<plotter->numLayers(); i++)
-  {
-    Layer* l=plotter->getLayer(i);
-    if (layerbutton->getToggleState() || plotter->isFocusLayer(l))
-    {
-      // only access a z value if arity>2 and hbox style
-      bool getz=(!rescalex && l->getLayerArity()>2 &&
-                 l->isDrawStyle(Layer::hbox));
-      for (int j=0; j<l->numPoints(); j++)
-      {
-        LayerPoint* p=l->getPoint(j);
-        double x, z;
-        double y=l->getPointY(p);
-        if (rescalex) 
-        {
-          x=cm_rescale(l->getPointX(p),xmin,xmax,0,len,1) ;
-          z=dur;
-        }
-        else
-        {
-          x=l->getPointX(p);
-          z=(getz) ? l->getPointZ(p) : dur;
-        }
-        if (rescaley)
-          y=cm_rescale(y,ymin,ymax,key0,key1,1);
-        MidiOutPort::getInstance()->sendNote(x,z,y,amp,chan,write);
-      }
-    }
-  }
-
-}
-*/
 
 /*=======================================================================*
                                 Export Editor
@@ -733,7 +708,8 @@ PlotExportEditor::PlotExportEditor (Plotter* pltr)
     exportbutton (0),
     include(0)
 {
-  tabType=TabExport;
+  tabType=ExportEditor;
+  setName(T("Export"));
   numfields=plotter->numFields();
   include=new bool[numfields];
   for (int i=0;i<numfields; i++) include[i]=true;

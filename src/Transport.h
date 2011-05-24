@@ -9,19 +9,16 @@
 
 #include "Libraries.h"
 
-/** A component for controlling audio/midi playback. Based on Andrew
-    Burnson's original Transport class in Chorale Composer I. A
-    Transport provides 5 buttons: Rewind, Back, Play/Pause, Forward,
-    GoToEnd, a slider for scrolling through the playback sequence and
-    an optional tempo slider. To create a Transport just pass it a
-    Transport::Listener with the required play(), pause() ,
-    positionChanged() and tempoChanged() callbacks implemented. These
-    methods will be triggered whenever the user clicks on the
-    Transport's components.  The Transport can be controlled from
-    other objects in the main message thread by calling the underlying
-    setPlaying(), setPausing() and setPlaybackPosition() and
-    setTempo() methods.  To trigger transport actions from other
-    threads use the asynchronous sendMessage() method. **/
+/** An audio control component. When the user clicks on a Transport's
+    buttons or moves its sliders the Transport::Listener's methods are
+    triggered to effect playback changes.  A Transport provides 5
+    buttons: Rewind, Back, Play/Pause, Forward, GoToEnd, a slider for
+    scrolling through the playback sequence and an optional tempo
+    slider with associated bpm label.  A Transport can be triggered
+    from the main message thread by calling its underlying
+    setPlaying(), setPausing(), setPlaybackPosition() and setTempo()
+    methods.  To trigger transport outside of the main thread use its
+    asynchronous sendMessage() method. **/
 
 class Transport : public juce::Component, 
   public juce::AsyncUpdater,
@@ -37,7 +34,20 @@ class Transport : public juce::Component,
     RewindButton=1, BackButton, PlayPauseButton, ForwardButton, GoToEndButton, SliderButton
   };
 
-  /** Transport message ids. Use these with sendMessage to control the
+  /** The width and heights of the transport display. **/
+
+  enum TransportGeometry
+  {
+    ButtonWidth = 44,  /// The width of the transport buttons
+    ButtonHeight = 24, /// The height of the transport buttons
+    Margin = 4,        /// The inset space around edges
+    NumButtons = 5,    /// The number of buttons on transport
+    TransportWidthNoTempo = Margin + (ButtonWidth*NumButtons) + Margin,
+    TransportWidthWithTempo = TransportWidthNoTempo + (ButtonHeight*5),
+    TransportHeight = Margin + (ButtonHeight*2) + Margin
+  };
+
+ /** Transport message ids. Use these with sendMessage to control the
       transport from other threads.  **/
 
   enum TransportMessageIds
@@ -75,12 +85,11 @@ class Transport : public juce::Component,
 
   };
   
-  /** A component for controlling audio playback. When the user clicks
-      on a Transport's components the Transport::Listener's methods
-      are called to implement the underlying changes in playback
-      state. If tempo is > 0.0 the transport component will provide a
-      tempo slider for conrolling the speed of playback while audio is
-      running. **/
+  /** Transport constructor. To create a Transport pass it a
+      Transport::Listener with its play(), pause() , positionChanged()
+      and tempoChanged() callbacks implemented. If a non-zero tempo
+      value is specfied then the transport will contain a tempo
+      slider to alter the playback rate while audio is running. **/
 
   Transport (Listener* transportListener, double tempo=0.0)
    : listener(transportListener),
@@ -92,8 +101,6 @@ class Transport : public juce::Component,
     sliderPosition(0),
     sliderTempo(0),
     labelTempo(0),
-    buttonWidth(44),
-    buttonHeight(24),
     buttonColor (juce::Colour(90,90,120)),
     toggleColor (juce::Colour(60,60,180)),
     playing(false)
@@ -140,15 +147,21 @@ class Transport : public juce::Component,
       sliderPosition->setRange(0, 1.0);
       sliderPosition->addListener(this);
  
-      // size the transport to width of 5 buttons and height of 2
-      // lines with 4px margins all around
-      int width = 4 + (buttonWidth*5)  + 4;
-      int height = 4 + (buttonHeight*2) + 4;
+      // basic width is 5 buttons and height is 2 lines with
+      // margins all around
+      int width = Margin + (ButtonWidth*5)  + Margin;
+      int height = Margin + (ButtonHeight*2) + Margin;
       if (tempo>0)
       {
-        // add extra width if we have a tempo slider
-        //width += (buttonHeight + (buttonHeight*2) + (buttonHeight*2));
-        width += ((buttonHeight/2) + (buttonHeight*2) + (buttonHeight*2));
+        /* Optional tempo display adds a total of 5 lineheights to the
+           transport's WIDTH. Tempo display consists of a rotary
+           slider and an associated bpm label. The slider claims a
+           square of ButtonHeight*2 so that it fills the available
+           vertical space and is positioned 1/2 lineheight to the
+           right of the GoToEnd button. The bpm label abutts the tempo
+           slider. Its width is 2 1/2 lineheights (just enough room to
+           stop juce font scaling on a 3-digit bpm). */
+        width += (ButtonHeight*5);
         addAndMakeVisible(labelTempo = new juce::Label(juce::String::empty,juce::String(tempo) + juce::String(" BPM")));
         labelTempo->setColour(juce::Label::textColourId, buttonColor);
         addAndMakeVisible(sliderTempo = new juce::Slider(juce::String("Tempo")));
@@ -166,13 +179,15 @@ class Transport : public juce::Component,
       setSize(width, height);
     }
   
+  /** Transport destructor. **/
+
   ~Transport()
   {
     deleteAllChildren();
   }
 
- /** Returns true if the transport' state is set to playing otherwise
-     false. This method is not thread safe. **/
+ /** Returns true if the transport is playing otherwise false. This
+     method is not thread safe. **/
 
   bool isPlaying()
   {
@@ -180,8 +195,8 @@ class Transport : public juce::Component,
   }
 
   /** Marks transport as playing, flips to the "pause" icon for the
-      user and calls the play() method if triggerAction is true (and
-      the transport is not already playing). This method is not thread
+      user and calls the play() method if triggerAction is true and
+      the transport is not already playing. This method is not thread
       safe, use sendMessage() for that. **/
 
   void setPlaying(bool triggerAction=true)
@@ -198,8 +213,8 @@ class Transport : public juce::Component,
   }
   
   /** Marks transport as pausing, displays the "play" icon for the
-      user and calls the pause() method if triggerAction is true (and
-      the transport is currently playing). This method is not thread
+      user and calls the pause() method if triggerAction is true and
+      the transport is currently playing. This method is not thread
       safe, use sendMessage() for that. **/
 
   void setPausing(bool triggerAction=true)
@@ -217,7 +232,7 @@ class Transport : public juce::Component,
 
   /** Sets the playback position as a normalized value 0.0 to 1.0. If
       triggerAction is true then the positionChanged() callback will
-      be triggred. This method is not thread safe, use sendMessage()
+      be triggered. This method is not thread safe, use sendMessage()
       for that. **/
 
   void setPlaybackPosition(double position, bool triggerAction=true)
@@ -285,6 +300,8 @@ class Transport : public juce::Component,
 
   bool playing;
   Listener* listener; 
+  juce::Colour buttonColor;
+  juce::Colour toggleColor;
   juce::DrawableButton* buttonPlayPause;
   juce::DrawableButton* buttonRewind;
   juce::DrawableButton* buttonBack;
@@ -293,10 +310,6 @@ class Transport : public juce::Component,
   juce::Slider*         sliderPosition;
   juce::Slider*         sliderTempo;
   juce::Label*          labelTempo;
-  int buttonWidth;
-  int buttonHeight;
-  juce::Colour buttonColor;
-  juce::Colour toggleColor;
 
   /** Internal support for messaging from other threads **/
 
@@ -353,29 +366,30 @@ class Transport : public juce::Component,
   {
     int viewWidth=getWidth();
     int viewHeight=getHeight();
-    int buttonLeft=(viewWidth/2)-(buttonWidth*2.5);  // total of 5 buttons
-    // a tempo slider adds an extra 4.5 lineHeight's of width
+    int buttonLeft=(viewWidth/2)-(ButtonWidth*2.5);  // total of 5 buttons
+    // a tempo slider adds an extra 5 lineHeight's of width
     if (sliderTempo)
-      buttonLeft -= (buttonHeight*2.25);
+      buttonLeft -= (ButtonHeight*2.5);
 
-    int buttonTop=(viewHeight/2)-buttonHeight;
-    buttonRewind->setBounds(buttonLeft, buttonTop, buttonWidth, buttonHeight);
-    buttonBack->setBounds(buttonLeft + buttonWidth, buttonTop, buttonWidth, buttonHeight);      
-    buttonPlayPause->setBounds(buttonLeft + (buttonWidth*2), buttonTop, buttonWidth, buttonHeight);
-    buttonForward->setBounds(buttonLeft + (buttonWidth*3), buttonTop, buttonWidth, buttonHeight);
-    buttonGoToEnd->setBounds(buttonLeft + (buttonWidth*4), buttonTop, buttonWidth, buttonHeight);    
-    sliderPosition->setBounds(buttonLeft, buttonTop + buttonHeight, (buttonWidth*5), buttonHeight);
+    int buttonTop=(viewHeight/2)-ButtonHeight;
+    buttonRewind->setBounds(buttonLeft, buttonTop, ButtonWidth, ButtonHeight);
+    buttonBack->setBounds(buttonLeft + ButtonWidth, buttonTop, ButtonWidth, ButtonHeight);      
+    buttonPlayPause->setBounds(buttonLeft + (ButtonWidth*2), buttonTop, ButtonWidth, ButtonHeight);
+    buttonForward->setBounds(buttonLeft + (ButtonWidth*3), buttonTop, ButtonWidth, ButtonHeight);
+    buttonGoToEnd->setBounds(buttonLeft + (ButtonWidth*4), buttonTop, ButtonWidth, ButtonHeight);    
+    sliderPosition->setBounds(buttonLeft, buttonTop + ButtonHeight, (ButtonWidth*5), ButtonHeight);
     if (sliderTempo)
     {
       // the optional tempo components are squares of 2 lineheights
       // per side positioned one lineheight to the right of the
       // rightmost transport button.
-      sliderTempo->setBounds(buttonGoToEnd->getRight()+(buttonHeight/2), buttonTop , buttonHeight*2,  buttonHeight*2);
-      labelTempo->setBounds(sliderTempo->getRight(), sliderTempo->getY(), buttonHeight*2,  buttonHeight*2);
+      int halfheight=ButtonHeight/2;
+      sliderTempo->setBounds(buttonGoToEnd->getRight()+halfheight, buttonTop , ButtonHeight*2,  ButtonHeight*2);
+      labelTempo->setBounds(sliderTempo->getRight(), sliderTempo->getY(), (ButtonHeight*2)+halfheight,  ButtonHeight*2);
     }
   }
 
-  /** Internal function implements button clicked actions. **/
+  /** Internal juce callback implements button clicked actions. **/
 
   virtual void buttonClicked(juce::Button* button)
   {
@@ -413,8 +427,7 @@ class Transport : public juce::Component,
     }
   }
   
-  /** Internal slider function invokes the source's postionChanged()
-      or tempoChanged() method. **/
+  /** Internal juce callback implements slider moved actions. **/
 
   virtual void sliderValueChanged(juce::Slider *slider)
   {
