@@ -12,7 +12,6 @@
 	 (g3 (* .5 .75 amp))
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -21,3 +20,4 @@
 			(* g1 (oscil osc1))
 			(* g2 (oscil osc2))))
 		  (* (env ampenv2) g3 (oscil osc3))))))))
+

@@ -1,6 +1,6 @@
 ;;; -------- STEREO-FLUTE
+
 (definstrument (stereo-flute start dur freq flow 
-			    
 			     (flow-envelope '(0  1 100 1))
 			     (decay 0.01) 		; additional time for instrument to decay
 			     (noise 0.0356) 
@@ -49,7 +49,6 @@ is a physical model of a flute:
 	 (bore (make-delay period-samples))
 	 (offset (floor (* period-samples offset-pos)))
 	 (reflection-lowpass-filter (make-one-pole a0 b1)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -59,8 +58,9 @@ is a physical model of a flute:
 			     (* ran-amount (rand-interp random-vibrato)) 
 			     (env flowf)))
        (set! current-difference 
-	     (+  (+ current-flow (* noise (* current-flow (rand breath))))
-		 (* fbk-scl1 delay-sig)))
+	     (+ current-flow 
+		(* noise current-flow (rand breath))
+		(* fbk-scl1 delay-sig)))
        (set! current-excitation (- emb-sig (* emb-sig emb-sig emb-sig)))
        (set! out-sig (one-pole reflection-lowpass-filter 
 			       (+ current-excitation (* fbk-scl2 delay-sig))))

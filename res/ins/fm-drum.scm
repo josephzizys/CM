@@ -36,7 +36,6 @@
 	 (carrier (make-oscil frequency))
 	 (fmosc (make-oscil (* frequency fmrat)))
 	 (cascade (make-oscil (* frequency casrat))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

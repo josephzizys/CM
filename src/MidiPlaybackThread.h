@@ -52,6 +52,17 @@ class MidiPlaybackThread : public juce::Thread
 
     double beat;
 
+    /** Specifies the ending time in beats for playback.  Playback
+        automatically stops once the the position's beat exceeds this
+        value. **/
+
+    double endbeat; 
+
+    /** Specifies the amount of beat the thread waits on each
+        iteration **/
+
+    double tick;
+
     /** An index for the caller to use if it wants to maintain a
         running position in its sequence of data during
         playback. Caller is reponsible for incrementing the index if
@@ -60,12 +71,6 @@ class MidiPlaybackThread : public juce::Thread
         equal to or greater than the position's length value. **/
 
     int index;
-
-    /** Specifies the ending time in beats for playback.  Playback
-        automatically stops once the the position's beat exceeds this
-        value. **/
-
-    double endbeat; 
 
     /** Specifies the maximum number of positions the source has in
         its sequenence of midi data. If the length is greater than
@@ -82,8 +87,9 @@ class MidiPlaybackThread : public juce::Thread
 
   PlaybackPosition()
     : beat (0.0),
-      index (0),
       endbeat (0.0),
+      tick (0.0),
+      index (0),
       length (0),
       stop (false)
       {
@@ -101,7 +107,10 @@ class MidiPlaybackThread : public juce::Thread
 
     bool isAtEnd()
     {
-      return (stop || (beat > endbeat) || ((length > 0) && (index >= length)) );
+      // arrgh! floating point error can make beat>endbeat test
+      // not work. fix for now is too use a 1/2 tick fudge
+      // factor to allow for some error in the comparison
+      return (stop || (beat > (endbeat + (tick/2))) || ((length > 0) && (index >= length)) );
     }
     
     /** Internal function resets the position back to its starting
@@ -236,6 +245,7 @@ class MidiPlaybackThread : public juce::Thread
     transport (transprt),
     paused (true)
     {   
+      position.tick= 1.0/ticksPerBeat;
     }
   
   ~MidiPlaybackThread()
@@ -304,6 +314,7 @@ class MidiPlaybackThread : public juce::Thread
     juce::ScopedLock mylock(pblock);
     if (tpb<1) tpb=1;
     ticks=tpb;
+    position.tick=1.0/tpb;
   }
 
   /** Returns true if the thread is currently paused. **/
@@ -357,6 +368,46 @@ class MidiPlaybackThread : public juce::Thread
     }
   }
 
+  /** Microtunes successive channels in the output device according to
+      the number of divisions per semitone, a value 1 to 16
+      inclusive. The starting channel is channel offset to begin
+      tuning at, a value 0 to 15 inclusive. **/
+
+  void sendMicrotuning(int divs, int startingChannel=0)
+  {
+    juce::ScopedLock mylock(pblock);
+    if (port==0) return;
+    divs=juce::jlimit(1,16,divs);
+    int chan=startingChannel;
+    for (; chan<divs && chan<16; chan++)
+    {
+      double frac=(double)((double)chan/(double)divs);
+      // juce pitch bends are 0 to 16383 with slider 0 == 8192 and
+      // range -2 to 2 semitones so: bend=rescale(slider,-2,2,0,16383)
+      int bend=(int)(4095.75 * (frac + 2));
+      std::cout << "sending pitchbend, chan=" << chan << " bend=" << bend << "\n";
+      port->sendMessageNow( juce::MidiMessage::pitchWheel(chan+1,bend));
+    }
+    // adjust all higher channels to slider position 0 (no tuning)
+    for (; chan<16; chan++)
+      port->sendMessageNow( juce::MidiMessage::pitchWheel(chan+1,8192));
+  }
+
+  /** Utility function to microtune a message by shifting it the
+      appropiate number of channels for the specified divisions and
+      fractional keynum. The message should already have its base
+      channel and (integer) keynum values assigned.  **/
+
+  static void microtuneMessage(juce::MidiMessage& msg, int divs, double knum)
+  {
+    int base=(int)knum;
+    double frac=knum-base;
+    // how many channels we have to shift for the resolution
+    int shift=(int)(frac/divs);
+    if (shift>0)
+      msg.setChannel(msg.getChannel()+shift);
+  }
+
   /** Clears the queue of pending messages. Don't call this unless the
       thread is currently paused or you will pobably have dangling
       midi notes to deal with!  **/
@@ -389,7 +440,7 @@ class MidiPlaybackThread : public juce::Thread
       double bpm=tempo;
       // 'ticks' is the number of ticks per beat and 'tick' is the
       // wait time expressed in beats, without regard to tempo
-      double tick = 1.0/ticks;
+      //      double tick = 1.0/ticks;
       pblock.exit();
 
       // if playback is paused then block until user unblocks us
@@ -446,7 +497,7 @@ class MidiPlaybackThread : public juce::Thread
                 break;
               }
             }
-            position.beat += tick;
+            position.beat += position.tick;
             pblock.exit();
           }
         }
@@ -467,7 +518,7 @@ class MidiPlaybackThread : public juce::Thread
             processMessage(msg);       // send message out port
             msg=messages.getFirst();   // increment to next
           }
-          position.beat += tick;      // increment beat
+          position.beat += position.tick;  // increment beat
           pblock.exit();
         }
         // update position of transport's slider at 1/10 the playback rate
@@ -479,10 +530,13 @@ class MidiPlaybackThread : public juce::Thread
           else
             transpcounter = ((transpcounter + 1) % 10);
         }
-        // calculate the amount of time to wait between iterations
-        // by converting ticks to milliseconds at the current tempo
-        // e.g  wait(1000 * tick * (60/bpm));
-        wait((int)(60000*(tick/bpm)));
+        // 'tick' is the wait time expressed in beats, without regard
+        // to tempo. calculate the amount of time to wait between
+        // iterations by converting ticks to milliseconds at the
+        // current tempom e.g  wait(1000 * tick * (60/bpm));
+
+        wait((int)(60000*(position.tick/bpm)));
+
       }
     }
     // send all notes off if user closed the window without stopping

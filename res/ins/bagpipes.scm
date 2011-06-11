@@ -1,3 +1,4 @@
+
 (definstrument (drone startime dur frequency amp ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)
   (let* ((beg (seconds->samples startime))
 	 (end (+ beg (seconds->samples dur)))
@@ -10,11 +11,11 @@
 	 (ran-vib (make-rand :frequency rvibfreq 
 			     :amplitude (* rvibamt freq)))
 	 (loc (make-locsig deg dis amtrev)))
-    (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
-       (locsig loc i (* (env amp-env) (table-lookup s (+ (rand ran-vib)))))))))
+       (locsig loc i (* (env amp-env) (table-lookup s (rand ran-vib))))))))
+
 
 (definstrument (canter beg dur pitch amp-1 deg dis pcrev ampfun ranfun skewfun
 		       skewpc ranpc ranfreq indexfun atdr dcdr
@@ -61,7 +62,6 @@
 	 (gen4 (make-oscil (* pitch harm4)))
 	 (ranvib (make-rand :frequency ranfreq :amplitude (hz->radians (* ranpc pitch))))
 	 (loc (make-locsig deg dis pcrev)))
-    (ws-interrupt?)
     (run
      (do ((i start (+ i 1)))
 	 ((= i end))
@@ -74,6 +74,7 @@
 		    (* lamp2 ampval (oscil gen2 (* (+ (* (+ dev02 (* indval dev12)) modval) frqval) harm2)))
 		    (* lamp3 ampval (oscil gen3 (* (+ (* (+ dev03 (* indval dev13)) modval) frqval) harm3)))
 		    (* lamp4 ampval (oscil gen4 (* (+ (* (+ dev04 (* indval dev14)) modval) frqval) harm4))))))))))
+
 
 
 

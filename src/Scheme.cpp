@@ -778,7 +778,7 @@ void SchemeThread::printBanner()
 #ifdef WITH_SDIF
   banner << T("SDIF ") 
          << String(SDIF_VERSION_STRING) << T(" ")
-         << SysInfo::getCopyright(T("IRCAM-Centre Georges Pompidou, Paris, France"))
+         << SysInfo::getCopyright(T("IRCAM"))
          << T("\n");
 #endif
   banner << SysInfo::getCMLogo() 

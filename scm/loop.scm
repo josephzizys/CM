@@ -631,16 +631,26 @@
               (push `(cdr ,head) return))))
          ;; add loop accumulation forms
          (if (eq? oper 'append)
-           (begin
+           (let ((sym (gensym)))
             (push `(set-cdr! ,tail (append ,expr (list))) loop)
-            (push `(set! ,tail (last-pair ,tail)) loop))
+;            (push `(set! ,tail (last-pair ,tail)) loop)
+            (push `(set! ,tail (let getend ((,sym ,tail))
+                                 (if (or (null? ,sym) (null? (cdr ,sym))) ,sym
+                                     (getend (cdr ,sym)))))
+                  loop)
+            )
            (if (eq? oper 'collect)
              (begin
               (push `(set-cdr! ,tail (list ,expr)) loop)
               (push `(set! ,tail (cdr ,tail)) loop))
              (begin 
               (push `(set-cdr! ,tail ,expr) loop)
-              (push `(set! ,tail (last-pair ,tail)) loop))))
+;              (push `(set! ,tail (last-pair ,tail)) loop)
+              (push `(set! ,tail (let getend ((,sym ,tail))
+                                 (if (or (null? ,sym) (null? (cdr ,sym))) ,sym
+                                     (getend (cdr ,sym)))))
+                  loop)
+              )))
          ;; update user into variable inside the main loop
          ;; regardless of whether its a new collector or not
          (if into

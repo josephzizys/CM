@@ -57,7 +57,6 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
     (do ((i 0 (+ i 1)))
 	((= i dlen))
       (set! (tab i) (- 1.0 (random 2.0))))
-    (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -68,3 +67,4 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	 (set! ctr (+ ctr 1))
 	 (if (>= ctr dlen) (set! ctr 0))
 	 (outa i (* amp val)))))))
+

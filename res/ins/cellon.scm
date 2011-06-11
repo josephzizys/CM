@@ -32,13 +32,12 @@
 	 (amplenv (make-env (stretch-envelope ampfun 25 ampap 75 ampdp) :scaler amp :duration dur))
 	 (betaenv (make-env (stretch-envelope betafun 25 betap 75 betdp) :duration dur
 			     :scaler (- beta1 beta0) :offset beta0)))
-    (ws-interrupt?)
     (run 
      (do ((i st (+ i 1)))
 	 ((= i nd))
-       (let* ((vib (+ (* (env pvibenv) (triangle-wave pvib))
-		      (* (env rvibenv) (rand-interp rvib))
-		      (env glisenv))))
+       (let ((vib (+ (* (env pvibenv) (triangle-wave pvib))
+		     (* (env rvibenv) (rand-interp rvib))
+		     (env glisenv))))
 	 (set! fm (one-zero low (* (env betaenv) (oscil fmosc (+ fm vib)))))
 	 (locsig loc i (* (env amplenv) 
 			  (oscil car (+ fm vib)))))))))

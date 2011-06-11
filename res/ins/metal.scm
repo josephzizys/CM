@@ -14,7 +14,6 @@
 	 (g3 .116)
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -26,3 +25,4 @@
 					 (oscil osc2))))
 			    (* g3 (env ampenv3) 
 			       (oscil osc3))))))))))
+

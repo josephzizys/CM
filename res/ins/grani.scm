@@ -28,7 +28,7 @@
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
-(define grani-default-base (expt 2 (/ 12)))
+(define grani-default-base (expt 2 1/12))
 
 (define* (exp-envelope env
 		       (base grani-default-base)
@@ -137,7 +137,7 @@
 (define* (semitones-envelope envelope (around 1.0) (error 0.01))
   (exp-envelope envelope
 		:error error
-		:base (expt 2 (/ 12))
+		:base (expt 2 1/12)
 		:cutoff #f
 		:scaler 1
 		:offset 0
@@ -231,11 +231,11 @@
 ;;; create a vct from an envelope
 
 (define* (make-gr-env env (length 512))
-  (let* ((env-vct (make-vct length))
-	 (length-1 (exact->inexact (- length 1))))
+  (let ((env-vct (make-vct length))
+	(length-1 (exact->inexact (- length 1))))
     (do ((i 0 (+ 1 i)))
 	((= i length) env-vct)
-      (vct-set! env-vct i (envelope-interp (/ i length-1) env)))))
+      (set! (env-vct i) (envelope-interp (/ i length-1) env)))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; Grain envelopes
@@ -254,7 +254,7 @@
       (if (and (>= i start) (< i end))
 	  (let ((sine (sin (* s incr))))
 	    (set! s (+ 1 s))
-	    (vct-set! v i (* sine sine)))))))
+	    (set! (v i) (* sine sine)))))))
 
 ;;;=============================================================================
 ;;; Granular synthesis instrument
@@ -559,9 +559,9 @@
 		       (do ((chn 0 (+ 1 chn)))
 			   ((or (= chn out-chans)
 				(= chn where-bins-len)))
-			 (locsig-set! loc chn (if (< (vct-ref where-bins chn)
+			 (locsig-set! loc chn (if (< (where-bins chn)
 						     where
-						     (vct-ref where-bins (+ 1 chn)))
+						     (where-bins (+ 1 chn)))
 						  1.0
 						  0.0)))
 		       ;; if not "where" see if the user wants to send to all channels

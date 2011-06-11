@@ -23,10 +23,10 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 			       (* a1 (sin (* i frq1)))
 			       (* a2 (sin (* i frq2))))
 			    .5 (- 1.0 (cos (* i win-freq))))))
-      (ws-interrupt?)
       (run
        (do ((i start (+ i 1)))
 	   ((= i end))
 	 (outa i (* (env ampf) 
 		    (wave-train wt0 (* (env vibf) 
 				       (oscil vibr)))))))))
+

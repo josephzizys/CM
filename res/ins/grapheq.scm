@@ -50,13 +50,13 @@ nil doesnt print anything, which will speed up a bit the process.
 			  (len (length gain-freq-list)))
 		      (do ((i (- len 2) (- i 2)))
 			  ((< i 0))
-			(set! lst (cons (list-ref gain-freq-list i) lst)))
+			(set! lst (cons (gain-freq-list i) lst)))
 		      lst))
 	 (freq-list (let ((lst '())
 			  (len (length gain-freq-list)))
 		      (do ((i (- len 1) (- i 2)))
 			  ((<= i 0))
-			(set! lst (cons (list-ref gain-freq-list i) lst)))
+			(set! lst (cons (gain-freq-list i) lst)))
 		      lst))
 	 (env-size (if (list? (car gain-list))
 		       (make-vector (length freq-list))
@@ -68,8 +68,8 @@ nil doesnt print anything, which will speed up a bit the process.
 
     (do ((k 0 (+ 1 k)))
 	((= k half-list))
-      (let ((gval (list-ref gain-list k))
-	    (fval (list-ref freq-list k)))
+      (let ((gval (gain-list k))
+	    (fval (freq-list k)))
 	(if (list? gval)
 	  (begin
 	    (set! (env-size k) (make-env gval
@@ -81,7 +81,6 @@ nil doesnt print anything, which will speed up a bit the process.
 	    (set! (gains k) (if (< (+ offset-gain gval) 0) 
 				0
 				(+ offset-gain gval)))))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -100,3 +99,4 @@ nil doesnt print anything, which will speed up a bit the process.
 	   (set! outval (+ outval (* (gains k)
 				     (formant (frm-size k) inval)))))
 	 (outa i (* (env ampenv) outval)))))))
+

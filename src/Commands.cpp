@@ -774,6 +774,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 
     case CommandIDs::PlotterNew:
       info.shortName=T("New Plot");
+      info.addDefaultKeypress('N', comk+meta);
       break;
 
     case CommandIDs::PlotterOpen:

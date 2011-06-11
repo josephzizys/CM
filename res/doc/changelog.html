@@ -16,21 +16,25 @@ li.change { display: list-item; list-style: circle; padding-bottom: .5em; margin
   
   <h1>Changelog</h1>
 
-  <h2>CM 3.8.0 (SVN development trunk)</h2>
+  <h2>CM 3.8.0 "Black Magicke" (SVN development trunk)</h2>
 
   <ul>
 
-    <li class="change">Enhancement: new <span class="menuitem">Audio&gt;Play Midi File...</span>window plays midifiles the the selected output port. Audio&gt;Play Midi File...</li>
+    <li class="change">Enhancement: Upgraded to S7 Scheme 1.89 (5-June-11). This is Bill's new optimized s7 which runs 2x faster than April's version with 8x faster GC!  Also updated the clm instrument distribution in the <span class="menuitem">Audio&gt;Instrument Browser...</span> window.</li>
+
+    <li class="change">Enhancement: Plot window essentially reimplemented. Window now includes a tabbed editor and real-time audio playback for any plot. See the updated Lisp and Sal plotting examples in the <span class="menuitem">Help&gt;Examples</span> menu.</li>
+
+    <li class="change">Enhancement: SDIF file importing using Ircam's SDIF library. See <a href="cm.html#sdif-import">sdif-import</a> and <a href="cm.html#sdif-import-spectra">sdif-import-spectra</a> for more information.
     </li>
     
-    <li class="change">Enhancement: SDIF support using Ircam's SDIF library. See <a href="cm.html#sdif-import">sdif-import</a> and <a href="cm.html#sdif-import-spectra">sdif-import-spectra</a> for more information.
+    <li class="change">Enhancement: new <span class="menuitem">Audio&gt;Play Midi File...</span> window plays midifiles the the selected output port. Audio&gt;Play Midi File...</li>
     </li>
     
     <li class="change">Enhancement: new functions <a href="cm.html#random-series">random-series</a>, <a href="cm.html#list-intersection">list-intersection</a>, <a href="cm.html#list-union">list-union</a>, <a href="cm.html#list-difference">list-difference</a> and <a href="cm.html#remove-duplicates">remove-duplicates</a>.
     </li>
     
     <li class="change">Enhancement: new function <a href="cm.html#qsort_">qsort!</a>
-    performs in line (destructive) sorting of lists and vectors.
+    performs in line (destructive) sorting of lists and vectors. (The standard sort! function that is provided by s7 does destructive sorting of arrays but copies lists.)
     </li>
 
     <li class="change">Change: function import-spear-frames has been renamed spear-import-spectra
@@ -443,7 +447,7 @@ li.change { display: list-item; list-style: circle; padding-bottom: .5em; margin
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Fri May  6 13:55:19 CDT 2011 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start -->Last modified: Fri Jun 10 14:45:08 CDT 2011 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

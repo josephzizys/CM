@@ -60,8 +60,8 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
      (lambda (return-early)               
        (do ((i 0 (+ i 2)))
 	   ((>= i len))
-	 (let ((x (list-ref env i))
-	       (y (list-ref env (+ i 1))))
+	 (let ((x (env i))
+	       (y (env (+ i 1))))
 	   (set! lasty y)
 	   (if (null? nenv)
 	       (if (>= x beg)
@@ -90,13 +90,13 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 	      (lambda (e)
 		(let* ((diff (car e))
 		       (len (length e))
-		       (lastx (list-ref e (- len 2)))
-		       (newe (copy e))) ; it is dangerous (and unclean...) to use list-set! on the original list
+		       (lastx (e (- len 2)))
+		       (newe (copy e)))
 		  (do ((i 0 (+ i 2)))
 		      ((>= i len) newe)
-		    (let ((x (/ (- (list-ref newe i) diff) lastx)))
+		    (let ((x (/ (- (newe i) diff) lastx)))
 		      (set! xs (cons x xs))
-		      (list-set! newe i x))))))
+		      (set! (newe i) x))))))
 	     (remove-duplicates
 	      (lambda (lst)
 		(letrec ((rem-dup
@@ -117,7 +117,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 		(let ((len (length xs)))
 		  (do ((i 0 (+ 1 i)))
 		      ((= i len))
-		    (let ((x (list-ref xs i)))
+		    (let ((x (xs i)))
 		      (set! newe (append newe (list x (op (envelope-interp x ee1) (envelope-interp x ee2)))))))
 		  newe)))))))
 
@@ -178,7 +178,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- stretch-envelope
 
-(define (stretch-envelope . args)
+(define* (stretch-envelope fn old-att new-att old-dec new-dec)
 
   "(stretch-envelope env old-attack new-attack old-decay new-decay) takes 'env' and 
 returns a new envelope based on it but with the attack and optionally decay portions stretched 
@@ -188,26 +188,22 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
   (stretch-envelope '(0 0 1 1) .1 .2) -> (0 0 0.2 0.1 1.0 1) 
   (stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6) -> (0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)"
 
-  (let ((fn (list-ref args 0))
-	(old-att (if (> (length args) 1) (list-ref args 1) #f))
-	(new-att (if (> (length args) 2) (list-ref args 2) #f))
-	(old-dec (if (> (length args) 3) (list-ref args 3) #f))
-	(new-dec (if (> (length args) 4) (list-ref args 4) #f)))
+  (let ()
     (if (and old-att
 	     (not new-att))
 	(throw 'wrong-number-of-args (list "stretch-envelope" 
-					   old-attack 
+					   old-att
 					   "old-attack but no new-attack?"))
 	(if (not new-att)
 	    fn
 	    (if (and old-dec
 		     (not new-dec))
 		(throw 'wrong-number-of-args (list "stretch-envelope" 
-						   old-attack new-attack old-decay
+						   old-att new-att old-dec
 						   "old-decay but no new-decay?"))
 		(let* ((x0 (car fn))
 		       (new-x x0)
-		       (last-x (list-ref fn (- (length fn) 2)))
+		       (last-x (fn (- (length fn) 2)))
 		       (y0 (cadr fn))
 		       (new-fn (list y0 x0))
 		       (scl (/ (- new-att x0) (max .0001 (- old-att x0)))))
@@ -281,7 +277,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
   (let ((len (length e)))
     (if (or (= len 0) (= len 2))
 	e
-	(let ((xmax (list-ref e (- len 2))))
+	(let ((xmax (e (- len 2))))
 	  (reverse-env-1 e '() xmax)))))
 
 
@@ -322,9 +318,9 @@ to have the same extent as the original's. 'reflected' causes every other
 repetition to be in reverse."
   (let* ((times (if reflected (floor (/ repeats 2)) repeats))
 	 (e (if reflected
-		(let* ((lastx (list-ref ur-env (- (length ur-env) 2)))
-		       (rev-env (cddr (reverse ur-env)))
-		       (new-env (reverse ur-env)))
+		(let ((lastx (ur-env (- (length ur-env) 2)))
+		      (rev-env (cddr (reverse ur-env)))
+		      (new-env (reverse ur-env)))
 		  (while (not (null? rev-env))
 			 (set! new-env (cons (+ lastx (- lastx (cadr rev-env))) new-env))
 			 (set! new-env (cons (car rev-env) new-env))
@@ -332,18 +328,18 @@ repetition to be in reverse."
 		  (reverse new-env))
 		ur-env))
 	 (first-y (cadr e))
-	 (x-max (list-ref e (- (length e) 2)))
+	 (x-max (e (- (length e) 2)))
 	 (x (car e))
-	 (first-y-is-last-y (= first-y (list-ref e (- (length e) 1))))
+	 (first-y-is-last-y (= first-y (e (- (length e) 1))))
 	 (new-env (list first-y x))
 	 (len (length e)))
     (do ((i 0 (+ 1 i)))
 	((= i times))
       (do ((j 2 (+ j 2)))
 	  ((>= j len))
-	(set! x (+ x (- (list-ref e j) (list-ref e (- j 2)))))
+	(set! x (+ x (- (e j) (e (- j 2)))))
 	(set! new-env (cons x new-env))
-	(set! new-env (cons (list-ref e (+ j 1)) new-env)))
+	(set! new-env (cons (e (+ j 1)) new-env)))
       (if (and (< i (- times 1)) (not first-y-is-last-y))
 	  (begin
 	    (set! x (+ x (/ x-max 100.0)))
@@ -355,7 +351,7 @@ repetition to be in reverse."
 	      (new-len (length new-env)))
 	  (do ((i 0 (+ i 2)))
 	      ((>= i new-len))
-	    (list-set! new-env i (* scl (list-ref new-env i))))))
+	    (set! (new-env i) (* scl (new-env i))))))
     new-env))
 
 
@@ -368,7 +364,7 @@ repetition to be in reverse."
 (defgenerator penv (envs #f :type clm-vector) (total-envs 0 :type int) (current-env 0 :type int) (current-pass 0 :type int))
 
 (define (power-env pe)
-  (let* ((val (env (vector-ref (penv-envs pe) (penv-current-env pe)))))
+  (let ((val (env (vector-ref (penv-envs pe) (penv-current-env pe)))))
     (set! (penv-current-pass pe) (- (penv-current-pass pe) 1))
     (if (= (penv-current-pass pe) 0)
       (if (< (penv-current-env pe) (- (penv-total-envs pe) 1))
@@ -383,15 +379,15 @@ repetition to be in reverse."
 			:total-envs len
 			:current-env 0
 			:current-pass 0))
-	 (xext (- (list-ref envelope (- (length envelope) 3)) (car envelope))))
+	 (xext (- (envelope (- (length envelope) 3)) (car envelope))))
     (do ((i 0 (+ 1 i))
 	 (j 0 (+ j 3)))
 	((= i len))
-      (let ((x0 (list-ref envelope j))
-	    (x1 (list-ref envelope (+ j 3)))
-	    (y0 (list-ref envelope (+ j 1)))
-	    (y1 (list-ref envelope (+ j 4)))
-	    (base (list-ref envelope (+ j 2))))
+      (let ((x0 (envelope j))
+	    (x1 (envelope (+ j 3)))
+	    (y0 (envelope (+ j 1)))
+	    (y1 (envelope (+ j 4)))
+	    (base (envelope (+ j 2))))
 	(vector-set! (penv-envs pe) i (make-env (list 0.0 y0 1.0 y1) 
 						:base base :scaler scaler :offset offset 
 						:duration (* duration (/ (- x1 x0) xext))))))
@@ -421,7 +417,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	 (fulldur (or dur (frames snd chn edpos)))
 	 (len (length envelope))
 	 (x1 (car envelope))
-	 (xrange (- (list-ref envelope (- len 3)) x1))
+	 (xrange (- (envelope (- len 3)) x1))
 	 (y1 (cadr envelope))
 	 (base (caddr envelope))
 	 (x0 0.0)
@@ -434,12 +430,12 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	       ((= i len))
 	     (set! x0 x1)
 	     (set! y0 y1)
-	     (set! x1 (list-ref envelope i))
-	     (set! y1 (list-ref envelope (+ i 1)))
-	     (let* ((curdur (round (* fulldur (/ (- x1 x0) xrange)))))
+	     (set! x1 (envelope i))
+	     (set! y1 (envelope (+ i 1)))
+	     (let ((curdur (round (* fulldur (/ (- x1 x0) xrange)))))
 	       (xramp-channel y0 y1 base curbeg curdur snd chn edpos)
 	       (set! curbeg (+ curbeg curdur)))
-	     (set! base (list-ref envelope (+ i 2)))))))))
+	     (set! base (envelope (+ i 2)))))))))
 
 
 ;;; by Anders Vinjar:
@@ -459,7 +455,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	 (largest-diff (* 1.0 (- (max-envelope e) mn)))
 	 (x-min (car e))
 	 (len (length e))
-	 (x-max (list-ref e (- len 2)))
+	 (x-max (e (- len 2)))
 	 (x-incr (* 1.0 (/ (- x-max x-min) xgrid)))
 	 (new-e '()))
     (do ((x x-min (+ x x-incr)))
@@ -557,23 +553,23 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 
   (if (and env
 	   (> (length env) 4))
-      (let* ((new-env (list (cadr env) (car env)))
-	     (ymax (max-envelope env))
-	     (ymin (min-envelope env))
-	     (xmax (list-ref env (- (length env) 2)))
-	     (xmin (car env)))
+      (let ((new-env (list (cadr env) (car env)))
+	    (ymax (max-envelope env))
+	    (ymin (min-envelope env))
+	    (xmax (env (- (length env) 2)))
+	    (xmin (car env)))
 	(if (= ymin ymax)
 	    (list xmin ymin xmax ymax)
-	  (let* ((y-scl (/ ygrid (- ymax ymin)))
-		 (x-scl (/ (or xgrid ygrid) (- xmax xmin)))
-		 (px #f) (py #f)
-		 (qx #f) (qy #f) 
-		 (tx #f) (ty #f) 
-		 (qtx #f) (qty #f))
+	  (let ((y-scl (/ ygrid (- ymax ymin)))
+		(x-scl (/ (or xgrid ygrid) (- xmax xmin)))
+		(px #f) (py #f)
+		(qx #f) (qy #f) 
+		(tx #f) (ty #f) 
+		(qtx #f) (qty #f))
 	    (do ((i 0 (+ i 2)))
 		((>= i (length env)))
-	      (let ((ttx (list-ref env i))
-		    (tty (list-ref env (+ i 1))))
+	      (let ((ttx (env i))
+		    (tty (env (+ i 1))))
 		(set! tx (round (* ttx x-scl)))
 		(set! ty (round (* tty y-scl)))
 		(if px

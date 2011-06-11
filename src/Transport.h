@@ -34,7 +34,7 @@ class Transport : public juce::Component,
     RewindButton=1, BackButton, PlayPauseButton, ForwardButton, GoToEndButton, SliderButton
   };
 
-  /** The width and heights of the transport display. **/
+  /** Various aspects of the transport display. **/
 
   enum TransportGeometry
   {
@@ -44,7 +44,15 @@ class Transport : public juce::Component,
     NumButtons = 5,    /// The number of buttons on transport
     TransportWidthNoTempo = Margin + (ButtonWidth*NumButtons) + Margin,
     TransportWidthWithTempo = TransportWidthNoTempo + (ButtonHeight*5),
-    TransportHeight = Margin + (ButtonHeight*2) + Margin
+    TransportHeight = Margin + (ButtonHeight*2) + Margin,
+
+  };
+
+  enum TransportAspects
+  {
+    TempoMinimum = 1,
+    TempoMaximum = 2,
+    TempoSkewFactor = 3,
   };
 
  /** Transport message ids. Use these with sendMessage to control the
@@ -162,10 +170,10 @@ class Transport : public juce::Component,
            slider. Its width is 2 1/2 lineheights (just enough room to
            stop juce font scaling on a 3-digit bpm). */
         width += (ButtonHeight*5);
-        addAndMakeVisible(labelTempo = new juce::Label(juce::String::empty,juce::String(tempo) + juce::String(" BPM")));
-        labelTempo->setColour(juce::Label::textColourId, buttonColor);
         addAndMakeVisible(sliderTempo = new juce::Slider(juce::String("Tempo")));
         sliderTempo->setSliderStyle(juce::Slider::Rotary);
+        // disable normal textbox, we'll add our own
+        ////sliderTempo->TextEntryBoxPosition(Slider::TextBoxRight);
         sliderTempo->setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
         sliderTempo->setColour(juce::Slider::thumbColourId, buttonColor);
         sliderTempo->setColour(juce::Slider::rotarySliderFillColourId, buttonColor);
@@ -174,6 +182,9 @@ class Transport : public juce::Component,
         sliderTempo->setRange(6.0, 208.0, 1.0);
         sliderTempo->setValue(tempo, true, true);
         sliderTempo->addListener(this);
+        // add custom tempo label
+        addAndMakeVisible(labelTempo = new juce::Label(juce::String::empty, juce::String(juce::roundToInt(tempo)) + juce::String(" BPM")));
+        labelTempo->setColour(juce::Label::textColourId, buttonColor);
       }
       setVisible(true);
       setSize(width, height);
@@ -184,6 +195,27 @@ class Transport : public juce::Component,
   ~Transport()
   {
     deleteAllChildren();
+  }
+
+  /** Allow some aspects of the Tranport to be changed and
+      cusomized **/
+
+  void setTransportAspect(int aspect, double val)
+  {
+    switch (aspect)
+    {
+    case TempoMinimum:
+      sliderTempo->setRange(val, sliderTempo->getMaximum());
+      break;
+    case TempoMaximum:
+      sliderTempo->setRange(sliderTempo->getMinimum(), val);
+      break;
+    case TempoSkewFactor:
+      sliderTempo->setSkewFactor(val);
+      break;
+    default:
+      break;
+    }
   }
 
  /** Returns true if the transport is playing otherwise false. This
@@ -271,7 +303,7 @@ class Transport : public juce::Component,
       sliderTempo->setValue(tempo, triggerAction, false);
       // if we are not triggering the update label display by hand
       if (!triggerAction)
-        labelTempo->setText(juce::String(tempo)+juce::String(" BPM"), false);
+        labelTempo->setText(juce::String(juce::roundToInt(tempo))+juce::String(" BPM"), false);
     }
   }
 
@@ -436,7 +468,7 @@ class Transport : public juce::Component,
     else if (slider == sliderTempo)
     {
       double val=sliderTempo->getValue();
-      labelTempo->setText(juce::String(val)+juce::String(" BPM"), false);
+      labelTempo->setText(juce::String(juce::roundToInt(val))+juce::String(" BPM"), false);
       listener->tempoChanged(val, isPlaying());
     }
   }

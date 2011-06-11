@@ -75,24 +75,22 @@ class Axis
     {
       StringArray range;
       String str=(ax) ? ax->getStringAttribute(T("axis")) : String::empty;
+      //std::cout << "axis str=" << str << "\n";
       range.addTokens(str,false);
       if (range.size()>0)
       {
 	int arg=1;
 	if (range[0]==T("percent") || range[0]==T("percentage") || range[0]==T("pct"))
 	  init(percentage);
-	else if (range[0]==T("keynum") || range[0]==T("notes"))
+	else if (range[0]==T("keynum"))
 	  init(keynum);
 	else if (range[0]==T("seconds"))
 	  init(seconds);
-	else if (range[0]==T("hertz")) 
-	  init(hertz);
 	else if (range[0]==T("unitcircle") || range[0]==T("circle"))
 	  init(circle);
 	else if (range[0]==T("ordinal"))
 	  init(ordinal);
-	else if (range[0]==T("unit") || range[0]==T("normalized") || 
-		 range[0]==T("normal"))
+	else if (range[0]==T("unit") || range[0]==T("normalized") || range[0]==T("normal"))
 	  init(normalized);
 	else if (range[0]==T("midi"))
 	  init(midi);
@@ -113,6 +111,11 @@ class Axis
 	      b=t-f;
 	      k=5;
 	    }
+            else 
+            {
+              b=by;
+              k=ticks;
+            }
 	  }
           else if (num==3)
 	  {
@@ -123,6 +126,10 @@ class Axis
 	    {
 	      k=5;
 	    }
+            else
+            {
+              k=ticks;
+            }
 	  }
           else if (num==4)
 	  {
@@ -177,6 +184,7 @@ class Axis
     default :
       break;
     }
+    //    std::cout << "init: " << toString().toUTF8() << "\n";
   }
 
   ~Axis () {}
@@ -184,6 +192,7 @@ class Axis
   //  void init (AxisType typ) ;
   int getType() {return type;}
   void setType(int n) {type=(AxisType)n;}
+  bool isType(int typ){return type==typ;}
   String getName() {return name;}
   void setName(String n) {name=n;}
   double getMinimum() {return from;}
@@ -198,7 +207,19 @@ class Axis
   int getDecimals() {return decimals;}
   void setDecimals(int v) {decimals=v;}
   double getRange() {return to-from;}
-
+  String getLabel(double val)
+  {
+    if (getType()==keynum)
+    {
+      static const char* pcs[12]={"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+      int key=(int)val;
+      int let=(key % 12);
+      int oct=key/12;
+      return String(pcs[let]) + ((oct==0) ? String("00") : String(oct-1));
+    }
+    else
+      return String(val,getDecimals());
+  }
   double rescale(const double val, const double newMin, const double newMax)
   {
     if (newMin == from && newMax == to) return val;
@@ -251,18 +272,19 @@ class Layer
     box = 8,   // Boxes are triples x y z with z sharing an axis
     vertical = 16,
     horizontal = 32,
-    lineandpoint = 3,
-    vline = 17,
-    impulse = 17,
-    vlineandpoint = 19,
-    histogram = 19,
-    vbar = 20,
-    vbox = 24,
-    hbar = 36,
-    hbox = 40
+    //-------
+    lineandpoint = line + point,
+    vline = vertical + line,
+    impulse = vline,
+    vlineandpoint = vertical + line + point,
+    histogram = vlineandpoint,
+    vbar = vertical + bar,
+    vbox = vertical + box,
+    hbar = horizontal + bar,
+    hbox = horizontal + box
   };
 
-  // NPoint: a point with a variable number of plottable fields.
+  // NPoint: a point with n plottable fields.
   class NPoint
   {
   public:
@@ -282,12 +304,12 @@ class Layer
     if (s==T("lineandpoint") || s==T("envelope")) return lineandpoint;
     if (s==T("line") || s==T("lines")) return line;
     if (s==T("point") || s==T("points")) return point;
-    if (s==T("hbox")) return hbox;
+    if (s==T("hbox") || s==T("box") || s==T("pianoroll")) return hbox;
     if (s==T("vbox")) return vbox;
-    if (s==T("histogram") || s==T("vlineandpoint")) return histogram;
+    if (s==T("vlineandpoint") || s==("aerial")) return histogram;
     if (s==T("impulse") || s==T("impulses") ) return impulse;
     if (s==T("hbar")) return hbar;
-    if (s==T("vbar")) return vbar;
+    if (s==T("vbar") || s==T("bar")) return vbar;
     if (s==T("unspecified")) return unspecified;
     return def;
   }
@@ -323,46 +345,60 @@ class Layer
   OwnedArray<NPoint> points;
   bool changed;
 
-  /* A preallocated point holding default field values that new points
-     will be merged with to produce a fully specfifed point. */
-  
-  NPoint* _defaults; 
+
 
   /** _x _y and _z are the field indices for graphing x y and z point
-     values. Indicies can be changed on the fly so a layer with more
-     than 2 fields can display these other "dimensions" of data. **/
+      values. Indicies can be changed on the fly so a layer with more
+      than 2 fields can display these other "dimensions" of data. **/
 
   int _x, _y, _z; 
-  int arity;        /// number of fields in points
+  int arity;        /// arity of points in layer (number of fields in points)
   String name;      /// layer name
   int id;           /// unique id
-  Colour color;     /// line and point color
-  int style;        /// drawing style
-  bool transp;      /// allow back plots to be visible. unused
-  int pbindex;      /// running index during playback
-  
+
+  //------------------//
+  //Drawing variables//
+  //------------------//
+  Colour color;           /// line and point color
+  int style;              /// drawing style
+  double lineWidth;       /// width of plot lines
+  double pointWidth;      /// diameter of plot points
+  double barWidth;        /// width of bars and boxes
+
+  //------------------//
+  //Playback variables//
+  //------------------//
+  int pbIndex;      /// point index during playback
+  double pbDur;     /// default note duration
+  double pbAmp;     /// default amplitude 
+  int pbChan;       /// default channel
+
   Layer (int ari, String nam, Colour col, int sty=lineandpoint)
-    : transp(true),
-    _x (0),
+    : _x (0),
     _y (1),
     _z (2),
-    _defaults (NULL),
-    pbindex(0),
+    arity (ari),
+    name (nam),
+    style (sty),
+    lineWidth (1.0),
+    pointWidth (8.0),
+    barWidth (8.0),
+    pbIndex(-1),
+    pbDur (0.25),
+    pbAmp (1.0),
+    pbChan (0),
     changed (false)
     {
       static int layerid=1;
-      arity=ari;
-      name=nam;
       color=col;
       id=layerid++;
-      style=sty;
+      if (name.isEmpty())
+        name=T("Layer ")+String(id);
     }
   
   ~Layer()
   {
     points.clear(true);
-    if (_defaults!=NULL)
-      delete _defaults;
   };
 
   bool hasUnsavedChanges() {return changed;}
@@ -375,34 +411,35 @@ class Layer
   void setLayerColor(Colour c){color=c;}
   String getLayerName(){return name;}
   void setLayerName(String n){name=n;}
-  bool isTransparent() {return transp;}
-  void setTransparent(bool b) {transp=b;}  
   int getLayerStyle(){return style;}
   void setLayerStyle(int s){style=s;}
   bool isDrawStyle(int i) {return (getLayerStyle() & i) != 0;}
   int numPoints() {return points.size();}
-  NPoint* getLayerFieldDefaults(){return _defaults;}
-  void setLayerFieldDefaults(NPoint* p){_defaults=p;}
   bool isPoints() {return (points.size()>0);}
   void sortPoints () {points.sort(*this);}
-  int addPoint(double x, double y) 
+
+  int addPoint(double x, double y, NPoint* defaults) 
   {
+    //    std::cout << "addPoint("<<x<<","<<y<<")\n";
     changed=true;
     NPoint* p =  new NPoint(arity);
-    initPoint(p);
-    p->setVal(_x,x);
-    p->setVal(_y,y);
+    // point defaults
+    if (defaults && arity>2)
+      for (int i=0; i<arity; i++)
+      {
+	p->vals[i]=defaults->vals[i];
+        p->vals[i]=.5;
+        //        std::cout << "init field[" << i << "]=" << p->vals[i] << "\n";
+      }
+    // set X and Y fields to mouse values
+    p->setVal(_x, x);
+    p->setVal(_y, y);
+    //    std::cout << "set x field[" << _x << "]=" << p->vals[_x] << "\n";
+    //    std::cout << "set y field[" << _y << "]=" << p->vals[_y] << "\n";
     points.addSorted(*this, p);
     return points.indexOf(p);
   }
-  void initPoint(NPoint* p)
-  {
-    // init new point with layer's default point values
-    if (_defaults != (NPoint*)NULL)
-      for (int i=0; i<arity; i++)
-	p->vals[i]=_defaults->vals[i];
-  }
-  
+
   void addXmlPoints(XmlElement* xmlpoints)
   {
     StringArray pts;
@@ -628,10 +665,22 @@ class Layer
     return text;
   }
 
+
+  /** Returns the index of the first point that contains the given
+      mouse coordinate, or -1 if no index was found. **/
+
+  int findPointContaining(double mousex, double mousey, double halfx, double halfy);
+
+  ///-------------///
+  ///Midi Playback///
+  ///-------------///
+
+  void pbInitialize();
+
   /** Returns the index of the first X value at or later than the
       given beat time or -1 if no index is found for the beat.  **/
 
-  int getNextPlaybackIndex (const double beat)
+  int pbFindNextIndexForBeat (const double beat)
   {
     const int n = points.size();
     for (int i = 0; i < n; i++)
@@ -651,37 +700,43 @@ class AxisView : public Component
   
  public:
   Axis* axis;
-  double _spread; /// expansion factor for "zooming" space on axis
-  double _ppi;    /// pixels per increment (distance between labels)
+
+  double spread; /// expansion factor for "zooming" space on axis
+  double ppi;    // pixels per increment (distance between labels)
   double pad;     /// pixel margin on either side of axis line
-  double _offset; /// pixel position for start of axis line
+  double offset; /// pixel position for start of axis line
   int orient;     /// orientation (horizontal, vertical)
   PlotViewport* viewport;  /// back pointer to viewport
-  double _sweep;
-  bool autosized; /// if true then the axis is autosized to fit maximally in the view
+  double sweep;
+  bool fit;       /// if true then the axis is autosized to fit maximally in the view
+
   AxisView (PlotViewport* vp, int o)
-    : _spread (1.0),
-    _ppi (90.0),
-    _offset (0.0),
+    : spread (1.0),
+    offset (0.0),
     viewport (0),
     axis (0),
+    ppi (90.0),
     pad (8.0),
-    autosized (true),
-    _sweep (0.0)
+    fit (true),
+    sweep (0.0)
     {
       viewport=vp;
       orient=o;
+      setVisible(true);
     }
   ~AxisView () {}
 
   bool isVertical();
   bool isHorizontal();
   int getOrientation(){return orient;}
-  double getSpread() {return _spread;}
-  void setSpread(double v) {_spread=v; }
+  double getSpread() {return spread;}
+  void setSpread(double v) {spread=v; }
 
-  bool isAutosized() {return autosized;}
-  void setAutosized(bool b) {autosized=b;}
+  bool isFitInView() {return fit;}
+  void setFitInView(bool b) {fit=b;}
+
+
+
 
   /** getPad returns the pixel margin that exists on either side of
       axis line so that points at the start or end of end of the are
@@ -696,24 +751,23 @@ class AxisView : public Component
       axis its the height of the view minus the pad (because the
       origin of the axis is at the bottom of the view). **/
 
-  double getOrigin() {return _offset;}
-  void setOrigin(double v) {_offset=v; }  
+  double getOrigin() {return offset;}
+  void setOrigin(double v) {offset=v; }  
   
-  bool hasAxis() {return axis != (Axis *)NULL;}
+  bool hasAxis() {return axis != 0;}
   Axis* getAxis() {return axis;}
   void setAxis(Axis* a) {axis=a;}
   
   double axisMinimum() {return axis->getMinimum();}
   double axisMaximum() {return axis->getMaximum();}
+  double axisIncrements() {return axis->getIncrements();}
   int numTicks(){return axis->getTicks();}
-  double getPPI() {return _ppi;}
-  void setPPI(double val) {_ppi=val;}
   
   /** Returns the size of pixels per increment at current spread **/
 
   double incrementSize () 
   {
-    return( _ppi * _spread);
+    return( ppi * spread);
   }
   
   /** Returns the pixel distance between graduals **/
@@ -742,7 +796,7 @@ class AxisView : public Component
   void setSpreadToFit(double size)
   {
     // get the normalized length of the axis line when spread equals 1
-    double nonspreadsize = getPPI() * axis->getIncrements();
+    double nonspreadsize = ppi * axis->getIncrements();
     // the available room for the axis line is the width of the view
     // minus the padding before and after axis line
     double availablesize = size - (getPad()*2);
@@ -753,7 +807,7 @@ class AxisView : public Component
 
   double toValue (double pix) 
   {
-    double p = extent() * ( isVertical() ) ? _offset - pix : pix - _offset;
+    double p = extent() * ( isVertical() ) ? offset - pix : pix - offset;
     return axis->getMinimum() + (axis->getRange() * ( p / extent()));
   }
   
@@ -763,9 +817,9 @@ class AxisView : public Component
   {
     // convert value in axis coords to pixel position
     double p = extent() * ( (val - axis->getMinimum()) / axis->getRange());
-    return ( isVertical() ) ? _offset - p : _offset + p;
+    return ( isVertical() ) ? offset - p : offset + p;
   }
-  
+
   void paint (Graphics& g) ;
 
 };
@@ -808,21 +862,22 @@ class Plotter : public Component,
     String name;
     Axis* axis;
     int shared;
-    bool isSharedAxis() {return (shared>=0);}
-    Field(String n, Axis* a, int s=-1)
+    double initval; 
+  Field(String n, Axis* a, int s=-1, double d=0.0)
+    : name (n),
+      axis (a),
+      shared (s),
+      initval (d)
       {
-	name=n;
-	axis=a;
-	shared=s;
       }
     ~Field()
-      {
-	if (!isSharedAxis()) delete axis;
-      }
+    {
+      if (!isSharedAxis()) delete axis;
+    }
+    bool isSharedAxis() {return (shared>=0);}
   };
   
  public:
-  enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
   enum Orientation {horizontal = 1, vertical };
   enum PlaybackParam {PlaybackMinKey=0, PlaybackMaxKey, PlaybackDuration, PlaybackAmplitude, PlaybackChannel, NumPlaybackParams=5};
 
@@ -832,18 +887,32 @@ class Plotter : public Component,
   PlotView* plotview;
   BackView* backview;
   PlotTabbedEditor* editor;
-  MidiPlaybackThread* pbthread;
-  MidiOutput* midiout;
-  CriticalSection pblock;
+
+  MidiPlaybackThread* pbThread;
+  bool pbVerticalRescale;
+  MidiOutput* pbMidiOut;
+  double pbMinKey;
+  double pbMaxKey;
+  int pbTuning;
+  CriticalSection pbLock;
+
   OwnedArray <Layer> layers;
   OwnedArray <Axis> axes;
   OwnedArray <Field> fields;
-  double playbackparams[NumPlaybackParams];
 
+  Layer::NPoint* defaults; 
   UndoManager actions;
   Font font;
   double zoom;
   double ppp;  // point size (pixels per point)
+
+  //-------------------//
+  //Background controls//
+  //-------------------//
+  Colour bgColor;
+  bool bgGrid;
+  bool bgPlotting;
+  bool bgMouseable;
 
   bool changed;
   //  int flags;
@@ -866,7 +935,7 @@ class Plotter : public Component,
 
   void setHorizontalAxis(Axis* a);
   void setVerticalAxis(Axis* a);
-  void autosizeAxes();
+  void insureAxisValues(int index);
 
   AxisView* getHorizontalAxisView();
   AxisView* getVerticalAxisView();
@@ -888,25 +957,29 @@ class Plotter : public Component,
   Layer* getFocusLayer();
   bool isFocusLayer(Layer* l);
   void setFocusLayer(Layer* l);
-  void setFocusVerticalField(int i);
   void addLayer(Layer* l);
   Layer* newLayer(XmlElement* e, bool redraw=false);
   void removeLayer(Layer* l);
 
+  /** Check if autosizing makes the axis increment too small and, if
+      so, turn off autosizing. **/
+
+  void checkFitInView();
+  
   void resized () ;
   void resizeForSpread();
   void redrawPlotView();
   void redrawBackView();
   void redrawHorizontalAxisView();
   void redrawVerticalAxisView();
+
+  /** triggers a repaint of all plotter components **/
+
+  void redrawAll();
+  void fitInView(double width=0.0, double height=0.0);
   int getViewportViewingHeight();
   int getViewportViewingWidth();
-  BGStyle getBackViewStyle();
-  void setBackViewStyle(BGStyle style);
-  bool isBackViewPlotting();
-  void setBackViewPlotting(bool val);
-  void setBackViewCaching(bool val);
-
+  void setBackViewCaching(bool caching);
   void sliderValueChanged (Slider *slider) ;
   void sliderDragStarted (Slider *slider) ;
   void sliderDragEnded (Slider *slider) ;
@@ -926,14 +999,14 @@ class Plotter : public Component,
   void moveSelection();
   void insurePointsVisible();
 
-  // Fields
+  //------//
+  //Fields//
+  //------//
+
+  void setVerticalField(int fnum);
+  void getVerticalField();
   int numFields() {return fields.size();}
   String getFieldName(int f) {return fields[f]->name;}
-  void getFieldNames(StringArray& ary)
-  {
-    for(int i=0;i<numFields();i++)
-      ary.add(getFieldName(i));
-  }
   Axis* getFieldAxis(int f) {return fields[f]->axis;}
   bool isSharedField(int f) {return fields[f]->isSharedAxis();}
   String getSharedFieldName(int f) 
@@ -951,41 +1024,36 @@ class Plotter : public Component,
   void paint(Graphics& g); 
 
   //----------------------//
-  //Audio playback methods//
+  //Midi Playback Methods//
   //----------------------//
 
-  /** opens the midi out device for the given index and assigns it to
-      the playback thread. An index less than zero closes any device
-      and clears it in the thread. **/
-  void setMidiOut(int id);
+  /** Creates playback thread and initializes playback variables.
+      (Transport is responsible for starting playback thread and
+      managing midi output port.) **/
 
-  /** Pauses the playback thread **/
+  void pbInitialize();
+
+  /** Opens the given device id and assigns it to the playback
+      thread. If the id is less than zero the current device is closed
+      and cleared in the thread. **/
+  void pbSetMidiOut(int id);
+
+  /** Called by Transport to stop thread playing. **/
   void pause();
 
-  /** Starts the playback thread playing **/
+  /** Called by the Transport to start thread playing. **/
   void play(double pos);
 
-  /** Changes the beat position of the playback **/
+  /** Called by Transport to change the playback beat position. **/
   void positionChanged(double position, bool isPlaying);
 
-  /** Changes the tempo of the playback **/
+  /** Called by Transport to change the playback tempo. **/
   void tempoChanged(double tempo, bool isPlaying);
 
-  /** Traverses plaot layers adding midi messages to the playback
+  /** Traverses all layers adding midi messages to the playback
       thread. **/
   void addMidiPlaybackMessages(MidiPlaybackThread::MidiMessageQueue& queue, MidiPlaybackThread::PlaybackPosition& position);
 
-  /** Sets message values for playback of non-midi plots. **/
-  void setPlaybackParameter(PlaybackParam id, double value);
-
-  /** Returns current playback value for the specified
-      PlaybackParam. **/
-  double getPlaybackParameter(PlaybackParam id);
-
-  /** Traverse layers setting their playback indexes to the nearest
-      point index equal to or later than the given beat or -1 if there
-      is no such point. **/
-  void setPlaybackIndexes(double beat);
 };
 
 #endif

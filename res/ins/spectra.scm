@@ -17,10 +17,14 @@
 	 (loc (make-locsig degree distance reverb-amount))
 	 (ran-vib (make-rand-interp :frequency (+ vibrato-speed 1.0)
 				    :amplitude (* vibrato-amplitude freq))))
-    (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
        (locsig loc i (* (env amp-env) 
 			(table-lookup s (+ (triangle-wave per-vib)
 					   (rand-interp ran-vib)))))))))
+
+;    (with-sound ()
+;      (spectra 0 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) 
+;               '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0)))
+

@@ -32,25 +32,30 @@ void PlotTabbedEditor::currentTabChanged (int newCurrentTabIndex, const String &
   switch (editor->tabType)
   {
   case PlotEditor::WindowEditor:
-    std::cout << "window editor!\n";    
+    //    std::cout << "window editor!\n";    
     break;
   case PlotEditor::AudioEditor:
-    std::cout << "audio editor!\n";    
+    //    std::cout << "audio editor!\n";    
     break;
   case PlotEditor::AxisEditor:
-    std::cout << "axis editor!\n";    
+    //    std::cout << "axis editor!\n";    
     break;
   case PlotEditor::LayerEditor:
-    std::cout << "layer editor!\n";    
+    //    std::cout << "layer editor!\n";  
+    PlotLayerEditor* ple=(PlotLayerEditor*)editor;
+    ple->deletebutton->setEnabled(ple->plotter->numLayers()>1);
+    ple->plotter->setFocusLayer(ple->layer);
+    ple->plotter->redrawAll();
     break;
   case PlotEditor::ExportEditor:
-    std::cout << "export editor!\n";    
+    //    std::cout << "export editor!\n";    
     break;
   case PlotEditor::PointsEditor:
-    std::cout << "points editor!\n";    
+    //    std::cout << "points editor!\n";    
     break;
   default:
-    std::cout << "unknown editor!\n";
+    //    std::cout << "unknown editor!\n";
+    break;
   }
 }
 
@@ -62,18 +67,77 @@ PlotWindowEditor::PlotWindowEditor (Plotter* pltr, TopLevelWindow* win)
   : PlotEditor(pltr),
     namelabel(0),
     namebuffer (0),
+    layerbutton (0),
     savebutton (0),
-    layerbutton (0)
+    bggroup (0),
+    bggridcheckbox (0),
+    bgplottingcheckbox (0),
+    bgmouseablecheckbox (0),
+    //    bgcolorlabel (0),
+    bgcolorpicker (0),
+    fieldgroup (0),
+    fieldxlabel (0),
+    fieldylabel (0),
+    fieldxmenu (0),
+    fieldymenu (0)
 {
   tabType=WindowEditor;
-  setName(T("Window"));
+  setName(T("Plot"));
   addAndMakeVisible(namelabel = new EditorLabel(T("Title:")));
   addAndMakeVisible(namebuffer = new EditorTextBox(win->getName()));
   namebuffer->addListener(this);
-  addAndMakeVisible(layerbutton = new EditorButton (T("New Layer")));
+  addAndMakeVisible(layerbutton = new EditorButton (T("Add Layer")));
   layerbutton->addListener(this);
   addAndMakeVisible(savebutton = new EditorButton (T("Save...")));
   savebutton->addListener(this);
+
+  addAndMakeVisible (bggroup = new GroupComponent(String::empty, T("Background")));
+  addAndMakeVisible(bggridcheckbox = new EditorCheckBox(T("Draw grid")));
+  bggridcheckbox->setToggleState(plotter->bgGrid, false);
+  bggridcheckbox->addListener(this);
+  addAndMakeVisible(bgplottingcheckbox = new EditorCheckBox(T("Plots visible")));
+  bgplottingcheckbox->setToggleState(plotter->bgPlotting, false);
+  bgplottingcheckbox->addListener(this);
+  addAndMakeVisible(bgmouseablecheckbox = new EditorCheckBox(T("Plots mouseable")));
+  bgmouseablecheckbox->setToggleState(plotter->bgMouseable, false);
+  bgmouseablecheckbox->setEnabled(plotter->bgPlotting);
+  bgmouseablecheckbox->addListener(this);
+
+  //  addAndMakeVisible (bgcolorlabel = new EditorLabel( T("Color:")));
+  addAndMakeVisible(bgcolorpicker = new ColourSelector( ColourSelector::showColourspace,4,0));
+  bgcolorpicker->setCurrentColour(plotter->bgColor);
+  bgcolorpicker->addChangeListener(this);
+
+  addAndMakeVisible(fieldgroup=new GroupComponent(String::empty,T("Point Fields")));
+  addAndMakeVisible(fieldxlabel = new EditorLabel(T("Horizontal:")));
+  addAndMakeVisible (fieldxmenu = new ComboBox (String::empty));
+  fieldxmenu->setEditableText (false);
+  fieldxmenu->setJustificationType (Justification::centredLeft);
+  addAndMakeVisible(fieldylabel = new EditorLabel(T("Vertical:")));
+  addAndMakeVisible (fieldymenu = new ComboBox (String::empty));
+  fieldymenu->setEditableText (false);
+  fieldymenu->setJustificationType (Justification::centredLeft);
+  for (int i=0; i<plotter->numFields(); i++)
+    {
+      if (plotter->getHorizontalAxis()==plotter->getFieldAxis(i))
+      {
+        fieldxmenu->addItem(plotter->getFieldName(i), i+1);
+        if (plotter->isSharedField(i))
+          fieldxmenu->setItemEnabled(i+1,false);
+        else
+          fieldxmenu->setSelectedId(i+1,false);
+      }
+      else
+      {
+        fieldymenu->addItem(plotter->getFieldName(i), i+1);
+        if (plotter->isSharedField(i))
+          fieldymenu->setItemEnabled(i+1,false);
+        else if (plotter->getVerticalAxis()==plotter->getFieldAxis(i))
+          fieldymenu->setSelectedId(i+1,false);
+      }
+    }
+  fieldxmenu->addListener (this);
+  fieldymenu->addListener (this);
   setVisible(true);
 }
 
@@ -84,14 +148,46 @@ PlotWindowEditor::~PlotWindowEditor ()
 
 void PlotWindowEditor::resized ()
 {
-  int y=margin;
-  namelabel->setTopLeftPosition(margin, y);
-  namebuffer->setBounds(namelabel->getRight()+margin, y, 220, lineheight);
-  layerbutton->setTopLeftPosition(namebuffer->getRight()+(margin*2), y);
-  //  y += (lineheight + margin);
-  savebutton->setTopLeftPosition(layerbutton->getRight()+(margin*2), y);
-
-  }
+  int m=Dialog::Margin;
+  int l=Dialog::LineHeight;
+  int x=m;
+  int y=m;
+  int z=0;
+  int s=Dialog::ItemSpacer;
+  int w=0;
+  namelabel->setTopLeftPosition(x, y);
+  namebuffer->setBounds(namelabel->getRight()+z, y, 220, Dialog::LineHeight);
+  layerbutton->setTopLeftPosition(namebuffer->getRight()+s, y);
+  savebutton->setTopLeftPosition(layerbutton->getRight()+s, y);
+  //  savebutton->setTopLeftPosition(getWidth()-savebutton->getWidth()-Dialog::Margin,
+  //                                 getHeight()-lineheight-Dialog::Margin);
+  x=m;
+  y += Dialog::LineAndSpace;
+  bggroup->setTopLeftPosition(x, y);
+  y += Dialog::Margin*2;
+  x += Dialog::Margin;
+  bggridcheckbox->setTopLeftPosition(x, y);
+  y += Dialog::Margin*2+3;//lineheight;
+  bgplottingcheckbox->setTopLeftPosition(x, y);
+  y += Dialog::Margin*2+3;//lineheight;
+  bgmouseablecheckbox->setTopLeftPosition(x, y);
+  bgcolorpicker->setBounds(bgmouseablecheckbox->getRight()+Dialog::ItemSpacer, bggridcheckbox->getY()-4,
+                           120, lineheight*2+m*2); 
+  bggroup->setSize(bgcolorpicker->getRight()-bggridcheckbox->getX()+(m*2), 
+                   bgmouseablecheckbox->getBottom() - bggroup->getY() + Dialog::Margin - 6
+                   );
+  x=bggroup->getRight()+m;
+  y=bggroup->getY();
+  fieldgroup->setBounds(x, y, getWidth()-x-m, bggroup->getHeight());
+  y += m*2;
+  x += m;
+  fieldxlabel->setTopLeftPosition(x,y);
+  w=fieldgroup->getRight()-fieldxlabel->getRight()-m;
+  fieldxmenu->setBounds(fieldxlabel->getRight()+z, y, w, l);
+  y += Dialog::LineAndSpace;
+  fieldylabel->setTopLeftPosition(x,y);
+  fieldymenu->setBounds(fieldxlabel->getRight()+z, y, w, l);
+}
 
 void PlotWindowEditor::buttonClicked (Button* buttonThatWasClicked)
 {
@@ -103,18 +199,213 @@ void PlotWindowEditor::buttonClicked (Button* buttonThatWasClicked)
   else if (buttonThatWasClicked == layerbutton)
   {
     Layer* layer=plotter->newLayer(NULL, true);
-    getPlotTabbedEditor()->addEditor(new PlotLayerEditor(plotter, layer));
+    PlotTabbedEditor* editor=getPlotTabbedEditor();
+    editor->addEditor(new PlotLayerEditor(plotter, layer));
+  }
+  else if (buttonThatWasClicked == bggridcheckbox)
+  {
+    plotter->bgGrid=bggridcheckbox->getToggleState();
+    plotter->redrawBackView();
+  }
+  else if (buttonThatWasClicked == bgplottingcheckbox)
+  {
+    plotter->bgPlotting=bgplottingcheckbox->getToggleState();
+    bgmouseablecheckbox->setEnabled(bgplottingcheckbox->getToggleState());
+    plotter->redrawBackView();
+  }
+  else if (buttonThatWasClicked == bgmouseablecheckbox)
+  {
+    plotter->bgMouseable=bgmouseablecheckbox->getToggleState();
   }
 }
 
 void PlotWindowEditor::textEditorReturnKeyPressed(TextEditor& editor) 
 {
-  if (&editor == namebuffer)
+  //std::cout << "PlotWindowEditor::textEditorReturnKeyPressed\n";
+  EditorTextBox* ed=dynamic_cast<EditorTextBox*>(&editor);
+  if (ed) ed->setTextChanged(false); else return;
+  if (ed == namebuffer)
   {
     TopLevelWindow* w=(TopLevelWindow *)getTopLevelComponent();
     String n=namebuffer->getTrimmedText();
     if (n.isNotEmpty())
       w->setName(n);
+  }
+}
+
+void PlotWindowEditor::changeListenerCallback (ChangeBroadcaster* source)
+{
+  if (source == bgcolorpicker)
+  {
+    Colour color=bgcolorpicker->getCurrentColour();
+   plotter->bgColor=color;
+   plotter->redrawBackView();
+  }
+}
+
+void PlotWindowEditor::comboBoxChanged (ComboBox* comboBoxThatHasChanged)
+{
+  if (comboBoxThatHasChanged == fieldxmenu)
+  {
+    std::cout << "Horizontal field\n";
+  }
+  else if (comboBoxThatHasChanged == fieldymenu)
+  {
+    std::cout << "Vertical field\n";
+  }
+}
+
+/*=======================================================================*
+                                Audio Editor
+ *=======================================================================*/
+
+PlotAudioEditor::PlotAudioEditor(Plotter* pltr)
+  : PlotEditor(pltr),
+    ycheckbox (0),
+    y0label (0),
+    y0typein (0),
+    y1label (0),
+    y1typein (0),
+    midioutmenu (0),
+    tuninglabel (0),
+    tuningmenu(0),
+    transport (0)
+{
+  tabType=AudioEditor;
+  setName(T("Audio"));
+
+  addAndMakeVisible(ycheckbox = new EditorCheckBox(T("Vertical scaling")));
+  ycheckbox->setToggleState(plotter->pbVerticalRescale, false);
+  ycheckbox->addListener(this);
+  ycheckbox->setColour(TextEditor::focusedOutlineColourId, Colour(0x00));
+
+  addAndMakeVisible (y0label = new EditorLabel( T("min:")));
+  addAndMakeVisible (y0typein = new EditorTextBox (String(plotter->pbMinKey)));
+  y0typein->addListener(this);
+  addAndMakeVisible (y1label = new EditorLabel( T("max:")));
+  addAndMakeVisible (y1typein = new EditorTextBox (String(plotter->pbMaxKey)));
+  y1typein->addListener(this);
+  addAndMakeVisible (midioutmenu = new MidiOutPopupMenu (this, true, MidiOutPort::getInstance()->devid));
+
+  addAndMakeVisible(tuninglabel = new EditorLabel(T("Tuning:")));
+  addAndMakeVisible (tuningmenu = new ComboBox (String::empty));
+  tuningmenu->setEditableText (false);
+  tuningmenu->setJustificationType (Justification::centredLeft);
+  tuningmenu->addItem (T("Semitone"), 1);
+  tuningmenu->addItem (T("Quartertone"), 2);
+  tuningmenu->setSelectedId(1, false);
+  tuningmenu->addListener (this);
+  // create a Transport for the Plotter
+  double tempo= (plotter->getHorizontalAxis()->isType(Axis::percentage)) ? 500.0 : 60.0;
+  addAndMakeVisible (transport = new Transport (plotter, tempo));
+  transport->setTransportAspect(Transport::TempoMaximum, 600);
+  transport->setTransportAspect(Transport::TempoSkewFactor, .5);
+  // configure the playback thread for running
+  plotter->pbThread->setTransport(transport);
+  plotter->pbThread->setPlaybackLimit( plotter->getHorizontalAxis()->getMaximum());
+  plotter->pbThread->startThread();
+}
+
+PlotAudioEditor::~PlotAudioEditor()
+{
+  deleteAndZero(ycheckbox);
+  deleteAndZero(y0label);
+  deleteAndZero(y0typein);
+  deleteAndZero(y1label);
+  deleteAndZero(y1typein);
+  deleteAndZero(midioutmenu);
+  deleteAndZero(tuninglabel);
+  deleteAndZero(tuningmenu);
+  deleteAndZero(transport);
+}
+
+void PlotAudioEditor::resized()
+{
+  int l=Dialog::LineHeight;
+  int m=Dialog::Margin;
+  int x=Dialog::Margin;
+  int y=Dialog::Margin;
+  int s=Dialog::LineAndSpace;
+  int z=0;
+  int h=Dialog::HalfMargin;
+  int w=y0typein->getFont().getStringWidthFloat(T("XXXXX"));
+  int i=Dialog::ItemSpacer;
+
+  midioutmenu->setBounds(x, y, 180, lineheight);
+  x=midioutmenu->getRight()+l;
+  ////transport->setTopLeftPosition((getWidth()/2)-(Transport::TransportWidthNoTempo/2), y);
+  ycheckbox->setTopLeftPosition(x, y);
+  x = ycheckbox->getRight()+0;
+  y0label->setTopLeftPosition(x,y);
+  x = y0label->getRight()+0;
+  y0typein->setBounds(x,y,w,l);
+  x = y0typein->getRight()+0;
+  y1label->setTopLeftPosition(x,y);
+  x = y1label->getRight()+0;
+  y1typein->setBounds(x,y,w,l);  
+  x = y1typein->getRight()+(Dialog::ItemSpacer*2);
+  ////  y=midioutmenu->getBottom()+m;
+  x=m;
+  y += s;
+  tuninglabel->setTopLeftPosition(x,y);
+  x=tuninglabel->getRight()+h;
+  tuningmenu->setBounds(x,y, 120, l);
+  // transport display centered buttons
+  y += s;
+  transport->setTopLeftPosition((getWidth()/2)-(Transport::TransportWidthNoTempo/2), y);
+}
+
+void PlotAudioEditor::buttonClicked (Button* buttonThatWasClicked)
+{
+  if (buttonThatWasClicked == ycheckbox)
+  {
+    ScopedLock mylock (plotter->pbLock);
+    bool state=ycheckbox->getToggleState();
+    plotter->pbVerticalRescale=state;
+    y0label->setEnabled(state);
+    y0typein->setEnabled(state);
+    y1label->setEnabled(state);
+    y1typein->setEnabled(state);
+  }
+}
+
+void PlotAudioEditor::comboBoxChanged (ComboBox* comboBoxThatHasChanged)
+{
+  if (comboBoxThatHasChanged == midioutmenu)
+  {
+    plotter->pbSetMidiOut(midioutmenu->getSelectedMidiOutputIndex());
+  }
+  else if (comboBoxThatHasChanged == tuningmenu)
+  {
+    ScopedLock mylock (plotter->pbLock);
+    plotter->pbTuning=tuningmenu->getSelectedId();
+    plotter->pbThread->sendMicrotuning(plotter->pbTuning);
+  }
+}
+
+void PlotAudioEditor::textEditorReturnKeyPressed(TextEditor& editor)
+{
+  //std::cout << "PlotAudioEditor::textEditorReturnKeyPressed\n";
+  EditorTextBox* ed=dynamic_cast<EditorTextBox*>(&editor);
+  if (ed) ed->setTextChanged(false); else return;
+
+  if (&editor == y0typein)
+  {
+    ScopedLock mylock (plotter->pbLock);
+    double key=y0typein->getDoubleValue();
+    if (y0typein->isNumericText() && (key >= 0.0) && (key <= 127.0))
+      plotter->pbMinKey=key;
+    else
+      y0typein->setText(String(plotter->pbMinKey), false);      
+  }
+  else if (&editor == y1typein)
+  {
+    ScopedLock mylock (plotter->pbLock);
+    double key=y1typein->getDoubleValue();
+    if (y1typein->isNumericText() && (key >= 0.0) && (key <= 127.0))
+      plotter->pbMaxKey=key;
+    else
+      y1typein->setText(String(plotter->pbMaxKey), false);
   }
 }
 
@@ -146,9 +437,11 @@ PlotAxisEditor::PlotAxisEditor (Plotter* pl, int orient)
 {
   tabType=AxisEditor;
   if (orientation==Plotter::horizontal)
-    setName(T("X Axis"));
+    setName(T("Horizontal"));
+               
   else
-    setName(T("Y Axis"));
+    setName(T("Vertical"));
+               
   AxisView* axisview = plotter->getAxisView(orientation);
   Axis* axis=axisview->getAxis();
   addAndMakeVisible(namelabel = new EditorLabel(T("Name:")));
@@ -214,10 +507,10 @@ PlotAxisEditor::PlotAxisEditor (Plotter* pl, int orient)
   zoomslider->setValue(axisview->getSpread(), false);
   zoomslider->setTextBoxStyle(Slider::TextBoxLeft, false, 80, 20);
   zoomslider->addListener(this);
-  zoomslider->setEnabled(!axisview->isAutosized());
+  zoomslider->setEnabled(!axisview->isFitInView());
 
-  addAndMakeVisible(fitcheckbox = new ToggleButton(T("Autosize")));
-  fitcheckbox->setToggleState(axisview->isAutosized(), false);
+  addAndMakeVisible(fitcheckbox = new EditorCheckBox(T("Fit in view")));
+  fitcheckbox->setToggleState(axisview->isFitInView(), false);
   fitcheckbox->addListener(this);
 }
 
@@ -244,29 +537,34 @@ PlotAxisEditor::~PlotAxisEditor()
 
 void PlotAxisEditor::resized()
 {
-  // line 1
-  int y=margin;
-  namelabel->setTopLeftPosition(margin, y);
-  namebuffer->setBounds (56, y, 120, lineheight);
-  typelabel->setTopLeftPosition(184, y);
-  typemenu->setBounds (232, y, 96, lineheight);
-  decimalslabel->setTopLeftPosition(336, y);
-  decimalsmenu->setBounds (408, y, 52, lineheight);
+  int x=Dialog::Margin;
+  int y=Dialog::Margin;
+  int z=0;
+  int w=namebuffer->getFont().getStringWidthFloat(T("XXXXX"));
+  int h=Dialog::HalfMargin;
+  int s=Dialog::Margin;
+  int l=Dialog::LineHeight;
+  namelabel->setTopLeftPosition(x, y);
+  namebuffer->setBounds (namelabel->getRight()+z, y, 120, l);
+  typelabel->setTopLeftPosition(namebuffer->getRight()+s, y);
+  typemenu->setBounds (typelabel->getRight()+z, y, 96, l);
+  decimalslabel->setTopLeftPosition(typemenu->getRight()+s, y);
+  decimalsmenu->setBounds (decimalslabel->getRight()+z, y, w, l);
   // line 2
-  y += (lineheight+margin);
-  fromlabel->setTopLeftPosition(margin, y);
-  frombuffer->setBounds (56, y, 56, 24);
-  tolabel->setTopLeftPosition(136, y);
-  tobuffer->setBounds (168, y, 56, 24);
-  bylabel->setTopLeftPosition(248, y);
-  bybuffer->setBounds (280, y, 56, 24);
-  tickslabel->setTopLeftPosition(352, y);
-  ticksbuffer->setBounds(408, y, 56, lineheight);
+  y += Dialog::LineAndSpace;
+  fromlabel->setTopLeftPosition(x, y);
+  frombuffer->setBounds (fromlabel->getRight()+z, y, w, l);
+  tolabel->setTopLeftPosition(frombuffer->getRight()+s, y);
+  tobuffer->setBounds (tolabel->getRight()+z, y, w, l);
+  bylabel->setTopLeftPosition(tobuffer->getRight()+s, y);
+  bybuffer->setBounds (bylabel->getRight()+z, y, w, l);
+  tickslabel->setTopLeftPosition(bybuffer->getRight()+s, y);
+  ticksbuffer->setBounds(tickslabel->getRight()+z, y, w, l);
   // line 3
-  y += (lineheight+margin);
-  zoomlabel->setTopLeftPosition(margin, y);
+  y += Dialog::LineAndSpace;
+  zoomlabel->setTopLeftPosition(x, y);
   zoomslider->setBounds (56, y, 280, 24);
-  fitcheckbox->setBounds (zoomslider->getRight()+margin, y, 180, 24);
+  fitcheckbox->setBounds (zoomslider->getRight()+s, y, 180, 24);
 }
 
 void PlotAxisEditor::comboBoxChanged (ComboBox* cbox)
@@ -297,30 +595,9 @@ void PlotAxisEditor::sliderValueChanged (Slider* sliderThatWasMoved)
   AxisView* axisview = plotter->getAxisView(orientation);
   if (sliderThatWasMoved == zoomslider)
   {
-    std::cout << "slider changed\n";
-    plotter->setBackViewCaching(false);
     axisview->setSpread(sliderThatWasMoved->getValue());
     plotter->resizeForSpread();
-    int w=axisview->getWidth();
-    int h=axisview->getHeight();
-    if (orientation==Plotter::horizontal)
-    {
-      // now have to update the size of the axis view -- this is NOT
-      // the size of the axis!
-      axisview->setSize(plotter->getViewportViewingWidth(), h);
-      // if spread has gotten larger then the size of the axis view
-      // doenst actually change, in which case we have to force a
-      // repaint to see the axis content drawn at the new spread.
-      if (w==axisview->getWidth())
-        axisview->repaint();
-    }
-    else
-    {
-      axisview->setSize(w, plotter->getViewportViewingHeight()) ;
-      if (h==axisview->getHeight())
-	repaint();
-    }
-    plotter->setBackViewCaching(true);
+    plotter->redrawAll();
   }
 }
 
@@ -329,19 +606,18 @@ void PlotAxisEditor::buttonClicked (Button* buttonThatWasClicked)
   AxisView* axisview = plotter->getAxisView(orientation);
   if (buttonThatWasClicked == fitcheckbox)
   {
-    std::cout << "button on\n";
     if (fitcheckbox->getToggleState())
     {
-      axisview->setAutosized(true);
+      axisview->setFitInView(true);
       zoomlabel->setEnabled(false);
       zoomslider->setValue(axisview->getSpread(), false);
       zoomslider->setEnabled(false);
+      plotter->fitInView(plotter->getWidth()-80, plotter->getWidth()-60);
       plotter->resized();
     }
     else
     {
-      std::cout << "button off\n";
-      axisview->setAutosized(false);
+      axisview->setFitInView(false);
       zoomlabel->setEnabled(true);
       zoomslider->setEnabled(true);
       zoomslider->setValue(axisview->getSpread(), false);
@@ -351,6 +627,10 @@ void PlotAxisEditor::buttonClicked (Button* buttonThatWasClicked)
 
 void PlotAxisEditor::textEditorReturnKeyPressed (TextEditor& editor)
 {
+  //std::cout << "PlotAxisEditor::textEditorReturnKeyPressed\n";
+  EditorTextBox* ed=dynamic_cast<EditorTextBox*>(&editor);
+  if (ed) ed->setTextChanged(false); else return;
+
   double val;
   AxisView* axisview = plotter->getAxisView(orientation);
   Axis* axis=axisview->getAxis();
@@ -423,8 +703,9 @@ void PlotAxisEditor::textEditorReturnKeyPressed (TextEditor& editor)
   } 
   if (redraw)
   {
-    axisview->repaint();
-    plotter->resizeForSpread();
+    //    axisview->repaint();
+    //    plotter->resizeForSpread();
+    plotter->redrawAll();
   }
 }
 
@@ -437,39 +718,80 @@ PlotLayerEditor::PlotLayerEditor (Plotter* pltr, Layer* layr)
     layer (layr),
     namelabel (0),
     namebuffer (0),
+    deletebutton (0),
     stylelabel (0),
     stylemenu (0),
+    linelabel (0),
+    linetextbox (0),
+    pointlabel (0),
+    pointtextbox (0),
+    barlabel (0),
+    bartextbox (0),
+    audiogroup (0),
+    durlabel (0),
+    durtypein(0),
+    amplabel (0),
+    amptypein (0),
+    chanlabel (0),
+    chantypein (0),
+    colorlabel (0),
     colorpicker (0)
 {
   tabType=LayerEditor;
   setName(layer->getLayerName());
   addAndMakeVisible (namelabel = new EditorLabel( T("Name:")));
-  addAndMakeVisible (namebuffer = new EditorTextBox (String::empty));
-  ////  namebuffer->setColour(TextEditor::textColourId, layer->getLayerColor());
-  ////namebuffer->setColour (TextEditor::backgroundColourId, layer->getLayerColor());
-  // have to add text AFTER the color changes.
-  ////  namebuffer->setText(layer->getLayerName(), false);
+  addAndMakeVisible (namebuffer = new EditorTextBox (layer->getLayerName()));
   namebuffer->addListener(this);
-  
+  addAndMakeVisible (deletebutton = new EditorButton (T("Delete Layer...")));
+  deletebutton->setEnabled(plotter->numLayers()>1);
+  deletebutton->addListener(this);
+
+  // point line bar editors need to exist when style menu configs
+  addAndMakeVisible(linelabel = new EditorLabel( T("Line:")));
+  addAndMakeVisible(linetextbox = new EditorTextBox (String(layer->lineWidth)));
+  linetextbox->addListener(this);
+  addAndMakeVisible(pointlabel = new EditorLabel( T("Point:")));
+  addAndMakeVisible (pointtextbox = new EditorTextBox (String(layer->pointWidth)));
+  pointtextbox->addListener(this);
+  addAndMakeVisible(barlabel = new EditorLabel( T("Bar:")));
+  addAndMakeVisible(bartextbox = new EditorTextBox (String(layer->barWidth)));
+  bartextbox->addListener(this);
+
   addAndMakeVisible (stylelabel = new EditorLabel (T("Style:")));
   addAndMakeVisible(stylemenu = new ComboBox (String::empty));
   stylemenu->setEditableText(false);
   stylemenu->setJustificationType(Justification::centredLeft);
-  stylemenu->addItem(T("envelope"), Layer::lineandpoint);
-  stylemenu->addItem(T("line"), Layer::line);
-  stylemenu->addItem(T("point"), Layer::point);
-  stylemenu->addItem(T("impulse"), Layer::impulse);
-  stylemenu->addItem(T("histogram"), Layer::histogram);
-  stylemenu->addItem(T("hbox"), Layer::hbox);
-  stylemenu->addItem(T("vbox"), Layer::vbox);
+  stylemenu->addItem(T("Envelope"), Layer::lineandpoint);
+  stylemenu->addItem(T("Line"), Layer::line);
+  stylemenu->addItem(T("Point"), Layer::point);
+  stylemenu->addItem(T("Impulse"), Layer::impulse);
+  stylemenu->addItem(T("Aerial"), Layer::vlineandpoint);
+  stylemenu->addItem(T("Bar"), Layer::vbar);
+  //  stylemenu->addItem(T("Horizontal Bar"), Layer::hbar);
+  stylemenu->addItem(T("Piano Roll"), Layer::hbox);
+  //  stylemenu->addItem(T("Vertical Box"), Layer::vbox);
   if (plotter->numFields()<=2)
   {
     stylemenu->setItemEnabled(Layer::hbox, false);
-    stylemenu->setItemEnabled(Layer::vbox, false);
+    //stylemenu->setItemEnabled(Layer::vbox, false);
   } 
-  stylemenu->setSelectedId(layer->getLayerStyle());
+  // add the listener before choosing so the selection will update the
+  // line, point and bar sizes
   stylemenu->addListener (this);
+  stylemenu->setSelectedId(layer->getLayerStyle());
 
+  addAndMakeVisible (audiogroup = new GroupComponent(String::empty, T("Audio Defaults")));
+  addAndMakeVisible (durlabel = new EditorLabel( T("Dur:")));
+  addAndMakeVisible (durtypein = new EditorTextBox (String(layer->pbDur)));
+  durtypein->addListener(this);
+  addAndMakeVisible (amplabel = new EditorLabel( T("Amp:")));
+  addAndMakeVisible (amptypein = new EditorTextBox (String(layer->pbAmp)));
+  amptypein->addListener(this);
+  addAndMakeVisible (chanlabel = new EditorLabel( T("Chan:")));
+  addAndMakeVisible (chantypein = new EditorTextBox (String(layer->pbChan)));
+  chantypein->addListener(this);
+
+  addAndMakeVisible (colorlabel = new EditorLabel( T("Point Color:")));
   addAndMakeVisible(colorpicker = new ColourSelector( ColourSelector::showColourspace,4,0));
   colorpicker->setCurrentColour(layer->getLayerColor());
   colorpicker->addChangeListener(this);
@@ -479,29 +801,134 @@ PlotLayerEditor::~PlotLayerEditor()
 {
   deleteAndZero (namelabel);
   deleteAndZero (namebuffer);
+  deleteAndZero (deletebutton);
   deleteAndZero (stylelabel);
   deleteAndZero (stylemenu);
+  deleteAndZero(linelabel);
+  deleteAndZero(linetextbox);
+  deleteAndZero(pointlabel);
+  deleteAndZero(pointtextbox);
+  deleteAndZero(barlabel);
+  deleteAndZero(bartextbox);
+  deleteAndZero(audiogroup);
+  deleteAndZero(durlabel);
+  deleteAndZero(durtypein);
+  deleteAndZero(amplabel);
+  deleteAndZero(amptypein);
+  deleteAndZero(chanlabel);
+  deleteAndZero(chantypein);
+  deleteAndZero (colorlabel);
   deleteAndZero (colorpicker);
+  //std::cout << "deleted layer editor\n";
 }
 
 void PlotLayerEditor::resized()
 {
-  int space=150-(margin*5);
-  int y=margin;
-  namelabel->setBounds(margin, y, 48, lineheight);
-  namebuffer->setBounds(56, y, 120, lineheight);
-  colorpicker->setBounds(320, y-4, 170, space);
+  int space=150-(Dialog::Margin*5);
+  int w=namebuffer->getFont().getStringWidthFloat(T("XXXXX"));
+  int x=Dialog::Margin;
+  int y=Dialog::Margin;
+  int h=Dialog::HalfMargin;
+  int z=0;
 
-  y+=(lineheight+margin);
-  stylelabel->setBounds(margin, y, 48, lineheight);
-  stylemenu->setBounds(56, y, 120, lineheight);
+  namelabel->setBounds(x, y, 48, lineheight);
+  x=namelabel->getRight()+h;
+  namebuffer->setBounds(x, y, 120, lineheight);
+  x=namebuffer->getRight()+Dialog::Margin;
+  deletebutton->setTopLeftPosition(x,y);
+
+  //  line 2
+  x = Dialog::Margin;
+  y += Dialog::LineAndSpace;
+  stylelabel->setTopLeftPosition(x,y);
+  x = stylelabel->getRight()+h;
+  stylemenu->setBounds(x, y, 120, lineheight);
+ 
+  //  line 3
+  x = stylemenu->getRight()+Dialog::Margin;
+  linelabel->setTopLeftPosition(x,y);
+  x = linelabel->getRight()+z;
+  linetextbox->setBounds(x,y,w,lineheight);
+  x = linetextbox->getRight()+h;
+  pointlabel->setTopLeftPosition(x,y);
+  x = pointlabel->getRight()+z;
+  pointtextbox->setBounds(x,y,w,lineheight);
+  x = pointtextbox->getRight()+h;  
+  barlabel->setTopLeftPosition(x,y);
+  x = barlabel->getRight()+z;
+  bartextbox->setBounds(x,y,w,lineheight);
+  x = bartextbox->getRight()+Dialog::ItemSpacer;
+
+  //  line 3
+  y+=Dialog::LineAndSpace;
+  x=Dialog::Margin;
+  audiogroup->setTopLeftPosition(x, y);
+  x += Dialog::Margin;
+  y += Dialog::Margin*2;
+  // dur
+  durlabel->setTopLeftPosition(x,y);
+  x = durlabel->getRight()+z;
+  durtypein->setBounds(x,y,w,lineheight);  
+  x = durtypein->getRight()+(Dialog::Margin*1);
+  // amp
+  amplabel->setTopLeftPosition(x,y);
+  x = amplabel->getRight()+z;
+  amptypein->setBounds(x,y,w,lineheight);  
+  x = amptypein->getRight()+(Dialog::Margin*1);
+  // chan
+  chanlabel->setTopLeftPosition(x,y);
+  x = chanlabel->getRight()+z;
+  chantypein->setBounds(x,y,w,lineheight);  
+  x = chantypein->getRight()+(Dialog::Margin*1);
+  audiogroup->setSize(x-audiogroup->getX(), lineheight+Dialog::Margin*3);
+  colorlabel->setTopLeftPosition(audiogroup->getRight()+Dialog::Margin, chanlabel->getY());
+  // point color picker is large squre and is itself in dented
+  colorpicker->setBounds(370, audiogroup->getY()-h, 120, lineheight*2+Dialog::Margin); //170*.66, space*.66
+
+}
+
+void PlotLayerEditor::buttonClicked (Button* button)
+{
+  if (button==deletebutton)
+  {
+    String text=T("Really delete layer '") + layer->getLayerName() + T("'?");
+    if (layer->numPoints()>0) text<<T("\nAll point data will be lost.");
+    if (!AlertWindow::showOkCancelBox(AlertWindow::WarningIcon, T("Delete Layer"),
+                                      text, T("Delete Layer"), T("Cancel"), this))
+      return;
+    PlotTabbedEditor* editor=getPlotTabbedEditor();
+    int index=editor->getTabIndex(this);
+    //std::cout << "deleting plotter layer\n";
+    plotter->removeLayer(layer);
+    plotter->redrawBackView();
+    plotter->redrawPlotView();
+    delete layer;
+    // select main tab because this one is going away!
+    //std::cout << "selecting main tab\n";
+    editor->setCurrentTabIndex(0);
+    // remove ourselves
+    //std::cout << "removing ourselves\n";
+    editor->removeTab(index);
+    //std::cout << "updating layer editors\n";
+    // delete ourselves!
+    //std::cout << "deleting ourselves\n";
+    delete this;
+  }
 }
 
 void PlotLayerEditor::comboBoxChanged (ComboBox* cbox)
 {
   if (cbox == stylemenu)
   {
-    layer->setLayerStyle(stylemenu->getSelectedId());
+    int style=stylemenu->getSelectedId();
+    layer->setLayerStyle(style);
+
+    linelabel->setEnabled((style & Layer::line) );
+    linetextbox->setEnabled(linelabel->isEnabled() );
+    pointlabel->setEnabled((style & Layer::point) );
+    pointtextbox->setEnabled(pointlabel->isEnabled() );
+    barlabel->setEnabled((style & (Layer::bar | Layer::box)));
+    bartextbox->setEnabled(barlabel->isEnabled() );
     plotter->redrawPlotView();
   }
 }
@@ -511,181 +938,102 @@ void PlotLayerEditor::changeListenerCallback (ChangeBroadcaster* source)
   if (source == colorpicker)
   {
     Colour color=colorpicker->getCurrentColour();
-    //namebuffer->setColour (TextEditor::backgroundColourId, color);
-    String name=namebuffer->getText();
-    // have to re-add text after color change :(
-    ////    namebuffer->setText(String::empty, false);
-    ////    namebuffer->setColour(TextEditor::textColourId, color);
-    ////    namebuffer->setText(name, false); 
     layer->setLayerColor(color);
     if (layer->isPoints())
       plotter->redrawPlotView();
+    plotter->redrawHorizontalAxisView();
+    plotter->redrawVerticalAxisView();
   }
 }
 
 void PlotLayerEditor::textEditorReturnKeyPressed(TextEditor& editor)
 {
-  if (&editor == namebuffer)
+  //std::cout << "PlotLayerEditor::textEditorReturnKeyPressed\n";
+  EditorTextBox* ed=dynamic_cast<EditorTextBox*>(&editor);
+  if (ed) ed->setTextChanged(false); else return;
+
+  if (ed == namebuffer)
   {
     String name=namebuffer->getTrimmedText();
     if (name.isEmpty())
       namebuffer->setText(layer->getLayerName(), false);
     else
     {
+      setName(name);
       layer->setLayerName(name);
-      TabbedComponent* tabber=(TabbedComponent*)getParentComponent();
-      int index=tabber->getCurrentTabIndex();
-      tabber->setTabName(index,name);
+      tabButton->setButtonText(name);
     }
   }
-}
-
-/*=======================================================================*
-                                Audio Editor
- *=======================================================================*/
-
-PlotAudioEditor::PlotAudioEditor(Plotter* pltr)
-  : PlotEditor(pltr),
-    y0label (0),
-    y0typein (0),
-    y1label (0),
-    y1typein (0),
-    tempolabel (0),
-    tempotypein (0),
-    durlabel (0),
-    durtypein(0),
-    amplabel (0),
-    amptypein (0),
-    midioutmenu (0),
-    transport (0),
-    ismidiplot (false)
-{
-  tabType=AudioEditor;
-  setName(T("Audio"));
-  addAndMakeVisible (y0label = new EditorLabel( T("Y(0) Key:")));
-  addAndMakeVisible (y0typein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackMinKey))));
-  y0typein->addListener(this);
-  addAndMakeVisible (y1label = new EditorLabel( T("Y(1) Key:")));
-  addAndMakeVisible (y1typein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackMaxKey))));
-  y1typein->addListener(this);
-  addAndMakeVisible (durlabel = new EditorLabel( T("Dur:")));
-  addAndMakeVisible (durtypein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackDuration))));
-  durtypein->addListener(this);
-  addAndMakeVisible (amplabel = new EditorLabel( T("Amp:")));
-  addAndMakeVisible (amptypein = new EditorTextBox (String(plotter->getPlaybackParameter(Plotter::PlaybackAmplitude))));
-  amptypein->addListener(this);
-  addAndMakeVisible (midioutmenu = new MidiOutPopupMenu (this, true, MidiOutPort::getInstance()->devid));
-  // create a Transport for the Plotter
-  addAndMakeVisible (transport = new Transport (plotter, 60.0));
-  // create a Transport for the Plotter
-  plotter->pbthread->setTransport(transport);
-  plotter->pbthread->startThread();
-  plotter->pbthread->setPlaybackLimit( plotter->getHorizontalAxis()->getMaximum());
-}
-
-PlotAudioEditor::~PlotAudioEditor()
-{
-  deleteAndZero(y0label);
-  deleteAndZero(y0typein);
-  deleteAndZero(y1label);
-  deleteAndZero(y1typein);
-  deleteAndZero(durlabel);
-  deleteAndZero(durtypein);
-  deleteAndZero(amplabel);
-  deleteAndZero(amptypein);
-  deleteAndZero(midioutmenu);
-  deleteAndZero(transport);
-}
-
-void PlotAudioEditor::resized()
-{
-  int x=margin;
-  int y=margin;
-  int z=0;
-  int w=y0typein->getFont().getStringWidthFloat(T("XXXXX"));
-
-  y0label->setTopLeftPosition(x,y);
-  x = y0label->getRight()+z;
-  y0typein->setBounds(x,y,w,lineheight);  
-  x = y0typein->getRight()+(margin*1);
-  // Y(1)
-  y1label->setTopLeftPosition(x,y);
-  x = y1label->getRight()+z;
-  y1typein->setBounds(x,y,w,lineheight);  
-  x = y1typein->getRight()+(margin*1);
-  // dur
-  durlabel->setTopLeftPosition(x,y);
-  x = durlabel->getRight()+z;
-  durtypein->setBounds(x,y,w,lineheight);  
-  x = durtypein->getRight()+(margin*1);
-  // amp
-  amplabel->setTopLeftPosition(x,y);
-  x = amplabel->getRight()+z;
-  amptypein->setBounds(x,y,w,lineheight);  
-
-  x=margin;
-  y=y0label->getBottom()+margin;
-  // center transport buttons (ignore width of tempo display)
-  transport->setTopLeftPosition((getWidth()/2)-(Transport::TransportWidthNoTempo/2), y);
-  y=getHeight()-(lineheight+margin);
-  midioutmenu->setBounds(x, y, 200, lineheight);
-}
-
-void PlotAudioEditor::comboBoxChanged (ComboBox* comboBoxThatHasChanged)
-{
-  if (comboBoxThatHasChanged == midioutmenu)
+  else if (ed == linetextbox)
   {
-    plotter->setMidiOut(midioutmenu->getSelectedMidiOutputIndex());
-  }
-}
-
-void PlotAudioEditor::textEditorReturnKeyPressed(TextEditor& editor)
-{
-  if (&editor == y0typein)
-  {
-    setPlaybackParam(Plotter::PlaybackMinKey, y0typein);
-  }
-  else if (&editor == y1typein)
-  {
-    setPlaybackParam(Plotter::PlaybackMaxKey, y1typein);
-  }
-  else if (&editor == durtypein)
-  {
-    setPlaybackParam(Plotter::PlaybackDuration, durtypein);
-  }
-  else if (&editor == amptypein)
-  {
-    setPlaybackParam(Plotter::PlaybackAmplitude, amptypein);
-  }
-}
-
-void PlotAudioEditor::setPlaybackParam(int param, EditorTextBox* editor)
-{
-  bool ok=false;
-  double doub;
-  if (editor->isNumericText())
-  {
-    doub=editor->getDoubleValue();
-    switch(param)
+    double val=linetextbox->getDoubleValue();
+    //std::cout << "linetextbox, val=" << val << "\n";
+    if (linetextbox->isNumericText() && (val > 0.0) && (val <= 16.0))
     {
-    case Plotter::PlaybackMinKey:
-    case Plotter::PlaybackMaxKey:
-      ok=(doub >= 0.0 && doub <= 127.0);
-      break;
-    case Plotter::PlaybackDuration:
-      ok=(doub > 0.0);
-      break;
-    case Plotter::PlaybackAmplitude:
-      ok=(doub > 0.0 && doub <= 1.0);
-      break;
-    default:
-      break;
+      layer->lineWidth=val;
+      plotter->redrawPlotView();
     }
+    else
+      linetextbox->setText(String(layer->lineWidth), false);
   }
-  if (ok)
-    plotter->setPlaybackParameter((Plotter::PlaybackParam)param, doub);
-  else
-    editor->setText(String(plotter->getPlaybackParameter((Plotter::PlaybackParam)param)), false);
+  else if (ed == pointtextbox)
+  {
+    double val=pointtextbox->getDoubleValue();
+    //std::cout << "linetextbox, val=" << val << "\n";
+    if (pointtextbox->isNumericText() && (val > 0.0) && (val <= 24.0))
+    {
+      layer->pointWidth=val;
+      plotter->redrawPlotView();
+    }
+    else
+      pointtextbox->setText(String(layer->pointWidth), false);
+  }
+  else if (ed == bartextbox)
+  {
+    double val=bartextbox->getDoubleValue();
+    //std::cout << "linetextbox, val=" << val << "\n";
+    if (bartextbox->isNumericText() && (val > 0.0) && (val <= 48.0))
+    {
+      layer->barWidth=val;
+      plotter->redrawPlotView();
+    }
+    else
+      bartextbox->setText(String(layer->barWidth), false);
+  }
+  else if (ed == durtypein)
+  {
+    ScopedLock mylock(plotter->pbLock);
+    double dur=durtypein->getDoubleValue();
+    if (durtypein->isNumericText() && (dur > 0.0))
+    {
+      //std::cout << "setting layer dur to " << dur << "\n";
+      layer->pbDur=dur;
+    }
+    else
+      durtypein->setText(String(layer->pbDur), false);
+  }
+  else if (ed == amptypein)
+  {
+    ScopedLock mylock(plotter->pbLock);
+    double amp=amptypein->getDoubleValue();
+    if (amptypein->isNumericText() && (amp >= 0.0))
+    {
+      //std::cout << "setting layer amp to " << amp << "\n";
+
+      layer->pbAmp=amp;
+    }
+    else
+      amptypein->setText(String(layer->pbAmp), false);
+  }
+  else if (ed == chantypein)
+  {
+    ScopedLock mylock(plotter->pbLock);
+    int chan=chantypein->getIntValue();
+    if (chantypein->isNumericText(false) && (chan >= 0 && chan <= 15))
+      layer->pbChan=chan;
+    else
+      chantypein->setText(String(layer->pbChan), false);
+  }
 }
 
 /*=======================================================================*
@@ -782,26 +1130,26 @@ PlotExportEditor::~PlotExportEditor()
 
 void PlotExportEditor::resized()
 {
-  int x=margin;
-  int y=margin;
+  int x=Dialog::Margin;
+  int y=Dialog::Margin;
   exportlabel->setTopLeftPosition (x, y);
-  exportmenu->setBounds (exportlabel->getRight()+margin, y, 88, lineheight);
-  syntaxlabel->setTopLeftPosition (exportmenu->getRight()+(margin*3), y);
-  syntaxmenu->setBounds (syntaxlabel->getRight()+margin, y, 80, lineheight);
-  fieldsbutton->setTopLeftPosition (syntaxmenu->getRight()+(margin*3), y);
+  exportmenu->setBounds (exportlabel->getRight()+Dialog::Margin, y, 88, lineheight);
+  syntaxlabel->setTopLeftPosition (exportmenu->getRight()+(Dialog::Margin*3), y);
+  syntaxmenu->setBounds (syntaxlabel->getRight()+Dialog::Margin, y, 80, lineheight);
+  fieldsbutton->setTopLeftPosition (syntaxmenu->getRight()+(Dialog::Margin*3), y);
   // line 2
-  x=margin;
-  y+=(lineheight+margin);
+  x=Dialog::Margin;
+  y+=Dialog::LineAndSpace;
   formatlabel->setTopLeftPosition (x, y);
-  formatmenu->setBounds (formatlabel->getRight()+margin, y, 150, lineheight);
-  decimalslabel->setTopLeftPosition (formatmenu->getRight()+(margin*3), y);
-  decimalsmenu->setBounds (decimalslabel->getRight()+margin, y, 80, lineheight);
+  formatmenu->setBounds (formatlabel->getRight()+Dialog::Margin, y, 150, lineheight);
+  decimalslabel->setTopLeftPosition (formatmenu->getRight()+(Dialog::Margin*3), y);
+  decimalsmenu->setBounds (decimalslabel->getRight()+Dialog::Margin, y, 80, lineheight);
   // line 3
-  x=margin;
-  y+=(lineheight+margin);
+  x=Dialog::Margin;
+  y+=Dialog::LineAndSpace;
   destlabel->setTopLeftPosition (x, y);
-  destmenu->setBounds (destlabel->getRight()+margin, y, 160, lineheight);
-  exportbutton->setBounds (destmenu->getRight()+(margin*3), y, 150, lineheight);
+  destmenu->setBounds (destlabel->getRight()+Dialog::Margin, y, 160, lineheight);
+  exportbutton->setBounds (destmenu->getRight()+(Dialog::Margin*3), y, 150, lineheight);
 }
 
 

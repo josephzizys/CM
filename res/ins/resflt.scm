@@ -41,7 +41,6 @@
 	 (cn (if (not with-noise)
 		 (make-ncos cosfreq0 cosnum)
 		 #f)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

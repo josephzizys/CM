@@ -47,14 +47,12 @@
 	 (vol (env ampe))
 	 (valA0 (* vol (granulate exA)))
 	 (valA1 (* vol (granulate exA))))
-    (ws-interrupt?)
     (if (or (<= (min-envelope rampdata) 0.0)
 	    (>= (max-envelope rampdata) 0.5))
-	(format #t "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp)
+	(format #t "ramp argument to exp-snd must always be between 0.0 and 0.5: ~A" ramp)
 	(run
 	 (do ((i st (+ i 1)))
 	     ((= i nd))
-					; (if (c-g?) (set! i (- nd 1)))
 	   (let* ((expa (env expenv)) ;current expansion amount
 		  (segl (env lenenv)) ;current segment length
 		  (resa (env srenv)) ;current resampling increment
@@ -82,3 +80,4 @@
 
 ;;; (with-sound () (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05))
 ;;; (with-sound () (exp-snd "oboe.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2))
+

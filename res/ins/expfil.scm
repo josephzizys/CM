@@ -20,7 +20,6 @@
 	 (end (+ beg (seconds->samples duration)))
 	 (out1 beg)
 	 (out2 (+ hop beg)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

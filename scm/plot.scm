@@ -109,22 +109,31 @@
       (format port "<fields>")
       (cond ((null? fields)
 	     ;; insure fields for each specified axis
-	     (field->xml port #f xaxis 0 fmat)
-	     (field->xml port #f yaxis 1 fmat))
+	     (field->xml port #f xaxis #f 0 fmat)
+	     (field->xml port #f yaxis #f 1 fmat))
 	    (else
 	     (do ((tail fields (cdr tail))
 		  (index 0 (+ index 1)))
 		 ((null? tail) #f)
-	       (if (pair? (car fields))
-		   (field->xml port (caar tail) (cdar tail) index fmat)
-		   (field->xml port (car tail) (list) index fmat)))
-	     ;; create the field access list for points
-	     (set! access (layer-field-access xaxis yaxis fields))
-	     ;; dont pass over a default access order
-	     (if (or (equal? access '(0 1))
-		     (equal? access '(0 1 2))
-		     (equal? access '(0 1 2 3)))
-		 (set! access (list)))))
+               (let ((field (car tail)))
+                 (if (pair? field)
+                     (let ((name (car field))
+                           (axis #f)
+                           (default #f))
+                       (set! field (cdr field))
+                       (if (pair? field)
+                           (begin (set! axis (car field)) (set! field (cdr field))))
+                       (if (pair? field)
+                           (begin (set! default (car field))))
+                       (field->xml port name axis default index fmat))
+                     (field->xml port field (list) #f index fmat))))
+             ;; create the field access list for points
+             (set! access (layer-field-access xaxis yaxis fields))
+             ;; dont pass over a default access order
+             (if (or (equal? access '(0 1))
+                     (equal? access '(0 1 2))
+                     (equal? access '(0 1 2 3)))
+                 (set! access (list)))))
       (format port "</fields>")
       (format port "<layers>")
       (cond 
@@ -156,13 +165,16 @@
   ;; determine the data fields to acess in the layer's points.
   (define (fieldpos name fields)
     ;; return the field's index from its name
+    (if (not (string? name))
+        (set! name (symbol->string name)))
     (do ((tail fields (cdr tail))
 	 (pos 0 (+ pos 1))
 	 (flag #f))
 	((or flag (null? tail)) flag)
-      (if (or (equal? (car tail) name)
-	      (and (pair? (car tail)) (equal? (caar tail) name)))
-	  (set! flag pos))))
+      (let* ((f (if (pair? (car tail)) (caar tail) (car tail)))
+             (n (if (not (string? f)) (symbol->string f) f)))
+      (if (string=? n name)
+	  (set! flag pos)))))
   (cond ((not xaxis)
 	 (cond ((not yaxis)
 		'(0 1))
@@ -196,39 +208,43 @@
 		(list (fieldpos yaxis fields)
 		      (fieldpos yaxis fields)))))))
 
-(define (field->xml port name axisinfo indx fmat)
+(define (field->xml port name axisinfo default-value indx fmat)
   (define (tostring x)
     (cond ((string? x) x)
 	  ((keyword? x) (keyword->string x))
 	  (else (format #f "~a" x))))
-  (if (not name) (set! name (format #f "Field ~a" (+ indx 1))))
+  (if (not name) 
+      (set! name (format #f "~c" (integer->char (+ 97 (modulo (+ 23 indx) 26))))))
   (cond ((pair? axisinfo)
 	 (format port "<field name=\"~a\"" (tostring name))
 	 (do ((tail axisinfo (cdr tail))
 	      (delim " axis=\"" " "))
-	     ((null? tail)
-	      (format port "\"/>") )
-	   (format port delim )
+	     ((null? tail) 
+              (format port "\""))
+	   (format port delim)
 	   (format port (tostring (car tail)) )))
 	(axisinfo
-	 (format port "<field name=\"~a\" axis=\"~a\"/>"
+	 (format port "<field name=\"~a\" axis=\"~a\""
 		 (tostring name)
 		 (tostring axisinfo) ))
 	((= indx 0)
 	 ;; insure x field even if not specied. if only y data
 	 ;; specified set x axis to ordinal
 	 (if (member fmat '(:y y))
-	     (format port "<field name=\"~a\" axis=\"ordinal\"/>" 
+	     (format port "<field name=\"~a\" axis=\"ordinal\"" 
 		     (tostring name))
-	     (format port "<field name=\"~a\" axis=\"unspecified\"/>"
+	     (format port "<field name=\"~a\" axis=\"unspecified\""
 		     (tostring name))))
 	((= indx 1)
 	 ;; insure y field even if not specified
-	 (format port "<field name=\"~a\" axis=\"unspecified\"/>"
+	 (format port "<field name=\"~a\" axis=\"unspecified\""
 		 (tostring name)))
 	(else
 	 ;; ignore unspecified z axis. shouldn't happen now!
 	 ))
+  (if default-value
+      (format port " default=\"~A\"" (tostring default-value)))
+  (format port "/>")
   (void))
 
 ; (axis->xml #t 'x)

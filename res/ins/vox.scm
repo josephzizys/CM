@@ -29,8 +29,8 @@
 	    (len (length phons)))
 	(do ((i 0 (+ i 2)))
 	    ((>= i len))
-	  (set! f1 (cons (list-ref phons i) f1))
-	  (set! f1 (cons (list-ref (find-phoneme (list-ref phons (+ i 1)) formants) which) f1)))
+	  (set! f1 (cons (phons i) f1))
+	  (set! f1 (cons ((find-phoneme (phons (+ i 1)) formants) which) f1)))
 	(reverse f1)))
 
   (let* ((start (seconds->samples beg))
@@ -59,8 +59,8 @@
 	 (ran-vib (make-rand-interp :frequency 20 :amplitude (* freq .5 vibscl))))
     (do ((i 0 (+ i 1)))
 	((= i fs))
-      (let ((amp (list-ref formant-amps i))
-	    (index (list-ref formant-indices i)))
+      (let ((amp (formant-amps i))
+	    (index (formant-indices i)))
 	(set! (evens i) (make-oscil 0))
 	(set! (odds i) (make-oscil 0))
 	(set! (amps i) amp)
@@ -97,3 +97,5 @@
 ;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
 ;;; (vox 0 2 300 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .15 .05) '(.05 .0125 .025) .02 .1)
 ;;; (vox 0 5 600 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .16 .04) '(.01 .01 .1) .01 .1)
+  
+

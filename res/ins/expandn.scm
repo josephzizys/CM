@@ -13,6 +13,7 @@
 (if (and (not (provided? 'snd-ws.scm)) 
 	 (not (provided? 'sndlib-ws.scm)))
     (load "ws.scm"))
+(if (not (provided? 'snd-env.scm)) (load "env.scm")) ; min-envelope, max-envelope
 
 
 (definstrument (expandn time duration filename amplitude
@@ -87,7 +88,7 @@
 	  
 	  (if (or minramp-bug maxramp-bug)
 	      (throw 'out-of-range (list expand 
-					 "ramp argument to expsnd must always be "
+					 "ramp argument to expandn must always be "
 					 (if (and minramp-bug maxramp-bug) "between 0.0 and 0.5"
 					     (if minramp-bug "greater than 0.0"
 						 "less than 0.5")))))
@@ -298,8 +299,8 @@
 			     ;; output interpolated samples
 			     (do ((ix 0 (+ 1 ix)))
 				 ((= ix in-chans))
-			       (let* ((v0 (vct-ref samples-0 ix))
-				      (v1 (vct-ref samples-1 ix)))
+			       (let ((v0 (vct-ref samples-0 ix))
+				     (v1 (vct-ref samples-1 ix)))
 				 (frame-set! inframe ix (+ v0 (* (- next-samp ex-samp)
 								 (- v1 v0)))))))
 			 ;; output mixed result

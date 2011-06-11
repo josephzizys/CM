@@ -21,7 +21,6 @@
 	 (rn (make-rand-interp :frequency 12 :amplitude (hz->radians (* .005 spacing-freq))))
 	 (beg (seconds->samples start))
 	 (end (+ beg (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -35,3 +34,5 @@
 
 ; (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5))
 ; to see the asymmetric spectrum most clearly, set the index function above to '(0 1 100 1)
+
+

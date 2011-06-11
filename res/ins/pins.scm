@@ -19,7 +19,6 @@
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (fil (make-file->sample file))
-	 (file-duration (mus-sound-duration file))
 	 (fdr (make-vct fftsize-1))
 	 (fdi (make-vct fftsize-1))
 	 (window (make-fft-window blackman2-window fftsize-1))
@@ -60,7 +59,6 @@
       (set! (resynth-oscils i) (make-oscil 0)))
     (set! trigger outhop)
     (vct-scale! window fftscale)
-    (ws-interrupt?)
     (run
      (do ((i start (+ i 1)))
 	 ((= i end))
@@ -217,4 +215,3 @@
 	       (set! (amps k) (+ (amps k) (rates k)))
 	       (set! (freqs k) (+ (freqs k) (sweeps k))))
 	     (outa i (* amp sum))))))))
-

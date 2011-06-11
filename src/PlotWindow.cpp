@@ -28,11 +28,14 @@ class PlotWindowComponent : public Component
   PlotWindow* plotwin;
 public:
   static const int plotviewwidth=500;
-  //static const int tabviewheight=150;
-  // total height: 5 lines plus 5 margins (extra line height is for tab button)
+
+  // total height of tabbed editor is 5 lineheight plus 5 margins: tab
+  // is 1 line, content is 4 lines and 5 margins
   static const int tabviewheight=(PlotEditor::lineheight*5)+(PlotEditor::margin*5);
+
   PlotWindowComponent (PlotWindow* win) : plotwin (win) {}
-  ~PlotWindowComponent () 
+
+  virtual ~PlotWindowComponent () 
   {
     // this deletes the Plotter and the TabbedEditor
     std::cout << "deleting PlotWindowComponent\n";
@@ -43,7 +46,8 @@ public:
     int w=getWidth();
     int h=getHeight();
     std::cout << "PlotWindowComponent::resized(" << w << ", " << h << ")\n";
-    plotwin->plotter->setBounds(0,0,w,h-tabviewheight);
+    plotwin->plotter->fitInView(w-80,(h-tabviewheight)-60);
+    plotwin->plotter->setBounds(0,0,w,(h-tabviewheight));
     plotwin->tabview->setBounds(0,h-tabviewheight,w,tabviewheight);
   }
 };
@@ -80,18 +84,19 @@ PlotWindow::PlotWindow(String title, MidiFile& midifile)
 
 PlotWindow::~PlotWindow ()
 {
-  delete menubar;
-  setMenuBar(0);
+  //  delete menubar;
+  //  setMenuBar(0);
 }
 
 void PlotWindow::init()
 {
-  menubar = new MenuBarComponent(this);
-  setMenuBar(this);
+  //  menubar = new MenuBarComponent(this);
+  //  setMenuBar(this);
+  setVisible(true);
   setUsingNativeTitleBar(true);    
   //  std::cout << "PlotWindow::init (sizing plotter)\n";
-  plotter->setSize(PlotWindowComponent::plotviewwidth, PlotWindowComponent::plotviewwidth); // extra 24 in veritical because of menu
-  //  std::cout << "PlotWindow::init (adding window tab)\n";
+  //  plotter->setSize(PlotWindowComponent::plotviewwidth, PlotWindowComponent::plotviewwidth);
+  std::cout << "PlotWindow::init (adding window tab)\n";
   tabview->addEditor(new PlotWindowEditor(plotter, this));
   //  std::cout << "PlotWindow::init (adding audio tab)\n";
   tabview->addEditor(new PlotAudioEditor(plotter));
@@ -120,17 +125,22 @@ void PlotWindow::init()
   content->addChildComponent(plotter);
   //  std::cout << "PlotWindow::init (add child tabview)\n";
   content->addChildComponent(tabview);
-  //  std::cout << "PlotWindow::init (center with size)\n";
-  centreWithSize (PlotWindowComponent::plotviewwidth, PlotWindowComponent::plotviewwidth + PlotWindowComponent::tabviewheight + 24);
-  //  std::cout << "PlotWindow::init (set resizable)\n";
+
   setResizable(true, true); 
-  WindowTypes::setWindowType(this, WindowTypes::PlotWindow);
-  //  std::cout << "PlotWindow::init (insure points visible)\n";
-  plotter->insurePointsVisible();
-  //  std::cout << "PlotWindow::init (set content component)\n";
+  std::cout << "PlotWindow::init (setContentComponent)\n";  
   setContentComponent(content, false, false);
-  //  std::cout << "PlotWindow::init (set visible)\n";
-  setVisible(true);
+  std::cout << "PlotWindow::init (center with size)\n";
+  //  std::cout << "PlotWindow::init (set resizable)\n";
+  WindowTypes::setWindowType(this, WindowTypes::PlotWindow);
+  std::cout << "PlotWindow::init (insure points visible)\n";
+  plotter->insurePointsVisible();
+  std::cout << "PlotWindow::init (resizeForSpread)\n";
+  plotter->resizeForSpread();
+  std::cout << "PlotWindow::init (checkFitInView)\n";
+  plotter->checkFitInView();
+  std::cout << "PlotWindow::init (fitInView)\n";
+  plotter->fitInView();
+  centreWithSize (PlotWindowComponent::plotviewwidth, PlotWindowComponent::plotviewwidth + PlotWindowComponent::tabviewheight);
   //  std::cout << "PlotWindow::init (DONE)\n";
 }
 
@@ -143,7 +153,7 @@ PlotWindow* PlotWindow::getPlotWindow(String title)
 	  w->getName()==title)
 	return (PlotWindow*)w;
     }
-  return (PlotWindow*)NULL;
+  return NULL;
 }
 
 bool PlotWindow::hasUnsavedChanges()
@@ -362,118 +372,6 @@ const PopupMenu PlotWindow::getMenuForIndex(int idx, const String &name)
   int val;
   int arity=plotter->numFields();
   
-  if (name==T("Plot"))
-    {
-      // File Menu
-      menu.addItem(CommandIDs::PlotterNew, T("New Plot"));
-      menu.addItem(CommandIDs::PlotterOpen, T("Open..."));
-      menu.addItem(CommandIDs::PlotterOpenMidiFile,T("Plot Midi File..."));
-      menu.addSeparator(); 
-      menu.addItem(CommandIDs::PlotterLayerAdd, T("New Layer"));
-      for (int i=0; i<plotter->numLayers(); i++)
-	{
-	  Layer* layer=plotter->getLayer(i);
-	  sub1.addColouredItem(CommandIDs::PlotterLayerSelect +
-			      layer->getLayerID(),
-			      layer->getLayerName(),
-			      layer->getLayerColor(),
-			      true,
-			      plotter->isFocusLayer(layer));
-	}
-      sub1.addSeparator(); 
-      sub1.addItem(CommandIDs::PlotterLayerDelete, T("Delete"),
-		   (plotter->numLayers() > 1));
-      menu.addSubMenu(T("Layers"), sub1);
-      menu.addSeparator();
-      menu.addItem(CommandIDs::PlotterClose, T("Close"));
-      menu.addItem(CommandIDs::PlotterSave, T("Save"));
-      menu.addItem(CommandIDs::PlotterSaveAs, T("Save As..."),
-		   (getPlotFile()!=File::nonexistent));
-      menu.addSeparator();
-      menu.addItem(CommandIDs::PlotterRename, T("Rename..."));
-      menu.addItem(CommandIDs::PlotterExport, T("Export..."));
-    }
-  else if (name==T("Edit"))
-    {
-      int sel=plotter->numSelected();
-      // Edit Menu
-      menu.addItem(CommandIDs::EditorUndo, T("Undo"),
-		   plotter->actions.canUndo());
-      menu.addItem(CommandIDs::EditorUndo, T("Redo"),
-		   plotter->actions.canRedo());
-      menu.addSeparator();
-      menu.addItem(CommandIDs::EditorCut, T("Cut"), (sel>0));
-      menu.addItem(CommandIDs::EditorCopy, T("Copy"), (sel>0));
-      menu.addItem(CommandIDs::EditorPaste, T("Paste"),
-		   !pointClipboard.isEmpty());
-      menu.addSeparator();
-      menu.addItem(CommandIDs::EditorSelectAll, T("Select All"));
-      menu.addItem(CommandIDs::EditorUnselectAll, T("Clear Selection"),
-		   (sel>0));
-      menu.addSeparator(); 
-      menu.addItem(CommandIDs::PlotterEditPoints, T("Edit Points"),
-		   (sel>0));
-      menu.addItem(CommandIDs::PlotterShiftPoints, T("Shift Points"),
-		   (sel>0));
-      menu.addItem(CommandIDs::PlotterRescalePoints, T("Rescale Points"),
-		   (sel>1));
-    }
-  else if (name==T("View"))
-  {
-    Layer* layer=plotter->getFocusLayer();
-    val=layer->getLayerStyle();
-    // add these with focus colored items to make it clear that the
-    // styling change only affects the focus plot
-    sub1.addItem(CommandIDs::PlotterStyle + Layer::line, 
-                 T("Line"), true, (val==Layer::line));
-    sub1.addItem(CommandIDs::PlotterStyle + Layer::point,
-                 T("Point"), true, (val==Layer::point));
-    sub1.addItem(CommandIDs::PlotterStyle + Layer::lineandpoint,
-                 T("Envelope"), true, (val==Layer::lineandpoint));
-    sub1.addItem(CommandIDs::PlotterStyle + Layer::hbox, 
-                 T("Horizontal Box"),
-                 (arity > 2), (val==Layer::hbox));
-    sub1.addItem(CommandIDs::PlotterStyle + Layer::vbox,
-                 T("Vertical Box"),
-                 (arity > 2), (val==Layer::vbox));
-    sub1.addItem(CommandIDs::PlotterStyle + Layer::impulse, 
-                 T("Impulse"), true, (val==Layer::impulse));
-    sub1.addItem(CommandIDs::PlotterStyle + Layer::histogram, 
-                 T("Histogram"), true, (val==Layer::histogram));
-    sub1.addItem(CommandIDs::PlotterStyle + Layer::vbar, 
-                 T("Vertical Bar"), false, (val==Layer::vbar));
-    menu.addSubMenu(T("Point Style"), sub1, true);
-    menu.addSeparator();
-    val=plotter->getBackViewStyle();
-    sub2.addItem(CommandIDs::PlotterBgStyle + Plotter::bgGrid,
-                 T("Grid"), true, (val==Plotter::bgGrid));
-    sub2.addItem(CommandIDs::PlotterBgStyle + Plotter::bgTiled,
-                 T("Tiled"), true, (val==Plotter::bgTiled));
-    sub2.addItem(CommandIDs::PlotterBgStyle + Plotter::bgSolid,
-                 T("Solid"), true, (val==Plotter::bgSolid));
-    sub2.addSeparator();
-    sub2.addItem(CommandIDs::PlotterBgColor, T("Colors..."), false);
-    sub2.addSeparator();
-    sub2.addItem(CommandIDs::PlotterBgPlotting,
-                 T("Show All Layers"), 
-                 true, 
-                 plotter->isBackViewPlotting() );
-    menu.addSubMenu(T("Background"), sub2, true);
-    menu.addSeparator();
-    menu.addItem(CommandIDs::PlotterZoomInX, T("Zoom In X"));
-    menu.addItem(CommandIDs::PlotterZoomOutX, T("Zoom Out X"));
-    menu.addItem(CommandIDs::PlotterZoomInY, T("Zoom In Y"));
-    menu.addItem(CommandIDs::PlotterZoomOutY, T("Zoom Out Y"));
-    menu.addSeparator();
-    menu.addItem(CommandIDs::PlotterZoomToFit, T("Fit in Window"), true, true);
-    menu.addItem(CommandIDs::PlotterZoomReset, T("Reset Zoom"));
-  }
-  else if (name==T("Audio"))
-    menu=CommandMenus::getAudioMenu(false);
-  else if (name==T("Window"))
-    menu=CommandMenus::getWindowMenu();
-  else if (name==T("Help")) 
-    menu=CommandMenus::getHelpMenu(WindowTypes::PlotWindow, 0);
   return menu;
 }
 
@@ -483,117 +381,7 @@ void PlotWindow::menuItemSelected (int id, int idx)
   int data = CommandIDs::getCommandData(id);  
   int type = CommandIDs::getCommandType(id);  
   
-  switch (cmd)
-  {
-  case CommandIDs::PlotterNew :
-    new PlotWindow((XmlElement*)NULL);
-    break;
-  case CommandIDs::PlotterOpen :
-  case CommandIDs::PlotterOpenMidiFile :
-    browseForFileToOpen(cmd);
-    break;
-  case CommandIDs::PlotterSave :
-    save();
-    break;
-  case CommandIDs::PlotterSaveAs :
-    save(true);
-    break;
-  case CommandIDs::PlotterRename :
-    {
-      AlertWindow w (T("Rename Plot"), String::empty, 
-                     AlertWindow::NoIcon);
-      w.addTextEditor(T("rename"), getName(), String::empty);
-      w.addButton(T("Cancel"), 0, KeyPress(KeyPress::escapeKey, 0, 0));
-      w.addButton(T("Rename"), 1, KeyPress(KeyPress::returnKey, 0, 0));
-      if (w.runModalLoop() != 0) // picked 'ok'
-        setName(w.getTextEditorContents(T("rename")));
-    }
-    break;
-  case CommandIDs::PlotterExport :
-    openExportDialog();
-    break;
-  case CommandIDs::PlotterClose :
-    closeButtonPressed();
-    break;
-  case CommandIDs::EditorUndo :
-    plotter->actions.undo();
-    break;
-  case CommandIDs::EditorRedo :
-    plotter->actions.redo();
-    break;
-  case CommandIDs::EditorCut :
-    plotter->deleteSelection(true);
-    break;
-  case CommandIDs::EditorSelectAll :
-    plotter->selectAll();
-    break;
-  case CommandIDs::EditorUnselectAll :
-    plotter->deselectAll();
-    break;
-  case CommandIDs::PlotterEditPoints :
-    openEditPointsDialog();
-    break;
-  case CommandIDs::PlotterShiftPoints :
-    openRescalePointsDialog(cmd);
-    break;
-  case CommandIDs::PlotterRescalePoints :
-    openRescalePointsDialog(cmd);
-    break;    
-  case CommandIDs::PlotterLayerAdd :
-    plotter->newLayer(NULL);
-    plotter->redrawBackView();
-    plotter->redrawHorizontalAxisView();
-    plotter->redrawVerticalAxisView();
-    break;
-  case CommandIDs::PlotterLayerDelete :
-    plotter->actions.perform
-      (new DeleteLayerAction(plotter,
-                             plotter->getFocusLayer()),
-       T("Delete Layer"));
-    break;
-  case CommandIDs::PlotterLayerSelect :
-    plotter->setFocusLayer(plotter->findLayer(data));
-    plotter->redrawBackView();
-    plotter->redrawPlotView();
-    plotter->redrawHorizontalAxisView();
-    plotter->redrawVerticalAxisView();
-    break;
-  case CommandIDs::PlotterStyle :
-    plotter->getFocusLayer()->setLayerStyle(data);
-    plotter->redrawPlotView();
-    break;
-  case CommandIDs::PlotterVertical :
-    plotter->setFocusVerticalField(data);
-    break;
-  case CommandIDs::PlotterBgStyle :
-    plotter->setBackViewStyle( (Plotter::BGStyle)data);
-    plotter->redrawBackView();
-    break;
-  case CommandIDs::PlotterBgColor :
-    break;
-  case CommandIDs::PlotterBgPlotting :
-    plotter->setBackViewPlotting( ! plotter->isBackViewPlotting()); 
-    plotter->redrawBackView();
-    break;
-
-  case CommandIDs::PlotterZoomInX:
-  case CommandIDs::PlotterZoomOutX:
-  case CommandIDs::PlotterZoomInY:
-  case CommandIDs::PlotterZoomOutY:
-    PlotWindow::openPlayPlotDialog ();
-    break;
-
-  case CommandIDs::PlotterZoomReset:
-    PlotWindow::openRescalePointsDialog (CommandIDs::PlotterRescalePoints);
-    break;
-
-  case CommandIDs::PlotterZoomToFit:
-    PlotWindow::openRescalePointsDialog (CommandIDs::PlotterShiftPoints);
-    break;
-
-  default :
-    break;
-  }
+  
 }
 
 void PlotWindow::PlotWindowListener::handleMessage(const Message &m)
@@ -762,14 +550,13 @@ public:
 EditPointsDialog::EditPointsDialog(Plotter* plotr)
 {
   plotter=plotr;
-  StringArray fields;
-  plotter->getFieldNames(fields);
+  int numfields=plotter->numFields();
   Layer::NPoint* p=(plotter->numSelected()==1)
     ? plotter->getSelected(0) : NULL ;
-  for (int i=0; i<fields.size(); i++)
+  for (int i=0; i<numfields; i++)
     {
-      labels.add(new Label(String::empty, fields[i]));
-      editors.add(new Label(fields[i], 
+      labels.add(new Label(String::empty, plotter->getFieldName(i)));
+      editors.add(new Label( plotter->getFieldName(i), 
 			    ((p) ? String(p->getVal(i)) : String::empty)));
       labels[i]->setFont(Font(15.0000f, Font::plain));
       editors[i]->setFont(Font(15.0000f, Font::plain));
@@ -780,7 +567,7 @@ EditPointsDialog::EditPointsDialog(Plotter* plotr)
       addAndMakeVisible(editors[i]);
     }	 
   int w=margin+labelwidth+margin+editorwidth+margin;
-  int h=(fields.size()*lineheight)+((fields.size()+1)*margin);
+  int h=(numfields*lineheight)+((numfields+1)*margin);
   setVisible(true);
   setSize(w, h);
 }

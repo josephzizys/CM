@@ -17,7 +17,7 @@
 class Plotter;
 class PlotTabbedEditor;
 
-class PlotWindow : public DocumentWindow, public MenuBarModel
+class PlotWindow : public DocumentWindow //, public MenuBarModel
 {
 
  public:
@@ -33,11 +33,11 @@ class PlotWindow : public DocumentWindow, public MenuBarModel
   Plotter* plotter;
   PlotTabbedEditor* tabview;
   File plotfile;
-  MenuBarComponent* menubar;
+  //  MenuBarComponent* menubar;
   PlotWindow (XmlElement* plot);
   PlotWindow (String title, MidiFile& midifile);
   void init();
-  ~PlotWindow ();
+  virtual ~PlotWindow ();
   const StringArray getMenuBarNames ();
   const PopupMenu getMenuForIndex (int idx, const String &name);
   void menuItemSelected (int id, int idx);

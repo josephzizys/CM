@@ -14,7 +14,6 @@
 	 (resenv (make-env (list 0 0 .001 1 .25 0 (max dur .26) 0) :duration dur))
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
@@ -22,3 +21,4 @@
 		  (+ 1.0 (* .007 (oscil ampmod)))
 		  (+ (* g0 (oscil osc0 (* g1 (oscil osc1))))
 		     (* (env resenv) g2 (oscil osc2 (* g3 (env indenv) (oscil osc3)))))))))))
+

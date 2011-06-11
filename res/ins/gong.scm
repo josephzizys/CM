@@ -33,7 +33,6 @@
 	 (mod3 (make-oscil mfq3))
 	 (beg (seconds->samples start-time))
 	 (end (+ beg (seconds->samples duration))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

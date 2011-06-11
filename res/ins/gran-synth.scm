@@ -9,7 +9,6 @@
     (do ((i 0 (+ i 1)))
 	((= i grain-size))
       (set! (grain i) (* (env grain-env) (oscil carrier))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

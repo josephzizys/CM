@@ -1,3 +1,4 @@
+
 (definstrument (rhodey beg dur freq amp (base .5))
   ;; from Perry Cook's Rhodey.cpp
   (let* ((osc0 (make-oscil freq))
@@ -13,9 +14,9 @@
 	 (g3 .109)
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
        (outa i (+ (* g0 (env ampenv1) (oscil osc0 (* g1 (oscil osc1))))
 		  (* g2 (env ampenv2) (oscil osc2 (* (env ampenv3) g3 (oscil osc3))))))))))
+

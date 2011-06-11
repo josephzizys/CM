@@ -15,7 +15,6 @@
 	 (indf (make-env mod-index-env :scaler (hz->radians mod-index) :duration dur))
 	 (modfrqf (make-env mod-freq-env :scaler (hz->radians mod-skew) :duration dur))
 	 (fm2-amp (hz->radians (* fm-index fm-ratio frequency))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

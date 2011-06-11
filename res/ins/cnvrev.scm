@@ -1,4 +1,3 @@
-
 (definstrument (cnvrev file impulse (rev-amt .1))
   (let* ((file-len (mus-sound-frames file))
 	 (filter-len (mus-sound-frames impulse))
@@ -29,7 +28,8 @@
 
 
 #|
-(with-sound (:statistics #t :scaled-to .5 :srate 44100 :channels 1) 
-  (cnvrev "oboe.snd" "fyow.snd"))
+ (with-sound (:statistics #t :scaled-to .5 :srate 44100 :channels 1) 
+   (cnvrev "oboe.snd" "fyow.snd"))
 |#
+
 

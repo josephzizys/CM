@@ -12,10 +12,10 @@ namespace SchemeSources
     const int           fomus_scmSize = 21869;
 
     extern const char*  genffi_scm;
-    const int           genffi_scmSize = 22497;
+    const int           genffi_scmSize = 22476;
 
     extern const char*  loop_scm;
-    const int           loop_scmSize = 37992;
+    const int           loop_scmSize = 38481;
 
     extern const char*  osc_scm;
     const int           osc_scmSize = 5176;
@@ -24,7 +24,7 @@ namespace SchemeSources
     const int           patterns_scmSize = 36965;
 
     extern const char*  plot_scm;
-    const int           plot_scmSize = 12502;
+    const int           plot_scmSize = 13332;
 
     extern const char*  ports_scm;
     const int           ports_scmSize = 20101;

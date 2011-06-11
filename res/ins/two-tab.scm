@@ -25,7 +25,6 @@
 				      :amplitude (* vibrato-amplitude freq)))
 	 (ran-vib (make-rand-interp :frequency (+ vibrato-speed 1.0)
 				    :amplitude (* vibrato-amplitude freq))))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

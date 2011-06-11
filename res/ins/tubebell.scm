@@ -17,10 +17,10 @@
 	 (g3 .144)
 	 (st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur))))
-    (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
 	 ((= i nd))
        (outa i (* (+ (* .007 (oscil ampmod)) .993)
 		  (+ (* g0 (env ampenv1) (oscil osc0 (* g1 (oscil osc1))))
 		     (* g2 (env ampenv2) (oscil osc2 (* g3 (oscil osc3)))))))))))
+

@@ -23,7 +23,6 @@
     (do ((ctr 0 (+ 1 ctr)))
 	((= ctr freq-inc))
       (set! (fs ctr) (make-formant (* ctr bin) radius)))
-    (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -53,3 +52,26 @@
 	       (set! outval (+ outval (* cur-scale (formant (fs ctr) inval))))
 	       (set! (scales ctr) (+ (scales ctr) (diffs ctr)))))
 	   (outa i (* amp outval))))))))
+
+#|
+Date: Fri, 25 Sep 1998 09:56:41 +0300
+From: Matti Koskinen <mjkoskin@sci.fi>
+To: linux-audio-dev@ginette.musique.umontreal.ca
+Subject: [linux-audio-dev] Announce: alpha version of denoising
+[...]
+	I wrote a simple denoiser called anoi after it's parent
+	clm-instrument anoi.ins.
+
+	anoi tries to remove white noise like tape hiss from wav-
+	files. Removing of noise succeeds ok, but depending of the
+	original sound, some distortion can be audible.
+
+	If someone is interested, http://www.sci.fi/~mjkoskin
+	contains tarred and gzipped file.
+
+	Now only monophonic wav-files can be denoised, but adding
+	others isn't too difficult. 
+
+-matti
+mjkoskin@sci.fi
+|#

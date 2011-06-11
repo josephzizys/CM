@@ -10,9 +10,9 @@
 
 (define (one-pole-allpass gen input)
   (declare (gen one-pole-allpass) (input float))
-  (let* ((coeff (one-pole-allpass-coeff gen))
-	 (y1 (one-pole-allpass-y1 gen))
-	 (x1 (one-pole-allpass-x1 gen)))
+  (let ((coeff (one-pole-allpass-coeff gen))
+	(y1 (one-pole-allpass-y1 gen))
+	(x1 (one-pole-allpass-x1 gen)))
     (set! (one-pole-allpass-y1 gen) (+ (* coeff (- input y1)) x1))
     (set! (one-pole-allpass-x1 gen) input)
     (one-pole-allpass-y1 gen)))
@@ -31,7 +31,7 @@
 (defgenerator one-pole-swept (y1 0.0))
 
 (define (one-pole-swept gen input coef)
-  (declare (gen one-pole-swept) (input float) (coeff float))
+  (declare (gen one-pole-swept) (input float) (coef float))
   ;; signal controlled one-pole lowpass filter
   (set! (one-pole-swept-y1 gen) (- (* (+ 1 coef) input) (* coef (one-pole-swept-y1 gen))))
   (one-pole-swept-y1 gen))
@@ -192,6 +192,12 @@
 		  (+ 1 (* a1 c))) 
 	       (* b1 s a1 s)))))
   
+  (define (signum n)
+    ;; in CL this returns 1.0 if n is float
+    (if (positive? n) 1
+	(if (zero? n) 0
+	    -1)))
+
   (define (get-allpass-coef samp-frac wT)
     (let ((ta (tan (- (* samp-frac wT))))
 	  (c (cos wT))
@@ -297,11 +303,10 @@
 	 ;;strike position comb filter delay length
 	 (agraffe-len (/ (* (mus-srate) strikePosition) freq)))
     
-    (ws-interrupt?)
     
     (do ((i 0 (+ 1 i)))
 	((= i 4))
-      (vector-set! hammer-one-pole i (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole))))
+      (set! (hammer-one-pole i) (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole))))
     
     (let* ((vals (apfloor agraffe-len wT))
 	   (dlen1 (car vals))
@@ -383,11 +388,11 @@
 	   (noi (make-pnoise)))
       
       (do ((i 0 (+ 1 i))) ((= i 8))
-	(vector-set! string1-stiffness-ap i (make-one-pole-allpass stiffnessCoefficientL)))
+	(set! (string1-stiffness-ap i) (make-one-pole-allpass stiffnessCoefficientL)))
       (do ((i 0 (+ 1 i))) ((= i 8))
-	(vector-set! string2-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
+	(set! (string2-stiffness-ap i) (make-one-pole-allpass stiffnessCoefficient)))
       (do ((i 0 (+ 1 i))) ((= i 8))
-	(vector-set! string3-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
+	(set! (string3-stiffness-ap i) (make-one-pole-allpass stiffnessCoefficient)))
       
       (run
        (do ((i beg (+ 1 i)))

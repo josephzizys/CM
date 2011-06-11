@@ -65,7 +65,6 @@
 	 (car2 (make-oscil 0.0))
 	 (car2-f (make-env (stretch-envelope ampenv2 25 ampattpt2 75 ampdecpt2)
 			   :scaler amp2 :duration dur)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -80,3 +79,4 @@
 			     (oscil car2 (* frq-change 
 					    (+ frq2 (* (env mod2-f) 
 						       (oscil mod2 (* modfrq2 frq-change))))))))))))))
+

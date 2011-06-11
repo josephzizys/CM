@@ -13,7 +13,6 @@
 	 (forwards (> src-ratio 0.0)))
     (if (and forwards (< turn-sample cur-sample))
 	(set! (mus-increment rd) (- src-ratio)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((>= turn-i turns))
@@ -41,3 +40,6 @@
 	 (set! last-val2 last-val)
 	 (set! last-val val)
 	 (outa i val))))))
+
+;;; (with-sound () (scratch 0.0 "now.snd" 1.5 '(0.0 .5 .25 1.0)))
+

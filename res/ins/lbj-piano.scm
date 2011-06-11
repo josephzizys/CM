@@ -411,11 +411,11 @@
 
     (define (get-piano-partials freq)
       (let ((pitch (round (* 12 (log (/ freq 32.703) 2)))))
-	(list-ref piano-spectra pitch)))
+	(piano-spectra pitch)))
 
     (define (make-piano-ampfun dur)
-      (let* ((releaseAmp (db->linear (* *db-drop-per-second* dur)))
-	     (attackTime (/ (* *piano-attack-duration* 100) dur)))
+      (let ((releaseAmp (db->linear (* *db-drop-per-second* dur)))
+	    (attackTime (/ (* *piano-attack-duration* 100) dur)))
 	(list 0 0 (/ attackTime 4) 1.0 attackTime 1.0 100 releaseAmp)))
     
     ;; This thing sounds pretty good down low, below middle c or so.  
@@ -447,7 +447,7 @@
 			      :scaler  amplitude
 			      :duration env1dur
 			      :base 10000.0))
-	   (releaseamp (list-ref ampfun1 (- (length ampfun1) 1)))
+	   (releaseamp (ampfun1 (- (length ampfun1) 1)))
 	   (ampenv2 (make-env '(0 1 100 0)
 			      :scaler (* amplitude releaseamp)
 			      :duration env1dur
@@ -459,7 +459,6 @@
 	  ((= i (length partials)))
 	(set! (alist j) (partials (+ i 1)))
 	(set! (oscils j) (make-oscil (* (partials i) frequency))))
-      (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -473,4 +472,3 @@
 			   (if (> sktr env1samples) 
 			       (env ampenv2) 
 			       (env ampenv1))))))))))
-

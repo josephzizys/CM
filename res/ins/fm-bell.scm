@@ -21,7 +21,6 @@
 	 (ampf (make-env (or amp-env 
 			     (list 0 0 .1 1 10 .6 25 .3 50 .15 90 .1 100 0))
 			 amplitude dur)))
-    (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
