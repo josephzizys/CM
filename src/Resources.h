@@ -9,7 +9,7 @@ namespace Resources
     const int           doc_xmlSize = 3287;
 
     extern const char*  doc_zip;
-    const int           doc_zipSize = 159364;
+    const int           doc_zipSize = 159697;
 
 };
 
