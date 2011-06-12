@@ -42,10 +42,12 @@ void PlotTabbedEditor::currentTabChanged (int newCurrentTabIndex, const String &
     break;
   case PlotEditor::LayerEditor:
     //    std::cout << "layer editor!\n";  
-    PlotLayerEditor* ple=(PlotLayerEditor*)editor;
-    ple->deletebutton->setEnabled(ple->plotter->numLayers()>1);
-    ple->plotter->setFocusLayer(ple->layer);
-    ple->plotter->redrawAll();
+    {
+      PlotLayerEditor* ple=(PlotLayerEditor*)editor;
+      ple->deletebutton->setEnabled(ple->plotter->numLayers()>1);
+      ple->plotter->setFocusLayer(ple->layer);
+      ple->plotter->redrawAll();
+    }
     break;
   case PlotEditor::ExportEditor:
     //    std::cout << "export editor!\n";    

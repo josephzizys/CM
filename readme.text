@@ -15,8 +15,8 @@ The CM source tree builds two different applications:
 Grace (Graphical Realtime Algorithmic Composition Environment) 
 
    A drag-and-drop GUI with embedded Scheme interpreter (Sndlib/S7),
-   code editor, data plotter and realtime audio connections to various
-   packages such as MIDI, OSC, CLM, Csound, Fomus.
+   code editor, data plotter and realtime connections to various
+   packages such as MIDI, OSC, CLM, Csound, Fomus and SDIF.
 
 cm 
 
@@ -50,6 +50,10 @@ OPTIONAL
 
   http://liblo.sourceforge.net/
 
+6. SDIF available at:
+
+  http://sdif.sourceforge.net/
+
 ==========================================================================
                                  BUILDING                                 
 ==========================================================================
@@ -66,16 +70,7 @@ And this is how I build the complete system (with Fomus and OSC)
   $ make
 
 You MUST specify a --target option (either gnu or vs2008) and a --sndlib
-installation directory
-
-To use an external JUCE installation rather than CM's amalgamated JUCE
-sources pass an optinal --juce installation directory.  To build with
-Fomus add your --fomus installation root as well, typically '--fomus
-/usr/local'
-
-The --sndlib --liblo and --fomus options all allow their path to be
-either the source directory (eg '--juce ../juce-1.46') or an install
-root (eg '--juce /usr/local').
+installation directory that contains the libsndlib.a
 
 Executables are saved in bin/:
 
@@ -135,14 +130,27 @@ EXAMPLE: BUILDING SNDLIB AND CM FROM SOURCES ON WINDOWS
   7. Double click the file 'cm.sln' , select the RELEASE configuration
   in the pulldown menu and press F7.
 
-EXAMPLE: BUILDING WITH A STATIC, UNINSTALLED LIBLO
+EXAMPLE: BUILDING A STATIC, UNINSTALLED LIBLO and CM
 
-  cd liblo-0.26
-  ./configure --enable-static=yes --enable-shared=no
-  make
-  cd ../cm
-  premake --verbose --target gnu --sndlib ../sndlib --liblo ../liblo
-  make
+    $ cd liblo-0.26
+    $ ./configure --enable-static=yes --enable-shared=no
+    $ make
+    $ cd ../cm
+    $ premake --verbose --target gnu --sndlib ../sndlib --liblo ../liblo
+    $ make
+
+EXAMPLE: BUILDING A STATIC UNINSTALLED SDIF and CM
+
+    $ cd sdif
+    $ wget http://sourceforge.net/projects/sdif/files/sdif/SDIF-3.11.2/SDIF-3.11.2-src.zip
+    $ unzip SDIF-3.11.2-src.zip
+    $ cd SDIF-3.11.2-src
+    $ ./configure --prefix=/home/hkt/Software/sdif --enable-static=yes --enable-shared=no --enable-pthreads=no
+    $ make
+    $ make install
+    $ cd ../../cm
+    $ premake --verbose --target gnu --sndlib ../sndlib --sdif ../sdif
+    $ make
 
 ==========================================================================
                                  CM IN EMACS                             
