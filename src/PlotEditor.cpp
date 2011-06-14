@@ -330,7 +330,7 @@ void PlotAudioEditor::resized()
   int s=Dialog::LineAndSpace;
   int z=0;
   int h=Dialog::HalfMargin;
-  int w=y0typein->getFont().getStringWidthFloat(T("XXXXX"));
+  int w=(int)y0typein->getFont().getStringWidthFloat(T("XXXXX"));
   int i=Dialog::ItemSpacer;
 
   midioutmenu->setBounds(x, y, 180, lineheight);
@@ -542,7 +542,7 @@ void PlotAxisEditor::resized()
   int x=Dialog::Margin;
   int y=Dialog::Margin;
   int z=0;
-  int w=namebuffer->getFont().getStringWidthFloat(T("XXXXX"));
+  int w=(int)namebuffer->getFont().getStringWidthFloat(T("XXXXX"));
   int h=Dialog::HalfMargin;
   int s=Dialog::Margin;
   int l=Dialog::LineHeight;
@@ -827,7 +827,7 @@ PlotLayerEditor::~PlotLayerEditor()
 void PlotLayerEditor::resized()
 {
   int space=150-(Dialog::Margin*5);
-  int w=namebuffer->getFont().getStringWidthFloat(T("XXXXX"));
+  int w=(int)namebuffer->getFont().getStringWidthFloat(T("XXXXX"));
   int x=Dialog::Margin;
   int y=Dialog::Margin;
   int h=Dialog::HalfMargin;

@@ -32,13 +32,7 @@
 //-----------------//
 //Platform-Specific//
 //-----------------//
-#ifdef _MSC_VER
-  #include <unistd.h>
-  #define strdup _strdup
-  #define jn _jn
-  double log2(double n) {return log(n)/log(2.0);}
-  int round(double n) {return (int)(n+.5);}
-#endif
+
 
 //----------------//
 //Standard library//

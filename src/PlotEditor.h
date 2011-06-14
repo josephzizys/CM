@@ -41,7 +41,7 @@ class EditorLabel : public Label
  public:
  EditorLabel(String text) : Label(String::empty, text)
   {
-    Font font (Dialog::FontSize, Font::plain);
+    Font font ((float)Dialog::FontSize, Font::plain);
     setFont (font);
     setJustificationType (Justification::centredLeft);
     setEditable (false, false, false);
@@ -92,7 +92,7 @@ class EditorCheckBox : public ToggleButton
   EditorCheckBox(String text)
     : ToggleButton(text)
   {
-    Font font (Dialog::FontSize, Font::plain);
+    Font font ((float)Dialog::FontSize, Font::plain);
     //setFont (font);
     setSize((int)(font.getStringWidthFloat(getButtonText()+T("     "))), Dialog::LineHeight);
     //changeWidthToFitText();

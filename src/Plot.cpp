@@ -1199,7 +1199,7 @@ Plotter::Plotter(MidiFile& midifile)
   fields.add(new Field(T("Time"), a, -1, 0.0));
   fields.add(new Field(T("Duration"), a, 0, 0.5));
   fields.add(new Field(T("Keynum"), new Axis(Axis::keynum), -1, 60));
-  fields.add(new Field(T("Amplitude"), new Axis(Axis::normalized) -1, 0.5));      
+  fields.add(new Field(T("Amplitude"), new Axis(Axis::normalized), -1, 0.5));      
   fields.add(new Field(T("Channel"), new Axis(Axis::generic,0,15,1,1,0), -1, 0.0));
   for (int i=0;i<midilayers.size();i++)
     addLayer(midilayers[i]);

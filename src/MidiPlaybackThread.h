@@ -313,7 +313,7 @@ class MidiPlaybackThread : public juce::Thread
   {
     juce::ScopedLock mylock(pblock);
     if (tpb<1) tpb=1;
-    ticks=tpb;
+    ticks=(int)tpb;
     position.tick=1.0/tpb;
   }
 

@@ -398,10 +398,10 @@ class Transport : public juce::Component,
   {
     int viewWidth=getWidth();
     int viewHeight=getHeight();
-    int buttonLeft=(viewWidth/2)-(ButtonWidth*2.5);  // total of 5 buttons
+    int buttonLeft=(viewWidth/2)-((int)(ButtonWidth*2.5));  // total of 5 buttons
     // a tempo slider adds an extra 5 lineHeight's of width
     if (sliderTempo)
-      buttonLeft -= (ButtonHeight*2.5);
+      buttonLeft -= (int)(ButtonHeight*2.5);
 
     int buttonTop=(viewHeight/2)-ButtonHeight;
     buttonRewind->setBounds(buttonLeft, buttonTop, ButtonWidth, ButtonHeight);
