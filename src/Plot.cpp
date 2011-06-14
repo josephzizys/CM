@@ -853,6 +853,7 @@ void PlotView::mouseDown (const MouseEvent &e)
           << T(" ") << haxview->toValue(mausx)
           << T(" ") << vaxview->toValue(mausy) 
           << T(")") ; 
+      std::cout << str.toUTF8() << "\n";
       SchemeThread::getInstance()->eval(str);
       return;
     }
@@ -1706,22 +1707,32 @@ void Plotter::checkFitInView()
 
 void Plotter::fitInView(double width, double height)
 {
-  bool fit=false;
+  bool myfit=false;
   if (haxview->isFitInView())
   {
     if (width==0.0)
       width = viewport->getMaximumVisibleWidth() ;
-    haxview->setSpreadToFit(width);
-    fit=true;
+    // during window creation on linux this can be called with
+    // negative values
+    if (width>0)
+      {
+	std::cout << "fitInView: setting X spread to fit " << width << "\n";
+	haxview->setSpreadToFit(width);
+	myfit=true;
+      }
   }
   if (vaxview->isFitInView())
   {
     if (height==0.0)
       height=viewport->getMaximumVisibleHeight();
-    vaxview->setSpreadToFit(height);
-    fit=true;
+    if (height>0)
+      {
+	std::cout << "fitInView: setting Y spread to fit " << height << "\n";
+	vaxview->setSpreadToFit(height);
+	myfit=true;
+      }
   } 
-  if (fit)
+  if (myfit)
     resizeForSpread();    
 }
 
