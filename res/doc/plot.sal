@@ -7,7 +7,7 @@
 plot(title: "My Plots",
      xaxis: "unit",
      yaxis: "unit",
-     layer: {0 0 .25 .9 .75 .9 1 0}, title: "foo", style: "bar",
+     layer: {0 .1 .25 .2 .75 .4 1 .9}, title: "foo", style: "bar",
      layer: {0 1 .15 .5 .30 .2 .60 .1 100 0}, title: "bar", style: "point",
      layer: {0 0 .5 1 1 0}, title: "baz", style: "envelope"
      )

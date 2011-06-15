@@ -677,8 +677,14 @@ void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview,
     else if (layer->isDrawStyle(Layer::bar))
     {
       if (layer->isDrawStyle(Layer::vertical))
-      {
-	g.fillRect((int)(px-half), (int)oy, (int)rw, (int)(py-oy));
+      {	
+        // y origin is always greater than 
+        ////        std::cout << "vbar: px=" << ((int)(px-half))
+        ////		  << " py=" << ((int)py) << " oy=" << ((int)oy)
+        ////		  << " w=" << ((int)rw) << " h=" << ((int)(oy-py))
+        ////		  << "\n";
+	g.fillRect((int)(px-half), (int)py, (int)rw, (int)(oy-py));
+        //	g.fillRect((int)(px-half), (int)oy, (int)rw, (int)(py-oy));
       }
       else if (layer->isDrawStyle(Layer::horizontal) )
       {
